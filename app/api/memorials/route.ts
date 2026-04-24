@@ -30,7 +30,10 @@ export async function POST(req: Request) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const uploadDir = "/home/u569694274/public_html/uploads";
+      // ✅ FIXED PATH (correct domain public_html)
+      const uploadDir =
+        "/home/u569694274/domains/deepskyblue-donkey-850675.hostingersite.com/public_html/uploads";
+
       await mkdir(uploadDir, { recursive: true });
 
       const safeName = coverPhoto.name
@@ -50,7 +53,15 @@ export async function POST(req: Request) {
 
     await db.execute(
       "INSERT INTO memorials (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [user.id, full_name, birth_date, death_date, biography, inviteToken, coverPhotoPath]
+      [
+        user.id,
+        full_name,
+        birth_date,
+        death_date,
+        biography,
+        inviteToken,
+        coverPhotoPath,
+      ]
     );
 
     return NextResponse.json({
