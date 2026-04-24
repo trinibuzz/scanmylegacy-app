@@ -1,56 +1,52 @@
-"use client";
+import { db } from "../../lib/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
+export default async function Dashboard() {
+  const cookieStore = await cookies();
+  const userCookie = cookieStore.get("user");
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  if (!userCookie) {
+    redirect("/login");
+  }
 
-  const handleLogin = async () => {
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
+  const user = JSON.parse(userCookie.value);
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    alert("Login successful!");
-    window.location.href = "/dashboard";
-  };
+  const [memorials]: any = await db.execute(
+    "SELECT * FROM memorials WHERE user_id = ? ORDER BY created_at DESC",
+    [user.id]
+  );
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="w-full max-w-md rounded-lg bg-zinc-900 p-8">
-        <h1 className="mb-4 text-2xl font-bold">Login</h1>
+    <main className="min-h-screen bg-[#0b1320] text-white p-8">
+      <h1 className="text-3xl font-serif mb-6">
+        Welcome, {user.name}
+      </h1>
 
-        <input
-          className="mb-3 w-full rounded bg-zinc-800 p-2"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+      <h2 className="text-xl mb-4 text-gray-300">
+        Your Memorials
+      </h2>
 
-        <input
-          className="mb-4 w-full rounded bg-zinc-800 p-2"
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-
-        <button
-          className="w-full rounded bg-white p-2 text-black"
-          onClick={handleLogin}
-        >
-          Login
-        </button>
-      </div>
+      {memorials.length === 0 ? (
+        <p className="text-gray-400">No memorials yet.</p>
+      ) : (
+        <div className="grid gap-4">
+          {memorials.map((m: any) => (
+            <div
+              key={m.id}
+              className="p-4 bg-[#111a2e] rounded-lg border border-[#1f2a44]"
+            >
+              <h3 className="text-lg font-semibold">{m.full_name}</h3>
+              <p className="text-gray-400 text-sm">
+                {m.birth_date} — {m.death_date}
+              </p>
+              <p className="mt-2 text-gray-300 line-clamp-2">
+                {m.biography}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </main>
   );
 }
