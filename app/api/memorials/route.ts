@@ -14,12 +14,18 @@ export async function POST(req: Request) {
     const user = JSON.parse(userCookie.value);
     const { full_name, birth_date, death_date, biography } = await req.json();
 
+    const inviteToken =
+      Math.random().toString(36).substring(2) + Date.now();
+
     await db.execute(
-      "INSERT INTO memorials (user_id, full_name, birth_date, death_date, biography) VALUES (?, ?, ?, ?, ?)",
-      [user.id, full_name, birth_date, death_date, biography]
+      "INSERT INTO memorials (user_id, full_name, birth_date, death_date, biography, invite_token) VALUES (?, ?, ?, ?, ?, ?)",
+      [user.id, full_name, birth_date, death_date, biography, inviteToken]
     );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      link: `/memorial/${inviteToken}`,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
