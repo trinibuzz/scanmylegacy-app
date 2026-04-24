@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export default function Dashboard() {
-  const cookieStore = cookies();
+export default async function Dashboard() {
+  const cookieStore = await cookies();
   const user = cookieStore.get("user");
 
   if (!user) {
