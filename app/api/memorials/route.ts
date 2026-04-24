@@ -9,13 +9,34 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
-    const userCookie = cookieStore.get("user");
+    const sessionCookie = cookieStore.get("session");
 
-    if (!userCookie) {
+    if (!sessionCookie) {
       return NextResponse.json({ error: "Not logged in" }, { status: 401 });
     }
 
-    const user = JSON.parse(userCookie.value);
+    const [sessionRows]: any = await db.execute(
+      "SELECT * FROM sessions WHERE id = ? LIMIT 1",
+      [sessionCookie.value]
+    );
+
+    if (sessionRows.length === 0) {
+      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
+    }
+
+    const session = sessionRows[0];
+
+    const [userRows]: any = await db.execute(
+      "SELECT * FROM users WHERE id = ? LIMIT 1",
+      [session.user_id]
+    );
+
+    if (userRows.length === 0) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const user = userRows[0];
+
     const formData = await req.formData();
 
     const full_name = formData.get("full_name") as string;
@@ -30,7 +51,6 @@ export async function POST(req: Request) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // ✅ FIXED PATH (correct domain public_html)
       const uploadDir =
         "/home/u569694274/domains/deepskyblue-donkey-850675.hostingersite.com/public_html/uploads";
 
