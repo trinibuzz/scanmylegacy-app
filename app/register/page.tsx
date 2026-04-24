@@ -7,8 +7,9 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleRegister = async () => {
-    await fetch("/api/register", {
+ const handleRegister = async () => {
+  try {
+    const res = await fetch("/api/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -16,8 +17,18 @@ export default function Register() {
       body: JSON.stringify({ name, email, password }),
     });
 
-    alert("User created!");
-  };
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert("Error: " + data.error);
+      return;
+    }
+
+    alert("User saved to database!");
+  } catch (error: any) {
+    alert("Register failed: " + error.message);
+  }
+};
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-black text-white">
