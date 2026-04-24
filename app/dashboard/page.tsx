@@ -38,7 +38,9 @@ export default async function Dashboard() {
             >
               <h3 className="text-lg font-semibold">{m.full_name}</h3>
               <p className="text-gray-400 text-sm">
-                {m.birth_date} — {m.death_date}
+                {m.birth_date ? new Date(m.birth_date).toLocaleDateString() : ""}
+{" — "}
+{m.death_date ? new Date(m.death_date).toLocaleDateString() : ""}
               </p>
               <p className="mt-2 text-gray-300 line-clamp-2">
                 {m.biography}
