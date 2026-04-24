@@ -1,7 +1,23 @@
-export default function Login() {
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+
+export default function Dashboard() {
+  const cookieStore = cookies();
+  const user = cookieStore.get("user");
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const userData = JSON.parse(user.value);
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black text-white">
-      <h1>Login Page</h1>
+    <main className="p-10 bg-black text-white min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">
+        Welcome, {userData.name}
+      </h1>
+
+      <p>Your memorials will appear here.</p>
     </main>
   );
 }
