@@ -18,14 +18,12 @@ export default async function Dashboard() {
   );
 
   return (
-    <main className="min-h-screen bg-[#0b1320] text-white p-8">
-      <h1 className="text-3xl font-serif mb-6">
+    <main className="min-h-screen bg-[#0b1320] p-8 text-white">
+      <h1 className="mb-6 font-serif text-3xl">
         Welcome, {user.name}
       </h1>
 
-      <h2 className="text-xl mb-4 text-gray-300">
-        Your Memorials
-      </h2>
+      <h2 className="mb-4 text-xl text-gray-300">Your Memorials</h2>
 
       {memorials.length === 0 ? (
         <p className="text-gray-400">No memorials yet.</p>
@@ -34,17 +32,26 @@ export default async function Dashboard() {
           {memorials.map((m: any) => (
             <div
               key={m.id}
-              className="p-4 bg-[#111a2e] rounded-lg border border-[#1f2a44]"
+              className="rounded-lg border border-[#1f2a44] bg-[#111a2e] p-4"
             >
               <h3 className="text-lg font-semibold">{m.full_name}</h3>
-              <p className="text-gray-400 text-sm">
+
+              <p className="text-sm text-gray-400">
                 {m.birth_date ? new Date(m.birth_date).toLocaleDateString() : ""}
-{" — "}
-{m.death_date ? new Date(m.death_date).toLocaleDateString() : ""}
+                {" — "}
+                {m.death_date ? new Date(m.death_date).toLocaleDateString() : ""}
               </p>
-              <p className="mt-2 text-gray-300 line-clamp-2">
-                {m.biography}
-              </p>
+
+              <p className="mt-2 text-gray-300">{m.biography}</p>
+
+              {m.invite_token && (
+                <a
+                  href={`/memorial/${m.invite_token}`}
+                  className="mt-4 inline-block rounded bg-[#d4af37] px-4 py-2 text-black"
+                >
+                  View Memorial
+                </a>
+              )}
             </div>
           ))}
         </div>
