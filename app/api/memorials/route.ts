@@ -30,10 +30,14 @@ export async function POST(req: Request) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const uploadDir = path.join(process.cwd(), "public", "uploads");
+      const uploadDir = "/home/u569694274/public_html/uploads";
       await mkdir(uploadDir, { recursive: true });
 
-      const fileName = `${Date.now()}-${coverPhoto.name.replace(/\s+/g, "-")}`;
+      const safeName = coverPhoto.name
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, "-");
+
+      const fileName = `${Date.now()}-${safeName}`;
       const filePath = path.join(uploadDir, fileName);
 
       await writeFile(filePath, buffer);
