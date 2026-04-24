@@ -23,31 +23,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid login" }, { status: 401 });
     }
 
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+    // 🔥 Create session
+    const sessionId =
+      Math.random().toString(36).substring(2) + Date.now();
 
-    // ✅ FIXED persistent cookie
-    response.cookies.set(
-      "user",
-      JSON.stringify({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      }),
-      {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-      }
+    await db.execute(
+      "INSERT INTO sessions (id, user_id) VALUES (?, ?)",
+      [sessionId, user.id]
     );
+
+    const response = NextResponse.json({ success: true });
+
+    // ✅ Store ONLY session id in cookie
+    response.cookies.set("session", sessionId, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+    });
 
     return response;
 

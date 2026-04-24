@@ -4,13 +4,33 @@ import { redirect } from "next/navigation";
 
 export default async function Dashboard() {
   const cookieStore = await cookies();
-  const userCookie = cookieStore.get("user");
+  const sessionCookie = cookieStore.get("session");
 
-  if (!userCookie) {
+  if (!sessionCookie) {
     redirect("/login");
   }
 
-  const user = JSON.parse(userCookie.value);
+  const [sessionRows]: any = await db.execute(
+    "SELECT * FROM sessions WHERE id = ? LIMIT 1",
+    [sessionCookie.value]
+  );
+
+  if (sessionRows.length === 0) {
+    redirect("/login");
+  }
+
+  const session = sessionRows[0];
+
+  const [userRows]: any = await db.execute(
+    "SELECT * FROM users WHERE id = ? LIMIT 1",
+    [session.user_id]
+  );
+
+  if (userRows.length === 0) {
+    redirect("/login");
+  }
+
+  const user = userRows[0];
 
   const [memorials]: any = await db.execute(
     "SELECT * FROM memorials WHERE user_id = ? ORDER BY created_at DESC",
