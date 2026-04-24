@@ -4,15 +4,18 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+
+    const email = body.email?.trim().toLowerCase();
+    const password = body.password?.trim();
 
     const [rows]: any = await db.execute(
-      "SELECT * FROM users WHERE email = ? LIMIT 1",
+      "SELECT * FROM users WHERE LOWER(email) = ? LIMIT 1",
       [email]
     );
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Invalid login" }, { status: 401 });
+      return NextResponse.json({ error: "Email not found" }, { status: 401 });
     }
 
     const user = rows[0];
@@ -20,7 +23,7 @@ export async function POST(req: Request) {
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      return NextResponse.json({ error: "Invalid login" }, { status: 401 });
+      return NextResponse.json({ error: "Password does not match" }, { status: 401 });
     }
 
     return NextResponse.json({
