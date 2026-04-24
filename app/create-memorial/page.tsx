@@ -7,19 +7,23 @@ export default function CreateMemorial() {
   const [birthDate, setBirthDate] = useState("");
   const [deathDate, setDeathDate] = useState("");
   const [biography, setBiography] = useState("");
+  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
 
   const saveMemorial = async () => {
+    const formData = new FormData();
+
+    formData.append("full_name", fullName);
+    formData.append("birth_date", birthDate);
+    formData.append("death_date", deathDate);
+    formData.append("biography", biography);
+
+    if (coverPhoto) {
+      formData.append("cover_photo", coverPhoto);
+    }
+
     const res = await fetch("/api/memorials", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        full_name: fullName,
-        birth_date: birthDate,
-        death_date: deathDate,
-        biography,
-      }),
+      body: formData,
     });
 
     const data = await res.json();
@@ -34,42 +38,48 @@ export default function CreateMemorial() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b1320] text-white flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-[#111a2e] rounded-2xl p-8 shadow-2xl border border-[#1f2a44]">
-
-        <h1 className="text-3xl font-serif text-center mb-2">
+    <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+      <div className="w-full max-w-2xl rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 shadow-2xl">
+        <h1 className="mb-2 text-center font-serif text-3xl">
           Preserve a Legacy
         </h1>
 
-        <p className="text-center text-gray-400 mb-6">
+        <p className="mb-6 text-center text-gray-400">
           Create a timeless tribute for your loved one
         </p>
 
         <input
-          className="w-full mb-3 p-3 rounded-lg bg-[#0b1320] border border-[#2a3550]"
+          className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
           placeholder="Full Name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
         />
 
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="mb-3 grid grid-cols-2 gap-3">
           <input
             type="date"
-            className="p-3 rounded-lg bg-[#0b1320] border border-[#2a3550]"
+            className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
             value={birthDate}
             onChange={(e) => setBirthDate(e.target.value)}
           />
 
           <input
             type="date"
-            className="p-3 rounded-lg bg-[#0b1320] border border-[#2a3550]"
+            className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
             value={deathDate}
             onChange={(e) => setDeathDate(e.target.value)}
           />
         </div>
 
+        <input
+          type="file"
+          accept="image/*"
+          className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
+          onChange={(e) => setCoverPhoto(e.target.files?.[0] || null)}
+        />
+
         <textarea
-          className="w-full mb-4 p-3 rounded-lg bg-[#0b1320] border border-[#2a3550] min-h-[120px]"
+          className="mb-4 min-h-[120px] w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
           placeholder="Write a life story, tribute, or memories..."
           value={biography}
           onChange={(e) => setBiography(e.target.value)}
@@ -77,11 +87,10 @@ export default function CreateMemorial() {
 
         <button
           onClick={saveMemorial}
-          className="w-full bg-[#d4af37] text-black font-semibold py-3 rounded-lg hover:opacity-90 transition"
+          className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black transition hover:opacity-90"
         >
           Create Memorial
         </button>
-
       </div>
     </main>
   );

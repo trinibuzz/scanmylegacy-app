@@ -10,9 +10,7 @@ export default function GuestAccess({ memorial, token }: any) {
   const enterMemorial = async () => {
     const res = await fetch("/api/guest-access", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token,
         guest_name: guestName,
@@ -34,10 +32,7 @@ export default function GuestAccess({ memorial, token }: any) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
         <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8">
-          <h1 className="mb-2 text-center font-serif text-3xl">
-            You’re Invited
-          </h1>
-
+          <h1 className="mb-2 text-center font-serif text-3xl">You’re Invited</h1>
           <p className="mb-6 text-center text-gray-400">
             Enter your name to view this memorial.
           </p>
@@ -74,22 +69,26 @@ export default function GuestAccess({ memorial, token }: any) {
           In Loving Memory
         </p>
 
-        <h1 className="mb-4 font-serif text-5xl">
-          {memorial.full_name}
-        </h1>
+        <h1 className="mb-4 font-serif text-5xl">{memorial.full_name}</h1>
 
         <p className="mb-8 text-gray-400">
-          {memorial.birth_date
-            ? new Date(memorial.birth_date).toLocaleDateString()
-            : ""}
+          {memorial.birth_date ? new Date(memorial.birth_date).toLocaleDateString() : ""}
           {" — "}
-          {memorial.death_date
-            ? new Date(memorial.death_date).toLocaleDateString()
-            : ""}
+          {memorial.death_date ? new Date(memorial.death_date).toLocaleDateString() : ""}
         </p>
 
         <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
       </section>
+
+      {memorial.cover_photo && (
+        <div className="mx-auto mb-10 max-w-3xl px-6">
+          <img
+            src={memorial.cover_photo}
+            alt={memorial.full_name}
+            className="h-[380px] w-full rounded-2xl border border-[#1f2a44] object-cover shadow-2xl"
+          />
+        </div>
+      )}
 
       <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-16 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
@@ -97,9 +96,7 @@ export default function GuestAccess({ memorial, token }: any) {
             Life Story
           </h2>
 
-          <p className="leading-relaxed text-gray-300">
-            {memorial.biography}
-          </p>
+          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
         </div>
 
         <div className="space-y-4">
