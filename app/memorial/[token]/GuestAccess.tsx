@@ -43,14 +43,14 @@ export default function GuestAccess({ memorial, token }: any) {
           </p>
 
           <input
-            className="mb-3 w-full rounded bg-[#0b1320] border border-[#2a3550] p-3"
+            className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
             placeholder="Your Name"
             value={guestName}
             onChange={(e) => setGuestName(e.target.value)}
           />
 
           <input
-            className="mb-4 w-full rounded bg-[#0b1320] border border-[#2a3550] p-3"
+            className="mb-4 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
             placeholder="Email Address (optional)"
             value={guestEmail}
             onChange={(e) => setGuestEmail(e.target.value)}
@@ -68,18 +68,58 @@ export default function GuestAccess({ memorial, token }: any) {
   }
 
   return (
-    <main className="min-h-screen bg-[#0b1320] p-10 text-white">
-      <div className="mx-auto max-w-3xl rounded-xl border border-[#1f2a44] bg-[#111a2e] p-8">
-        <h1 className="mb-2 font-serif text-4xl">{memorial.full_name}</h1>
-
-        <p className="mb-6 text-gray-400">
-          {memorial.birth_date ? new Date(memorial.birth_date).toLocaleDateString() : ""}
-          {" — "}
-          {memorial.death_date ? new Date(memorial.death_date).toLocaleDateString() : ""}
+    <main className="min-h-screen bg-[#0b1320] text-white">
+      <section className="px-6 py-16 text-center">
+        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
+          In Loving Memory
         </p>
 
-        <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
-      </div>
+        <h1 className="mb-4 font-serif text-5xl">
+          {memorial.full_name}
+        </h1>
+
+        <p className="mb-8 text-gray-400">
+          {memorial.birth_date
+            ? new Date(memorial.birth_date).toLocaleDateString()
+            : ""}
+          {" — "}
+          {memorial.death_date
+            ? new Date(memorial.death_date).toLocaleDateString()
+            : ""}
+        </p>
+
+        <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
+      </section>
+
+      <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-16 md:grid-cols-3">
+        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
+          <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
+            Life Story
+          </h2>
+
+          <p className="leading-relaxed text-gray-300">
+            {memorial.biography}
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
+            <div className="mb-3 text-4xl">🕯️</div>
+            <h3 className="font-serif text-xl">Light a Candle</h3>
+            <p className="mt-2 text-sm text-gray-400">
+              A quiet tribute of love and remembrance.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
+            <div className="mb-3 text-4xl">🌹</div>
+            <h3 className="font-serif text-xl">Leave a Flower</h3>
+            <p className="mt-2 text-sm text-gray-400">
+              Honor their memory with a simple gesture.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
