@@ -22,24 +22,24 @@ export default function Login() {
       return;
     }
 
-    alert("Login successful!");
+    // ✅ Redirect immediately (no alert)
     window.location.href = "/dashboard";
   };
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="bg-zinc-900 p-8 rounded-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-4">Login</h1>
+      <div className="w-full max-w-md rounded-lg bg-zinc-900 p-8">
+        <h1 className="mb-4 text-2xl font-bold">Login</h1>
 
         <input
-          className="w-full p-2 mb-3 bg-zinc-800 rounded"
+          className="mb-3 w-full rounded bg-zinc-800 p-2"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
-          className="w-full p-2 mb-4 bg-zinc-800 rounded"
+          className="mb-4 w-full rounded bg-zinc-800 p-2"
           placeholder="Password"
           type="password"
           value={password}
@@ -47,7 +47,7 @@ export default function Login() {
         />
 
         <button
-          className="w-full bg-white text-black p-2 rounded"
+          className="w-full rounded bg-white p-2 text-black"
           onClick={handleLogin}
         >
           Login
