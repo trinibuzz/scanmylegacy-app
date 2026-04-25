@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
@@ -10,7 +11,7 @@ const packageNames: any = {
   "eternal-legacy": "Eternal Legacy",
 };
 
-export default function CreateMemorial() {
+function CreateMemorialForm() {
   const searchParams = useSearchParams();
 
   const packageSlug = searchParams.get("package") || "starter-tribute";
@@ -107,11 +108,19 @@ export default function CreateMemorial() {
 
         <button
           onClick={saveMemorial}
-          className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black transition hover:opacity-90"
+          className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black"
         >
           Create Memorial
         </button>
       </div>
     </main>
+  );
+}
+
+export default function CreateMemorial() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateMemorialForm />
+    </Suspense>
   );
 }
