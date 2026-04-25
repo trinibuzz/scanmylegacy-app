@@ -1,4 +1,4 @@
-import { db } from "../../../../lib/db";
+import { db } from "../../../../../lib/db";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
@@ -34,7 +34,9 @@ export async function GET(req: Request) {
       `SELECT mg.id
        FROM memorial_gallery mg
        JOIN memorials m ON mg.memorial_id = m.id
-       WHERE mg.id = ? AND mg.memorial_id = ? AND m.user_id = ?
+       WHERE mg.id = ? 
+       AND mg.memorial_id = ? 
+       AND m.user_id = ?
        LIMIT 1`,
       [id, memorialId, userId]
     );
@@ -54,6 +56,9 @@ export async function GET(req: Request) {
       new URL(`/gallery/${memorialId}`, req.url)
     );
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
