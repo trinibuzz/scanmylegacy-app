@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Guestbook from "./Guestbook";
+import Guestbook from "@/app/memorial/[token]/Guestbook";
 
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
