@@ -1,12 +1,14 @@
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
+      {/* HERO */}
       <section className="relative min-h-[75vh] overflow-hidden">
         <img
-          src="/images/hero.jpg"
+          src="/images/home-hero.jpg"
           alt="Family preserving memories"
           className="absolute inset-0 h-full w-full object-cover opacity-45"
         />
+
         <div className="absolute inset-0 bg-gradient-to-r from-[#0b1320] via-[#0b1320]/80 to-transparent" />
 
         <div className="relative mx-auto flex min-h-[75vh] max-w-7xl items-center px-6">
@@ -44,12 +46,16 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="mb-12 text-center">
           <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
             How It Works
           </p>
-          <h2 className="font-serif text-4xl">Create a lasting tribute in minutes</h2>
+
+          <h2 className="font-serif text-4xl">
+            Create a lasting tribute in minutes
+          </h2>
         </div>
 
         <div className="grid gap-8 md:grid-cols-3">
@@ -57,28 +63,34 @@ export default function HomePage() {
             {
               title: "Choose a Package",
               text: "Select the memorial plan that fits your family’s needs.",
-              img: "/images/how-1.jpg",
+              img: "/images/how-hero.jpg",
             },
             {
               title: "Build the Memorial",
               text: "Add photos, videos, voice notes, life stories, and memories.",
-              img: "/images/how-2.jpg",
+              img: "/images/create-hero.jpg",
             },
             {
               title: "Invite Loved Ones",
               text: "Share a private invite link or QR code with family and friends.",
-              img: "/images/how-3.jpg",
+              img: "/images/welcome-hero.jpg",
             },
           ].map((item) => (
             <div
               key={item.title}
               className="overflow-hidden rounded-2xl border border-[#1f2a44] bg-[#111a2e]"
             >
-              <img src={item.img} alt={item.title} className="h-56 w-full object-cover" />
+              <img
+                src={item.img}
+                alt={item.title}
+                className="h-56 w-full object-cover"
+              />
+
               <div className="p-6">
                 <h3 className="mb-3 font-serif text-2xl text-[#d4af37]">
                   {item.title}
                 </h3>
+
                 <p className="text-gray-300">{item.text}</p>
               </div>
             </div>
@@ -86,13 +98,17 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* FEATURES */}
       <section className="bg-[#111a2e] px-6 py-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
               Features
             </p>
-            <h2 className="font-serif text-4xl">Everything families need to remember</h2>
+
+            <h2 className="font-serif text-4xl">
+              Everything families need to remember
+            </h2>
           </div>
 
           <div className="grid gap-4 md:grid-cols-4">
@@ -118,9 +134,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* TRUST SECTION */}
       <section className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2">
         <img
-          src="/images/trust.jpg"
+          src="/images/about-hero.jpg"
           alt="Family remembering a loved one"
           className="h-[420px] w-full rounded-2xl object-cover shadow-2xl"
         />
@@ -150,6 +167,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* CTA */}
       <section className="border-t border-[#1f2a44] px-6 py-16 text-center">
         <h2 className="mb-4 font-serif text-4xl">
           Start preserving a legacy today.
