@@ -1,4 +1,4 @@
-import { db } from "../../../../lib/db";
+import { db } from "../../../../../lib/db";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
@@ -30,27 +30,31 @@ export async function GET(req: Request) {
     const id = url.searchParams.get("id");
     const memorialId = url.searchParams.get("memorial_id");
 
+    if (!id || !memorialId) {
+      return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
     const [rows]: any = await db.execute(
       `SELECT mg.id
        FROM memorial_gallery mg
        JOIN memorials m ON mg.memorial_id = m.id
-       WHERE mg.id = ? 
-       AND mg.memorial_id = ? 
+       WHERE mg.id = ?
+       AND mg.memorial_id = ?
        AND m.user_id = ?
        LIMIT 1`,
       [id, memorialId, userId]
     );
 
-    if (rows.length === 0) {
-      return NextResponse.redirect(new URL(`/gallery/${memorialId}`, req.url));
+    if (rows.length > 0) {
+      await db.execute(
+        "DELETE FROM memorial_gallery WHERE id = ? AND memorial_id = ?",
+        [id, memorialId]
+      );
     }
 
-    await db.execute(
-      "DELETE FROM memorial_gallery WHERE id = ? AND memorial_id = ?",
-      [id, memorialId]
+    return NextResponse.redirect(
+      new URL(`/gallery/${memorialId}`, req.url)
     );
-
-    return NextResponse.redirect(new URL(`/gallery/${memorialId}`, req.url));
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
