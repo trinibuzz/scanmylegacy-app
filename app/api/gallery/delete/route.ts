@@ -1,4 +1,4 @@
-import { db } from "../../../../../lib/db";
+import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
@@ -42,9 +42,7 @@ export async function GET(req: Request) {
     );
 
     if (rows.length === 0) {
-      return NextResponse.redirect(
-        new URL(`/gallery/${memorialId}`, req.url)
-      );
+      return NextResponse.redirect(new URL(`/gallery/${memorialId}`, req.url));
     }
 
     await db.execute(
@@ -52,13 +50,8 @@ export async function GET(req: Request) {
       [id, memorialId]
     );
 
-    return NextResponse.redirect(
-      new URL(`/gallery/${memorialId}`, req.url)
-    );
+    return NextResponse.redirect(new URL(`/gallery/${memorialId}`, req.url));
   } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
