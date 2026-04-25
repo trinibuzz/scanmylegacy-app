@@ -36,13 +36,15 @@ export async function POST(req: Request) {
     }
 
     const user = userRows[0];
-
     const formData = await req.formData();
 
     const full_name = formData.get("full_name") as string;
     const birth_date = formData.get("birth_date") as string;
     const death_date = formData.get("death_date") as string;
     const biography = formData.get("biography") as string;
+    const package_slug = formData.get("package_slug") as string;
+    const package_name = formData.get("package_name") as string;
+    const package_price = formData.get("package_price") as string;
     const coverPhoto = formData.get("cover_photo") as File | null;
 
     let coverPhotoPath = "";
@@ -68,11 +70,12 @@ export async function POST(req: Request) {
       coverPhotoPath = `/uploads/${fileName}`;
     }
 
-    const inviteToken =
-      Math.random().toString(36).substring(2) + Date.now();
+    const inviteToken = Math.random().toString(36).substring(2) + Date.now();
 
     await db.execute(
-      "INSERT INTO memorials (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      `INSERT INTO memorials 
+      (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo, package_slug, package_name, package_price) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user.id,
         full_name,
@@ -81,6 +84,9 @@ export async function POST(req: Request) {
         biography,
         inviteToken,
         coverPhotoPath,
+        package_slug,
+        package_name,
+        package_price,
       ]
     );
 

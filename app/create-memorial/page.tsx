@@ -1,8 +1,22 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+const packageNames: any = {
+  "starter-tribute": "Starter Tribute",
+  "standard-legacy": "Standard Legacy",
+  "premium-legacy": "Premium Legacy",
+  "eternal-legacy": "Eternal Legacy",
+};
+
 export default function CreateMemorial() {
+  const searchParams = useSearchParams();
+
+  const packageSlug = searchParams.get("package") || "starter-tribute";
+  const packagePrice = searchParams.get("price") || "0";
+  const packageName = packageNames[packageSlug] || "Starter Tribute";
+
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [deathDate, setDeathDate] = useState("");
@@ -16,6 +30,9 @@ export default function CreateMemorial() {
     formData.append("birth_date", birthDate);
     formData.append("death_date", deathDate);
     formData.append("biography", biography);
+    formData.append("package_slug", packageSlug);
+    formData.append("package_name", packageName);
+    formData.append("package_price", packagePrice);
 
     if (coverPhoto) {
       formData.append("cover_photo", coverPhoto);
@@ -33,7 +50,6 @@ export default function CreateMemorial() {
       return;
     }
 
-    alert("Memorial saved!");
     window.location.href = "/dashboard";
   };
 
@@ -44,9 +60,13 @@ export default function CreateMemorial() {
           Preserve a Legacy
         </h1>
 
-        <p className="mb-6 text-center text-gray-400">
-          Create a timeless tribute for your loved one
-        </p>
+        <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
+          <p className="text-sm text-gray-400">Selected Package</p>
+          <p className="font-serif text-xl text-[#d4af37]">{packageName}</p>
+          <p className="text-gray-300">
+            {Number(packagePrice) === 0 ? "Free" : `$${packagePrice} USD`}
+          </p>
+        </div>
 
         <input
           className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3"
