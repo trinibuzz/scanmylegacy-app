@@ -37,8 +37,8 @@ export default async function MemorialAdmin({
   const memorial = memorialRows[0];
 
   const [guestbookRows]: any = await db.execute(
-    "SELECT * FROM guestbook WHERE memorial_token = ? ORDER BY created_at DESC",
-    [memorial.invite_token]
+    "SELECT * FROM guestbook_entries WHERE memorial_id = ? ORDER BY created_at DESC",
+    [memorial.id]
   );
 
   return (
