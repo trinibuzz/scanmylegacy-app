@@ -43,9 +43,13 @@ export default async function Dashboard() {
 
   return (
     <main className="min-h-screen bg-[#0b1320] p-8 text-white">
-      <h1 className="mb-6 font-serif text-3xl">Welcome, {user.name}</h1>
+      <h1 className="mb-6 font-serif text-3xl">
+        Welcome, {user.name}
+      </h1>
 
-      <h2 className="mb-4 text-xl text-gray-300">Your Memorials</h2>
+      <h2 className="mb-4 text-xl text-gray-300">
+        Your Memorials
+      </h2>
 
       {memorials.length === 0 ? (
         <p className="text-gray-400">No memorials yet.</p>
@@ -59,7 +63,9 @@ export default async function Dashboard() {
                 key={m.id}
                 className="rounded-lg border border-[#1f2a44] bg-[#111a2e] p-4"
               >
-                <h3 className="text-lg font-semibold">{m.full_name}</h3>
+                <h3 className="text-lg font-semibold">
+                  {m.full_name}
+                </h3>
 
                 <p className="text-sm text-gray-400">
                   {m.birth_date
@@ -71,7 +77,9 @@ export default async function Dashboard() {
                     : ""}
                 </p>
 
-                <p className="mt-2 text-gray-300">{m.biography}</p>
+                <p className="mt-2 text-gray-300">
+                  {m.biography}
+                </p>
 
                 {m.invite_token && (
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -80,6 +88,13 @@ export default async function Dashboard() {
                       className="rounded bg-[#d4af37] px-4 py-2 text-black"
                     >
                       View
+                    </a>
+
+                    <a
+                      href={`/admin/memorial/${m.id}`}
+                      className="rounded bg-blue-600 px-4 py-2 text-white"
+                    >
+                      Manage
                     </a>
 
                     <a
