@@ -1,11 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
+
+  const [messageName, setMessageName] = useState("");
+  const [message, setMessage] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [video, setVideo] = useState<File | null>(null);
+  const [audio, setAudio] = useState<File | null>(null);
+  const [entries, setEntries] = useState<any[]>([]);
+
+  const loadGuestbook = async () => {
+    const res = await fetch(`/api/guestbook?token=${token}`);
+    const data = await res.json();
+    setEntries(data.entries || []);
+  };
+
+  useEffect(() => {
+    if (allowed) {
+      loadGuestbook();
+    }
+  }, [allowed]);
 
   const enterMemorial = async () => {
     const res = await fetch("/api/guest-access", {
@@ -27,7 +46,41 @@ export default function GuestAccess({ memorial, token }: any) {
       return;
     }
 
+    setMessageName(guestName);
     setAllowed(true);
+  };
+
+  const submitGuestbook = async () => {
+    const formData = new FormData();
+
+    formData.append("token", token);
+    formData.append("guest_name", messageName);
+    formData.append("message", message);
+
+    if (image) formData.append("image", image);
+    if (video) formData.append("video", video);
+    if (audio) formData.append("audio", audio);
+
+    const res = await fetch("/api/guestbook", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+
+    alert("Guestbook message posted ❤️");
+
+    setMessage("");
+    setImage(null);
+    setVideo(null);
+    setAudio(null);
+
+    await loadGuestbook();
   };
 
   if (!allowed) {
@@ -74,9 +127,7 @@ export default function GuestAccess({ memorial, token }: any) {
           In Loving Memory
         </p>
 
-        <h1 className="mb-4 font-serif text-5xl">
-          {memorial.full_name}
-        </h1>
+        <h1 className="mb-4 font-serif text-5xl">{memorial.full_name}</h1>
 
         <p className="mb-8 text-gray-400">
           {memorial.birth_date
@@ -101,15 +152,13 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       )}
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-16 md:grid-cols-3">
+      <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-10 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Life Story
           </h2>
 
-          <p className="leading-relaxed text-gray-300">
-            {memorial.biography}
-          </p>
+          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
         </div>
 
         <div className="space-y-4">
@@ -128,6 +177,108 @@ export default function GuestAccess({ memorial, token }: any) {
               Honor their memory with a simple gesture.
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-16">
+        <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+          <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
+            Guestbook
+          </h2>
+
+          <input
+            className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+            placeholder="Your Name"
+            value={messageName}
+            onChange={(e) => setMessageName(e.target.value)}
+          />
+
+          <textarea
+            className="mb-3 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+            placeholder="Write a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+
+          <div className="mb-4 grid gap-3 md:grid-cols-3">
+            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+              Photo
+              <input
+                type="file"
+                accept="image/*"
+                className="mt-2 w-full text-xs"
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
+              />
+            </label>
+
+            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+              Video
+              <input
+                type="file"
+                accept="video/*"
+                className="mt-2 w-full text-xs"
+                onChange={(e) => setVideo(e.target.files?.[0] || null)}
+              />
+            </label>
+
+            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+              Audio
+              <input
+                type="file"
+                accept="audio/*"
+                className="mt-2 w-full text-xs"
+                onChange={(e) => setAudio(e.target.files?.[0] || null)}
+              />
+            </label>
+          </div>
+
+          <button
+            onClick={submitGuestbook}
+            className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+          >
+            Post to Guestbook
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {entries.length === 0 ? (
+            <p className="text-center text-gray-400">
+              No guestbook messages yet.
+            </p>
+          ) : (
+            entries.map((entry: any) => (
+              <div
+                key={entry.id}
+                className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5"
+              >
+                <h3 className="font-semibold text-white">
+                  {entry.guest_name}
+                </h3>
+
+                <p className="mt-2 text-gray-300">{entry.message}</p>
+
+                {entry.image_url && (
+                  <img
+                    src={entry.image_url}
+                    alt="Guestbook image"
+                    className="mt-4 max-h-[420px] w-full rounded-xl object-cover"
+                  />
+                )}
+
+                {entry.video_url && (
+                  <video controls className="mt-4 w-full rounded-xl">
+                    <source src={entry.video_url} />
+                  </video>
+                )}
+
+                {entry.audio_url && (
+                  <audio controls className="mt-4 w-full">
+                    <source src={entry.audio_url} />
+                  </audio>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </section>
     </main>
