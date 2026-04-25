@@ -53,7 +53,13 @@ export default async function MemorialAdmin({
         </h2>
 
         <p className="mb-2 text-gray-300">
-          {memorial.birth_date} — {memorial.death_date}
+          {memorial.birth_date
+            ? new Date(memorial.birth_date).toLocaleDateString()
+            : ""}
+          {" — "}
+          {memorial.death_date
+            ? new Date(memorial.death_date).toLocaleDateString()
+            : ""}
         </p>
 
         <p className="text-gray-400">
@@ -107,6 +113,32 @@ export default async function MemorialAdmin({
                 <p className="mt-2 text-gray-300">
                   {post.message}
                 </p>
+
+                {post.image_url && (
+                  <img
+                    src={post.image_url}
+                    alt="Guestbook upload"
+                    className="mt-4 max-h-[300px] rounded-lg object-cover"
+                  />
+                )}
+
+                {post.video_url && (
+                  <video
+                    controls
+                    className="mt-4 w-full rounded-lg"
+                  >
+                    <source src={post.video_url} />
+                  </video>
+                )}
+
+                {post.audio_url && (
+                  <audio
+                    controls
+                    className="mt-4 w-full"
+                  >
+                    <source src={post.audio_url} />
+                  </audio>
+                )}
 
                 <div className="mt-4">
                   <a
