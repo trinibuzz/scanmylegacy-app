@@ -23,7 +23,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid login" }, { status: 401 });
     }
 
-    // 🔥 Create session
     const sessionId =
       Math.random().toString(36).substring(2) + Date.now();
 
@@ -34,17 +33,14 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({ success: true });
 
-    // ✅ Store ONLY session id in cookie
     response.cookies.set("session", sessionId, {
       httpOnly: true,
-      secure: true,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30,
     });
 
     return response;
-
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
