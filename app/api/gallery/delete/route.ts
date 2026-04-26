@@ -2,6 +2,10 @@ import { db } from "../../../../lib/db";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  "https://deepskyblue-donkey-850675.hostingersite.com";
+
 async function getUserId() {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("session");
@@ -23,7 +27,7 @@ export async function GET(req: Request) {
     const userId = await getUserId();
 
     if (!userId) {
-      return NextResponse.redirect(new URL("/login", req.url));
+      return NextResponse.redirect(`${siteUrl}/login`);
     }
 
     const url = new URL(req.url);
@@ -31,7 +35,7 @@ export async function GET(req: Request) {
     const memorialId = url.searchParams.get("memorial_id");
 
     if (!id || !memorialId) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+      return NextResponse.redirect(`${siteUrl}/dashboard`);
     }
 
     const [rows]: any = await db.execute(
@@ -52,9 +56,7 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.redirect(
-      new URL(`/gallery/${memorialId}`, req.url)
-    );
+    return NextResponse.redirect(`${siteUrl}/gallery/${memorialId}`);
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
