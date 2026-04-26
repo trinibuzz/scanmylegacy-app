@@ -18,10 +18,7 @@ export default function FamilyTreeManager({ params }: any) {
 
   const loadMembers = async () => {
     try {
-      const res = await fetch(
-        `/api/family-tree?memorial_id=${memorialId}`
-      );
-
+      const res = await fetch(`/api/family-tree?memorial_id=${memorialId}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -47,7 +44,8 @@ export default function FamilyTreeManager({ params }: any) {
       rel === "Spouse" ||
       rel === "Brother" ||
       rel === "Sister" ||
-      rel === "Sibling Spouse"
+      rel === "Brother-in-law" ||
+      rel === "Sister-in-law"
     ) {
       return 0;
     }
@@ -84,48 +82,32 @@ export default function FamilyTreeManager({ params }: any) {
 
   const needsSpouseLink = [
     "Spouse",
-    "Sibling Spouse",
+    "Brother-in-law",
+    "Sister-in-law",
   ].includes(relationship);
 
   const parentOptions = useMemo(() => {
-    if (
-      relationship === "Son" ||
-      relationship === "Daughter"
-    ) {
+    if (relationship === "Son" || relationship === "Daughter") {
       return members.filter(
-        (m) =>
-          m.relationship === "Deceased" ||
-          m.relationship === "Spouse"
+        (m) => m.relationship === "Deceased" || m.relationship === "Spouse"
       );
     }
 
-    if (
-      relationship === "Nephew" ||
-      relationship === "Niece"
-    ) {
+    if (relationship === "Nephew" || relationship === "Niece") {
       return members.filter(
-        (m) =>
-          m.relationship === "Brother" ||
-          m.relationship === "Sister"
+        (m) => m.relationship === "Brother" || m.relationship === "Sister"
       );
     }
 
-    if (
-      relationship === "Grandson" ||
-      relationship === "Granddaughter"
-    ) {
+    if (relationship === "Grandson" || relationship === "Granddaughter") {
       return members.filter(
-        (m) =>
-          m.relationship === "Son" ||
-          m.relationship === "Daughter"
+        (m) => m.relationship === "Son" || m.relationship === "Daughter"
       );
     }
 
     if (relationship === "Cousin") {
       return members.filter(
-        (m) =>
-          m.relationship === "Nephew" ||
-          m.relationship === "Niece"
+        (m) => m.relationship === "Nephew" || m.relationship === "Niece"
       );
     }
 
@@ -134,16 +116,12 @@ export default function FamilyTreeManager({ params }: any) {
 
   const spouseOptions = useMemo(() => {
     if (relationship === "Spouse") {
-      return members.filter(
-        (m) => m.relationship === "Deceased"
-      );
+      return members.filter((m) => m.relationship === "Deceased");
     }
 
-    if (relationship === "Sibling Spouse") {
+    if (relationship === "Brother-in-law" || relationship === "Sister-in-law") {
       return members.filter(
-        (m) =>
-          m.relationship === "Brother" ||
-          m.relationship === "Sister"
+        (m) => m.relationship === "Brother" || m.relationship === "Sister"
       );
     }
 
@@ -193,12 +171,7 @@ export default function FamilyTreeManager({ params }: any) {
       formData.append("relationship", relationship);
       formData.append("parent_id", parentId);
       formData.append("spouse_id", spouseId);
-      formData.append(
-        "generation",
-        String(
-          getGenerationFromRelationship(relationship)
-        )
-      );
+      formData.append("generation", String(getGenerationFromRelationship(relationship)));
       formData.append("birth_date", birthDate);
       formData.append("death_date", deathDate);
 
@@ -230,18 +203,13 @@ export default function FamilyTreeManager({ params }: any) {
   };
 
   const deleteMember = async (id: number) => {
-    const yes = confirm(
-      "Delete this family member?"
-    );
-
+    const yes = confirm("Delete this family member?");
     if (!yes) return;
 
     try {
       const res = await fetch(
         `/api/family-tree?id=${id}&memorial_id=${memorialId}`,
-        {
-          method: "DELETE",
-        }
+        { method: "DELETE" }
       );
 
       const data = await res.json();
@@ -255,6 +223,11 @@ export default function FamilyTreeManager({ params }: any) {
     } catch {
       alert("Delete failed");
     }
+  };
+
+  const getLinkedName = (id: number | null) => {
+    const found = members.find((m) => Number(m.id) === Number(id));
+    return found ? found.name : "";
   };
 
   const renderMemberCard = (m: any) => (
@@ -274,13 +247,21 @@ export default function FamilyTreeManager({ params }: any) {
         </div>
       )}
 
-      <h4 className="font-semibold">
-        {m.name}
-      </h4>
+      <h4 className="font-semibold">{m.name}</h4>
 
-      <p className="text-sm text-[#d4af37]">
-        {m.relationship}
-      </p>
+      <p className="text-sm text-[#d4af37]">{m.relationship}</p>
+
+      {m.parent_id && (
+        <p className="mt-2 text-xs text-gray-400">
+          Parent / Branch: {getLinkedName(m.parent_id)}
+        </p>
+      )}
+
+      {m.spouse_id && (
+        <p className="mt-1 text-xs text-gray-400">
+          Spouse Of: {getLinkedName(m.spouse_id)}
+        </p>
+      )}
 
       <button
         onClick={() => deleteMember(m.id)}
@@ -292,9 +273,7 @@ export default function FamilyTreeManager({ params }: any) {
   );
 
   const parents = members.filter(
-    (m) =>
-      m.relationship === "Mother" ||
-      m.relationship === "Father"
+    (m) => m.relationship === "Mother" || m.relationship === "Father"
   );
 
   const mainLine = members.filter(
@@ -303,7 +282,8 @@ export default function FamilyTreeManager({ params }: any) {
       m.relationship === "Spouse" ||
       m.relationship === "Brother" ||
       m.relationship === "Sister" ||
-      m.relationship === "Sibling Spouse"
+      m.relationship === "Brother-in-law" ||
+      m.relationship === "Sister-in-law"
   );
 
   const childrenLine = members.filter(
@@ -347,9 +327,7 @@ export default function FamilyTreeManager({ params }: any) {
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               placeholder="Full Name"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
             />
 
             <select
@@ -361,30 +339,21 @@ export default function FamilyTreeManager({ params }: any) {
                 setSpouseId("");
               }}
             >
-              <option value="">
-                Choose Relationship
-              </option>
+              <option value="">Choose Relationship</option>
               <option value="Mother">Mother</option>
               <option value="Father">Father</option>
               <option value="Deceased">Deceased</option>
-              <option value="Spouse">Spouse</option>
+              <option value="Spouse">Spouse of Deceased</option>
               <option value="Brother">Brother</option>
               <option value="Sister">Sister</option>
-              <option value="Sibling Spouse">
-                Sibling Spouse
-              </option>
+              <option value="Brother-in-law">Brother-in-law</option>
+              <option value="Sister-in-law">Sister-in-law</option>
               <option value="Son">Son</option>
-              <option value="Daughter">
-                Daughter
-              </option>
+              <option value="Daughter">Daughter</option>
               <option value="Nephew">Nephew</option>
               <option value="Niece">Niece</option>
-              <option value="Grandson">
-                Grandson
-              </option>
-              <option value="Granddaughter">
-                Granddaughter
-              </option>
+              <option value="Grandson">Grandson</option>
+              <option value="Granddaughter">Granddaughter</option>
               <option value="Cousin">Cousin</option>
             </select>
 
@@ -392,19 +361,12 @@ export default function FamilyTreeManager({ params }: any) {
               <select
                 className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
                 value={parentId}
-                onChange={(e) =>
-                  setParentId(e.target.value)
-                }
+                onChange={(e) => setParentId(e.target.value)}
               >
-                <option value="">
-                  Choose Parent Branch
-                </option>
+                <option value="">Choose Parent / Branch</option>
 
                 {parentOptions.map((m) => (
-                  <option
-                    key={m.id}
-                    value={m.id}
-                  >
+                  <option key={m.id} value={m.id}>
                     {m.name} ({m.relationship})
                   </option>
                 ))}
@@ -415,19 +377,12 @@ export default function FamilyTreeManager({ params }: any) {
               <select
                 className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
                 value={spouseId}
-                onChange={(e) =>
-                  setSpouseId(e.target.value)
-                }
+                onChange={(e) => setSpouseId(e.target.value)}
               >
-                <option value="">
-                  Choose Spouse Link
-                </option>
+                <option value="">Choose Spouse Link</option>
 
                 {spouseOptions.map((m) => (
-                  <option
-                    key={m.id}
-                    value={m.id}
-                  >
+                  <option key={m.id} value={m.id}>
                     {m.name} ({m.relationship})
                   </option>
                 ))}
@@ -438,29 +393,21 @@ export default function FamilyTreeManager({ params }: any) {
               type="date"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               value={birthDate}
-              onChange={(e) =>
-                setBirthDate(e.target.value)
-              }
+              onChange={(e) => setBirthDate(e.target.value)}
             />
 
             <input
               type="date"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               value={deathDate}
-              onChange={(e) =>
-                setDeathDate(e.target.value)
-              }
+              onChange={(e) => setDeathDate(e.target.value)}
             />
 
             <input
               type="file"
               accept="image/*"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              onChange={(e) =>
-                setPhoto(
-                  e.target.files?.[0] || null
-                )
-              }
+              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
             />
           </div>
 
@@ -469,17 +416,13 @@ export default function FamilyTreeManager({ params }: any) {
             disabled={loading}
             className="mt-6 w-full rounded bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-50"
           >
-            {loading
-              ? "Adding..."
-              : "Add Family Member"}
+            {loading ? "Adding..." : "Add Family Member"}
           </button>
         </section>
 
         <section className="space-y-10">
           <div>
-            <h3 className="mb-4 text-xl text-[#d4af37]">
-              Parents
-            </h3>
+            <h3 className="mb-4 text-xl text-[#d4af37]">Parents</h3>
             <div className="grid gap-4 md:grid-cols-4">
               {parents.map(renderMemberCard)}
             </div>
@@ -487,8 +430,7 @@ export default function FamilyTreeManager({ params }: any) {
 
           <div>
             <h3 className="mb-4 text-xl text-[#d4af37]">
-              Deceased • Spouse • Siblings •
-              Siblings’ Spouses
+              Deceased • Spouse • Siblings • In-laws
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
               {mainLine.map(renderMemberCard)}
@@ -500,9 +442,7 @@ export default function FamilyTreeManager({ params }: any) {
               Children • Nephews • Nieces
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
-              {childrenLine.map(
-                renderMemberCard
-              )}
+              {childrenLine.map(renderMemberCard)}
             </div>
           </div>
 
@@ -511,9 +451,7 @@ export default function FamilyTreeManager({ params }: any) {
               Grandchildren • Cousins
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
-              {grandchildrenLine.map(
-                renderMemberCard
-              )}
+              {grandchildrenLine.map(renderMemberCard)}
             </div>
           </div>
         </section>
