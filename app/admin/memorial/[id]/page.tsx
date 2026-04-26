@@ -43,9 +43,7 @@ export default async function MemorialAdmin({
 
   return (
     <main className="min-h-screen bg-[#0b1320] p-8 text-white">
-      <h1 className="mb-6 font-serif text-4xl">
-        Manage Memorial
-      </h1>
+      <h1 className="mb-6 font-serif text-4xl">Manage Memorial</h1>
 
       <div className="mb-8 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
         <h2 className="mb-3 text-2xl font-semibold">
@@ -62,9 +60,7 @@ export default async function MemorialAdmin({
             : ""}
         </p>
 
-        <p className="text-gray-400">
-          {memorial.biography}
-        </p>
+        <p className="text-gray-400">{memorial.biography}</p>
 
         <div className="mt-6 flex flex-wrap gap-3">
           <a
@@ -87,18 +83,21 @@ export default async function MemorialAdmin({
           >
             QR Code
           </a>
+
+          <a
+            href={`/family-tree/${memorial.id}`}
+            className="rounded bg-purple-600 px-4 py-2"
+          >
+            Family Tree
+          </a>
         </div>
       </div>
 
       <div>
-        <h2 className="mb-4 font-serif text-3xl">
-          Guestbook Posts
-        </h2>
+        <h2 className="mb-4 font-serif text-3xl">Guestbook Posts</h2>
 
         {guestbookRows.length === 0 ? (
-          <p className="text-gray-400">
-            No guestbook entries yet.
-          </p>
+          <p className="text-gray-400">No guestbook entries yet.</p>
         ) : (
           <div className="space-y-4">
             {guestbookRows.map((post: any) => (
@@ -106,13 +105,9 @@ export default async function MemorialAdmin({
                 key={post.id}
                 className="rounded-xl border border-[#1f2a44] bg-[#111a2e] p-4"
               >
-                <h3 className="font-semibold">
-                  {post.guest_name}
-                </h3>
+                <h3 className="font-semibold">{post.guest_name}</h3>
 
-                <p className="mt-2 text-gray-300">
-                  {post.message}
-                </p>
+                <p className="mt-2 text-gray-300">{post.message}</p>
 
                 {post.image_url && (
                   <img
@@ -123,19 +118,13 @@ export default async function MemorialAdmin({
                 )}
 
                 {post.video_url && (
-                  <video
-                    controls
-                    className="mt-4 w-full rounded-lg"
-                  >
+                  <video controls className="mt-4 w-full rounded-lg">
                     <source src={post.video_url} />
                   </video>
                 )}
 
                 {post.audio_url && (
-                  <audio
-                    controls
-                    className="mt-4 w-full"
-                  >
+                  <audio controls className="mt-4 w-full">
                     <source src={post.audio_url} />
                   </audio>
                 )}
