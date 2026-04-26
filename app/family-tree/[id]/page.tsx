@@ -6,6 +6,8 @@ export default function FamilyTreeManager({ params }: any) {
   const memorialId = params.id;
 
   const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
   const [parentId, setParentId] = useState("");
@@ -15,15 +17,22 @@ export default function FamilyTreeManager({ params }: any) {
   const [photo, setPhoto] = useState<File | null>(null);
 
   const loadMembers = async () => {
-    const res = await fetch(`/api/family-tree?memorial_id=${memorialId}`);
-    const data = await res.json();
+    try {
+      const res = await fetch(
+        `/api/family-tree?memorial_id=${memorialId}`
+      );
 
-    if (!res.ok) {
-      alert(data.error);
-      return;
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to load family tree");
+        return;
+      }
+
+      setMembers(data.members || []);
+    } catch {
+      alert("Failed to load family tree");
     }
-
-    setMembers(data.members || []);
   };
 
   useEffect(() => {
@@ -141,7 +150,19 @@ export default function FamilyTreeManager({ params }: any) {
     return members;
   }, [members, relationship]);
 
+  const resetForm = () => {
+    setName("");
+    setRelationship("");
+    setParentId("");
+    setSpouseId("");
+    setBirthDate("");
+    setDeathDate("");
+    setPhoto(null);
+  };
+
   const addMember = async () => {
+    if (loading) return;
+
     if (!name.trim()) {
       alert("Please enter a name");
       return;
@@ -162,78 +183,113 @@ export default function FamilyTreeManager({ params }: any) {
       return;
     }
 
-    const formData = new FormData();
+    try {
+      setLoading(true);
 
-    formData.append("memorial_id", memorialId);
-    formData.append("name", name);
-    formData.append("relationship", relationship);
-    formData.append("parent_id", parentId);
-    formData.append("spouse_id", spouseId);
-    formData.append(
-      "generation",
-      String(getGenerationFromRelationship(relationship))
-    );
-    formData.append("birth_date", birthDate);
-    formData.append("death_date", deathDate);
+      const formData = new FormData();
 
-    if (photo) {
-      formData.append("photo", photo);
+      formData.append("memorial_id", memorialId);
+      formData.append("name", name.trim());
+      formData.append("relationship", relationship);
+      formData.append("parent_id", parentId);
+      formData.append("spouse_id", spouseId);
+      formData.append(
+        "generation",
+        String(
+          getGenerationFromRelationship(relationship)
+        )
+      );
+      formData.append("birth_date", birthDate);
+      formData.append("death_date", deathDate);
+
+      if (photo) {
+        formData.append("photo", photo);
+      }
+
+      const res = await fetch("/api/family-tree", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to add family member");
+        return;
+      }
+
+      alert("Family member added successfully");
+
+      resetForm();
+      await loadMembers();
+    } catch {
+      alert("Failed to add family member");
+    } finally {
+      setLoading(false);
     }
-
-    const res = await fetch("/api/family-tree", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    setName("");
-    setRelationship("");
-    setParentId("");
-    setSpouseId("");
-    setBirthDate("");
-    setDeathDate("");
-    setPhoto(null);
-
-    await loadMembers();
   };
 
   const deleteMember = async (id: number) => {
-    const yes = confirm("Delete this family member?");
+    const yes = confirm(
+      "Delete this family member?"
+    );
 
     if (!yes) return;
 
-    const res = await fetch(
-      `/api/family-tree?id=${id}&memorial_id=${memorialId}`,
-      {
-        method: "DELETE",
+    try {
+      const res = await fetch(
+        `/api/family-tree?id=${id}&memorial_id=${memorialId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Delete failed");
+        return;
       }
-    );
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
+      await loadMembers();
+    } catch {
+      alert("Delete failed");
     }
-
-    await loadMembers();
   };
 
-  const getParentName = (id: number | null) => {
-    const found = members.find((m) => m.id === id);
-    return found ? found.name : "";
-  };
+  const renderMemberCard = (m: any) => (
+    <div
+      key={m.id}
+      className="rounded-xl border border-[#1f2a44] bg-[#111a2e] p-4"
+    >
+      {m.photo_url ? (
+        <img
+          src={m.photo_url}
+          alt={m.name}
+          className="mb-4 h-36 w-full rounded-lg object-cover"
+        />
+      ) : (
+        <div className="mb-4 flex h-36 items-center justify-center rounded-lg bg-[#0b1320] text-4xl">
+          👤
+        </div>
+      )}
 
-  const getSpouseName = (id: number | null) => {
-    const found = members.find((m) => m.id === id);
-    return found ? found.name : "";
-  };
+      <h4 className="font-semibold">
+        {m.name}
+      </h4>
+
+      <p className="text-sm text-[#d4af37]">
+        {m.relationship}
+      </p>
+
+      <button
+        onClick={() => deleteMember(m.id)}
+        className="mt-4 rounded bg-red-600 px-4 py-2 text-sm"
+      >
+        Delete
+      </button>
+    </div>
+  );
 
   const parents = members.filter(
     (m) =>
@@ -265,60 +321,6 @@ export default function FamilyTreeManager({ params }: any) {
       m.relationship === "Cousin"
   );
 
-  const renderMemberCard = (m: any) => (
-    <div
-      key={m.id}
-      className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-4"
-    >
-      {m.photo_url ? (
-        <img
-          src={m.photo_url}
-          alt={m.name}
-          className="mb-4 h-36 w-full rounded-xl object-cover"
-        />
-      ) : (
-        <div className="mb-4 flex h-36 w-full items-center justify-center rounded-xl bg-[#0b1320] text-4xl">
-          👤
-        </div>
-      )}
-
-      <h4 className="text-lg font-semibold">{m.name}</h4>
-
-      <p className="text-sm text-[#d4af37]">
-        {m.relationship}
-      </p>
-
-      <p className="mt-2 text-sm text-gray-400">
-        {m.birth_date
-          ? new Date(m.birth_date).toLocaleDateString()
-          : ""}
-        {m.death_date ? " — " : ""}
-        {m.death_date
-          ? new Date(m.death_date).toLocaleDateString()
-          : ""}
-      </p>
-
-      {m.parent_id && (
-        <p className="mt-2 text-sm text-gray-400">
-          Parent: {getParentName(m.parent_id)}
-        </p>
-      )}
-
-      {m.spouse_id && (
-        <p className="text-sm text-gray-400">
-          Spouse Of: {getSpouseName(m.spouse_id)}
-        </p>
-      )}
-
-      <button
-        onClick={() => deleteMember(m.id)}
-        className="mt-4 rounded bg-red-600 px-4 py-2 text-sm"
-      >
-        Delete
-      </button>
-    </div>
-  );
-
   return (
     <main className="min-h-screen bg-[#0b1320] p-8 text-white">
       <div className="mx-auto max-w-7xl">
@@ -345,7 +347,9 @@ export default function FamilyTreeManager({ params }: any) {
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               placeholder="Full Name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
             />
 
             <select
@@ -357,20 +361,30 @@ export default function FamilyTreeManager({ params }: any) {
                 setSpouseId("");
               }}
             >
-              <option value="">Choose Relationship</option>
+              <option value="">
+                Choose Relationship
+              </option>
               <option value="Mother">Mother</option>
               <option value="Father">Father</option>
               <option value="Deceased">Deceased</option>
               <option value="Spouse">Spouse</option>
               <option value="Brother">Brother</option>
               <option value="Sister">Sister</option>
-              <option value="Sibling Spouse">Sibling Spouse</option>
+              <option value="Sibling Spouse">
+                Sibling Spouse
+              </option>
               <option value="Son">Son</option>
-              <option value="Daughter">Daughter</option>
+              <option value="Daughter">
+                Daughter
+              </option>
               <option value="Nephew">Nephew</option>
               <option value="Niece">Niece</option>
-              <option value="Grandson">Grandson</option>
-              <option value="Granddaughter">Granddaughter</option>
+              <option value="Grandson">
+                Grandson
+              </option>
+              <option value="Granddaughter">
+                Granddaughter
+              </option>
               <option value="Cousin">Cousin</option>
             </select>
 
@@ -378,12 +392,19 @@ export default function FamilyTreeManager({ params }: any) {
               <select
                 className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
                 value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
+                onChange={(e) =>
+                  setParentId(e.target.value)
+                }
               >
-                <option value="">Choose Parent Branch</option>
+                <option value="">
+                  Choose Parent Branch
+                </option>
 
                 {parentOptions.map((m) => (
-                  <option key={m.id} value={m.id}>
+                  <option
+                    key={m.id}
+                    value={m.id}
+                  >
                     {m.name} ({m.relationship})
                   </option>
                 ))}
@@ -394,12 +415,19 @@ export default function FamilyTreeManager({ params }: any) {
               <select
                 className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
                 value={spouseId}
-                onChange={(e) => setSpouseId(e.target.value)}
+                onChange={(e) =>
+                  setSpouseId(e.target.value)
+                }
               >
-                <option value="">Choose Spouse Link</option>
+                <option value="">
+                  Choose Spouse Link
+                </option>
 
                 {spouseOptions.map((m) => (
-                  <option key={m.id} value={m.id}>
+                  <option
+                    key={m.id}
+                    value={m.id}
+                  >
                     {m.name} ({m.relationship})
                   </option>
                 ))}
@@ -410,14 +438,18 @@ export default function FamilyTreeManager({ params }: any) {
               type="date"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
+              onChange={(e) =>
+                setBirthDate(e.target.value)
+              }
             />
 
             <input
               type="date"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               value={deathDate}
-              onChange={(e) => setDeathDate(e.target.value)}
+              onChange={(e) =>
+                setDeathDate(e.target.value)
+              }
             />
 
             <input
@@ -425,16 +457,21 @@ export default function FamilyTreeManager({ params }: any) {
               accept="image/*"
               className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
               onChange={(e) =>
-                setPhoto(e.target.files?.[0] || null)
+                setPhoto(
+                  e.target.files?.[0] || null
+                )
               }
             />
           </div>
 
           <button
             onClick={addMember}
-            className="mt-6 w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+            disabled={loading}
+            className="mt-6 w-full rounded bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-50"
           >
-            Add Family Member
+            {loading
+              ? "Adding..."
+              : "Add Family Member"}
           </button>
         </section>
 
@@ -450,7 +487,8 @@ export default function FamilyTreeManager({ params }: any) {
 
           <div>
             <h3 className="mb-4 text-xl text-[#d4af37]">
-              Deceased • Spouse • Siblings • Siblings’ Spouses
+              Deceased • Spouse • Siblings •
+              Siblings’ Spouses
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
               {mainLine.map(renderMemberCard)}
@@ -462,7 +500,9 @@ export default function FamilyTreeManager({ params }: any) {
               Children • Nephews • Nieces
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
-              {childrenLine.map(renderMemberCard)}
+              {childrenLine.map(
+                renderMemberCard
+              )}
             </div>
           </div>
 
@@ -471,7 +511,9 @@ export default function FamilyTreeManager({ params }: any) {
               Grandchildren • Cousins
             </h3>
             <div className="grid gap-4 md:grid-cols-4">
-              {grandchildrenLine.map(renderMemberCard)}
+              {grandchildrenLine.map(
+                renderMemberCard
+              )}
             </div>
           </div>
         </section>
