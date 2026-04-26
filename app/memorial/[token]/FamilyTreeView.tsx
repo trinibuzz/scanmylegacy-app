@@ -213,7 +213,13 @@ export default function FamilyTreeView({ token }: { token: string }) {
 
       {treeOpen && (
         <div className="overflow-x-auto rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-6">
-          <div className="min-w-[1400px]">
+          <div
+            className={
+              horizontalOpen
+                ? "min-w-[1400px]"
+                : "mx-auto min-w-[520px] max-w-[620px]"
+            }
+          >
             <div className="text-center">
               <p className="mb-4 text-sm uppercase tracking-widest text-gray-400">
                 Parents
@@ -234,29 +240,59 @@ export default function FamilyTreeView({ token }: { token: string }) {
               </p>
 
               <div className="relative">
-                <div className="absolute left-10 right-10 top-[86px] h-px bg-[#d4af37]/40" />
+                <div
+                  className={
+                    horizontalOpen
+                      ? "absolute left-10 right-10 top-[86px] h-px bg-[#d4af37]/40"
+                      : "absolute left-1/2 top-[86px] h-px w-[260px] -translate-x-1/2 bg-[#d4af37]/40"
+                  }
+                />
 
-                <div className="relative grid grid-cols-3 items-start gap-10 px-8 py-2">
-                  <RowToggle />
+                {horizontalOpen ? (
+                  <div className="relative grid grid-cols-3 items-start gap-10 px-8 py-2">
+                    <RowToggle />
 
-                  <div className="flex justify-end gap-8">
-                    {horizontalOpen && leftSiblings.map(renderSiblingBranch)}
+                    <div className="flex justify-end gap-8">
+                      {leftSiblings.map(renderSiblingBranch)}
+                    </div>
+
+                    <div className="min-w-[360px] text-center">
+                      {renderCouple(
+                        deceased,
+                        deceasedSpouse,
+                        getChildrenFor(deceased).length > 0
+                      )}
+
+                      {renderDescendants(
+                        deceased,
+                        "Children",
+                        "Grandchildren"
+                      )}
+                    </div>
+
+                    <div className="flex justify-start gap-8">
+                      {rightSiblings.map(renderSiblingBranch)}
+                    </div>
                   </div>
+                ) : (
+                  <div className="relative mx-auto flex w-fit justify-center px-8 py-2">
+                    <RowToggle />
 
-                  <div className="min-w-[360px] text-center">
-                    {renderCouple(
-                      deceased,
-                      deceasedSpouse,
-                      getChildrenFor(deceased).length > 0
-                    )}
+                    <div className="min-w-[360px] text-center">
+                      {renderCouple(
+                        deceased,
+                        deceasedSpouse,
+                        getChildrenFor(deceased).length > 0
+                      )}
 
-                    {renderDescendants(deceased, "Children", "Grandchildren")}
+                      {renderDescendants(
+                        deceased,
+                        "Children",
+                        "Grandchildren"
+                      )}
+                    </div>
                   </div>
-
-                  <div className="flex justify-start gap-8">
-                    {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
