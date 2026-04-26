@@ -87,12 +87,16 @@ export default function GuestAccess({ memorial, token }: any) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
         <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8">
+          <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            You are invited to view
+          </p>
+
           <h1 className="mb-2 text-center font-serif text-3xl">
-            You’re Invited
+            {memorial.full_name}
           </h1>
 
           <p className="mb-6 text-center text-gray-400">
-            Enter your name to view this memorial.
+            Memorial Tribute — Enter your name to continue
           </p>
 
           <input
@@ -127,7 +131,9 @@ export default function GuestAccess({ memorial, token }: any) {
           In Loving Memory
         </p>
 
-        <h1 className="mb-4 font-serif text-5xl">{memorial.full_name}</h1>
+        <h1 className="mb-4 font-serif text-5xl">
+          {memorial.full_name}
+        </h1>
 
         <p className="mb-8 text-gray-400">
           {memorial.birth_date
@@ -158,13 +164,17 @@ export default function GuestAccess({ memorial, token }: any) {
             Life Story
           </h2>
 
-          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
+          <p className="leading-relaxed text-gray-300">
+            {memorial.biography}
+          </p>
         </div>
 
         <div className="space-y-4">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
             <div className="mb-3 text-4xl">🕯️</div>
-            <h3 className="font-serif text-xl">Light a Candle</h3>
+            <h3 className="font-serif text-xl">
+              Light a Candle
+            </h3>
             <p className="mt-2 text-sm text-gray-400">
               A quiet tribute of love and remembrance.
             </p>
@@ -172,7 +182,9 @@ export default function GuestAccess({ memorial, token }: any) {
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
             <div className="mb-3 text-4xl">🌹</div>
-            <h3 className="font-serif text-xl">Leave a Flower</h3>
+            <h3 className="font-serif text-xl">
+              Leave a Flower
+            </h3>
             <p className="mt-2 text-sm text-gray-400">
               Honor their memory with a simple gesture.
             </p>
@@ -255,7 +267,9 @@ export default function GuestAccess({ memorial, token }: any) {
                   {entry.guest_name}
                 </h3>
 
-                <p className="mt-2 text-gray-300">{entry.message}</p>
+                <p className="mt-2 text-gray-300">
+                  {entry.message}
+                </p>
 
                 {entry.image_url && (
                   <img
@@ -266,7 +280,10 @@ export default function GuestAccess({ memorial, token }: any) {
                 )}
 
                 {entry.video_url && (
-                  <video controls className="mt-4 w-full rounded-xl">
+                  <video
+                    controls
+                    className="mt-4 w-full rounded-xl"
+                  >
                     <source src={entry.video_url} />
                   </video>
                 )}
