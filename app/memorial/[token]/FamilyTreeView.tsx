@@ -7,6 +7,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
   const [treeOpen, setTreeOpen] = useState(true);
   const [horizontalOpen, setHorizontalOpen] = useState(true);
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
+  const [openSpouses, setOpenSpouses] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch(`/api/public-family-tree?token=${token}`)
@@ -21,7 +22,15 @@ export default function FamilyTreeView({ token }: { token: string }) {
     }));
   };
 
+  const toggleSpouse = (id: number) => {
+    setOpenSpouses((prev) => ({
+      ...prev,
+      [id]: prev[id] === false,
+    }));
+  };
+
   const isBranchOpen = (id: number) => openBranches[id] !== false;
+  const isSpouseOpen = (id: number) => openSpouses[id] !== false;
 
   const parents = members.filter(
     (m) => m.relationship === "Mother" || m.relationship === "Father"
@@ -39,6 +48,10 @@ export default function FamilyTreeView({ token }: { token: string }) {
     (m) => m.relationship === "Brother" || m.relationship === "Sister"
   );
 
+  const midPoint = Math.ceil(siblings.length / 2);
+  const leftSiblings = siblings.slice(0, midPoint);
+  const rightSiblings = siblings.slice(midPoint);
+
   const getSpouseFor = (person: any) =>
     members.find(
       (m) =>
@@ -53,18 +66,28 @@ export default function FamilyTreeView({ token }: { token: string }) {
   const DownToggle = ({ id }: { id: number }) => (
     <button
       onClick={() => toggleBranch(id)}
-      className="absolute -bottom-5 left-1/2 z-20 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
+      className="absolute -bottom-3 left-1/2 z-20 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
       title="Expand or collapse branch"
     >
       {isBranchOpen(id) ? "⌃" : "⌄"}
     </button>
   );
 
-  const SideToggle = () => (
+  const SpouseToggle = ({ id }: { id: number }) => (
+    <button
+      onClick={() => toggleSpouse(id)}
+      className="absolute -right-3 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
+      title="Show or hide spouse"
+    >
+      {isSpouseOpen(id) ? "‹" : "›"}
+    </button>
+  );
+
+  const RowToggle = () => (
     <button
       onClick={() => setHorizontalOpen(!horizontalOpen)}
-      className="absolute -right-5 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
-      title="Expand or collapse siblings"
+      className="absolute -right-3 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
+      title="Show or hide siblings"
     >
       {horizontalOpen ? "‹" : "›"}
     </button>
@@ -91,17 +114,25 @@ export default function FamilyTreeView({ token }: { token: string }) {
     </div>
   );
 
-  const renderCouple = (person: any, partner?: any, canToggleDown = false) => (
-    <div className="relative flex items-center justify-center gap-3">
-      {renderPerson(person, canToggleDown)}
-      {partner && (
-        <>
-          <span className="text-[#d4af37]">—</span>
-          {renderPerson(partner, false)}
-        </>
-      )}
-    </div>
-  );
+  const renderCouple = (person: any, partner?: any, canToggleDown = false) => {
+    const spouseVisible = partner && isSpouseOpen(person.id);
+
+    return (
+      <div className="relative inline-flex items-center justify-center gap-3">
+        <div className="relative">
+          {renderPerson(person, canToggleDown)}
+          {partner && <SpouseToggle id={person.id} />}
+        </div>
+
+        {spouseVisible && (
+          <>
+            <span className="text-[#d4af37]">—</span>
+            {renderPerson(partner, false)}
+          </>
+        )}
+      </div>
+    );
+  };
 
   const renderDescendants = (
     person: any,
@@ -158,7 +189,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
     const children = getChildrenFor(sibling);
 
     return (
-      <div key={sibling.id} className="min-w-[340px] text-center">
+      <div key={sibling.id} className="min-w-[330px] text-center">
         {renderCouple(sibling, spouse, children.length > 0)}
         {renderDescendants(sibling, "Nephews / Nieces", "Cousins")}
       </div>
@@ -170,9 +201,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
   return (
     <section className="mx-auto max-w-7xl px-6 pb-16">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-serif text-3xl text-[#d4af37]">
-          Family Tree
-        </h2>
+        <h2 className="font-serif text-3xl text-[#d4af37]">Family Tree</h2>
 
         <button
           onClick={() => setTreeOpen(!treeOpen)}
@@ -184,7 +213,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
 
       {treeOpen && (
         <div className="overflow-x-auto rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-6">
-          <div className="min-w-[1300px]">
+          <div className="min-w-[1400px]">
             <div className="text-center">
               <p className="mb-4 text-sm uppercase tracking-widest text-gray-400">
                 Parents
@@ -207,10 +236,12 @@ export default function FamilyTreeView({ token }: { token: string }) {
               <div className="relative">
                 <div className="absolute left-10 right-10 top-[86px] h-px bg-[#d4af37]/40" />
 
-                <div className="relative mx-auto flex w-fit items-start justify-center gap-10 rounded-2xl px-8 py-2">
-                  <SideToggle />
+                <div className="relative grid grid-cols-3 items-start gap-10 px-8 py-2">
+                  <RowToggle />
 
-                  {horizontalOpen && siblings.map(renderSiblingBranch)}
+                  <div className="flex justify-end gap-8">
+                    {horizontalOpen && leftSiblings.map(renderSiblingBranch)}
+                  </div>
 
                   <div className="min-w-[360px] text-center">
                     {renderCouple(
@@ -219,11 +250,11 @@ export default function FamilyTreeView({ token }: { token: string }) {
                       getChildrenFor(deceased).length > 0
                     )}
 
-                    {renderDescendants(
-                      deceased,
-                      "Children",
-                      "Grandchildren"
-                    )}
+                    {renderDescendants(deceased, "Children", "Grandchildren")}
+                  </div>
+
+                  <div className="flex justify-start gap-8">
+                    {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
                   </div>
                 </div>
               </div>
