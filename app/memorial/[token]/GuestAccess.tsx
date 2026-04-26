@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import FamilyTreeView from "./FamilyTreeView";
 
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
@@ -172,9 +173,7 @@ export default function GuestAccess({ memorial, token }: any) {
         <div className="space-y-4">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
             <div className="mb-3 text-4xl">🕯️</div>
-            <h3 className="font-serif text-xl">
-              Light a Candle
-            </h3>
+            <h3 className="font-serif text-xl">Light a Candle</h3>
             <p className="mt-2 text-sm text-gray-400">
               A quiet tribute of love and remembrance.
             </p>
@@ -182,15 +181,15 @@ export default function GuestAccess({ memorial, token }: any) {
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
             <div className="mb-3 text-4xl">🌹</div>
-            <h3 className="font-serif text-xl">
-              Leave a Flower
-            </h3>
+            <h3 className="font-serif text-xl">Leave a Flower</h3>
             <p className="mt-2 text-sm text-gray-400">
               Honor their memory with a simple gesture.
             </p>
           </div>
         </div>
       </section>
+
+      <FamilyTreeView token={token} />
 
       <section className="mx-auto max-w-5xl px-6 pb-16">
         <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
@@ -280,10 +279,7 @@ export default function GuestAccess({ memorial, token }: any) {
                 )}
 
                 {entry.video_url && (
-                  <video
-                    controls
-                    className="mt-4 w-full rounded-xl"
-                  >
+                  <video controls className="mt-4 w-full rounded-xl">
                     <source src={entry.video_url} />
                   </video>
                 )}
