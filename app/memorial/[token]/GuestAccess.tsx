@@ -15,15 +15,27 @@ export default function GuestAccess({ memorial, token }: any) {
   const [audio, setAudio] = useState<File | null>(null);
   const [entries, setEntries] = useState<any[]>([]);
 
+  const [candles, setCandles] = useState(0);
+  const [flowers, setFlowers] = useState(0);
+
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
     const data = await res.json();
     setEntries(data.entries || []);
   };
 
+  const loadReactions = async () => {
+    const res = await fetch(`/api/reactions?token=${token}`);
+    const data = await res.json();
+
+    setCandles(data.candles || 0);
+    setFlowers(data.flowers || 0);
+  };
+
   useEffect(() => {
     if (allowed) {
       loadGuestbook();
+      loadReactions();
     }
   }, [allowed]);
 
@@ -49,6 +61,37 @@ export default function GuestAccess({ memorial, token }: any) {
 
     setMessageName(guestName);
     setAllowed(true);
+  };
+
+  const submitReaction = async (type: "candle" | "flower") => {
+    const res = await fetch("/api/reactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        reaction_type: type,
+        guest_name: messageName || guestName,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+
+    await loadReactions();
+
+    if (type === "candle") {
+      alert("Candle lit 🕯️");
+    }
+
+    if (type === "flower") {
+      alert("Flower placed 🌹");
+    }
   };
 
   const submitGuestbook = async () => {
@@ -171,21 +214,27 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
+          <button
+            onClick={() => submitReaction("candle")}
+            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
+          >
             <div className="mb-3 text-4xl">🕯️</div>
             <h3 className="font-serif text-xl">Light a Candle</h3>
             <p className="mt-2 text-sm text-gray-400">
-              A quiet tribute of love and remembrance.
+              {candles} candles lit
             </p>
-          </div>
+          </button>
 
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center">
+          <button
+            onClick={() => submitReaction("flower")}
+            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
+          >
             <div className="mb-3 text-4xl">🌹</div>
             <h3 className="font-serif text-xl">Leave a Flower</h3>
             <p className="mt-2 text-sm text-gray-400">
-              Honor their memory with a simple gesture.
+              {flowers} flowers placed
             </p>
-          </div>
+          </button>
         </div>
       </section>
 
