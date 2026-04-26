@@ -37,9 +37,19 @@ export async function GET(req: Request) {
       if (row.reaction_type === "flower") flowers = Number(row.total);
     });
 
+    const [reactions]: any = await db.execute(
+      `SELECT *
+       FROM memorial_reactions
+       WHERE memorial_id = ?
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [memorial.id]
+    );
+
     return NextResponse.json({
       candles,
       flowers,
+      reactions,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -52,7 +62,7 @@ export async function POST(req: Request) {
 
     const token = body.token;
     const reaction_type = body.reaction_type;
-    const guest_name = body.guest_name || "";
+    const guest_name = body.guest_name || "Someone";
 
     if (!token || !reaction_type) {
       return NextResponse.json(

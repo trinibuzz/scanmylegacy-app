@@ -17,6 +17,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const [candles, setCandles] = useState(0);
   const [flowers, setFlowers] = useState(0);
+  const [reactions, setReactions] = useState<any[]>([]);
 
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
@@ -30,6 +31,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
     setCandles(data.candles || 0);
     setFlowers(data.flowers || 0);
+    setReactions(data.reactions || []);
   };
 
   useEffect(() => {
@@ -235,6 +237,49 @@ export default function GuestAccess({ memorial, token }: any) {
               {flowers} flowers placed
             </p>
           </button>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl px-6 pb-10">
+        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+          <h2 className="mb-6 font-serif text-2xl text-[#d4af37]">
+            Memorial Garden
+          </h2>
+
+          {reactions.length === 0 ? (
+            <p className="text-gray-400">
+              No candles or flowers yet.
+            </p>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {reactions.map((reaction: any) => (
+                <div
+                  key={reaction.id}
+                  className="rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">
+                      {reaction.reaction_type === "candle"
+                        ? "🕯️"
+                        : "🌹"}
+                    </div>
+
+                    <div>
+                      <p className="font-semibold">
+                        {reaction.guest_name}
+                      </p>
+
+                      <p className="text-sm text-gray-400">
+                        {reaction.reaction_type === "candle"
+                          ? "lit a candle"
+                          : "left a flower"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
