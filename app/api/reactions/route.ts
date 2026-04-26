@@ -42,7 +42,7 @@ export async function GET(req: Request) {
        FROM memorial_reactions
        WHERE memorial_id = ?
        ORDER BY created_at DESC
-       LIMIT 50`,
+       LIMIT 100`,
       [memorial.id]
     );
 
@@ -63,6 +63,8 @@ export async function POST(req: Request) {
     const token = body.token;
     const reaction_type = body.reaction_type;
     const guest_name = body.guest_name || "Someone";
+    const message = body.message || "";
+    const flower_type = body.flower_type || "";
 
     if (!token || !reaction_type) {
       return NextResponse.json(
@@ -90,8 +92,16 @@ export async function POST(req: Request) {
     const memorial = memorialRows[0];
 
     await db.execute(
-      "INSERT INTO memorial_reactions (memorial_id, reaction_type, guest_name) VALUES (?, ?, ?)",
-      [memorial.id, reaction_type, guest_name]
+      `INSERT INTO memorial_reactions 
+       (memorial_id, reaction_type, guest_name, message, flower_type)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        memorial.id,
+        reaction_type,
+        guest_name,
+        message,
+        reaction_type === "flower" ? flower_type : null,
+      ]
     );
 
     return NextResponse.json({ success: true });
