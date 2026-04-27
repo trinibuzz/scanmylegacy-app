@@ -4,12 +4,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const {
-      memorial_id,
-      package_name,
-      package_price,
-      customer_name,
-    } = body;
+    const { memorial_id, package_name, package_price, customer_name } = body;
 
     if (!memorial_id || !package_price) {
       return NextResponse.json(
@@ -29,41 +24,84 @@ export async function POST(req: Request) {
       );
     }
 
-    const payload = {
-      account_number: accountNumber,
-      reason: `${package_name} - ScanMyLegacy Memorial`,
-      amount: package_price,
-      currency: "TTD",
-      name: customer_name || "Customer",
-      response_url: `${siteUrl}/payment-success?memorial_id=${memorial_id}`,
-      cancel_url: `${siteUrl}/payment-cancelled?memorial_id=${memorial_id}`,
-    };
+    const payload = new URLSearchParams();
+
+    payload.append("account_number", accountNumber);
+    payload.append("apikey", apiKey);
+    payload.append("environment", "live");
+    payload.append("method", "credit_card");
+    payload.append("country_code", "TT");
+    payload.append("currency", "TTD");
+    payload.append("total", String(package_price));
+    payload.append("fee_structure", "customer_pay");
+    payload.append("order_id", String(memorial_id));
+    payload.append("description", `${package_name} - ScanMyLegacy Memorial`);
+    payload.append("name", customer_name || "Customer");
+    payload.append(
+      "response_url",
+      `${siteUrl}/payment-success?memorial_id=${memorial_id}`
+    );
+    payload.append(
+      "cancel_url",
+      `${siteUrl}/payment-cancelled?memorial_id=${memorial_id}`
+    );
 
     const response = await fetch(
       "https://tt.wipayfinancial.com/plugins/payments/request",
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: JSON.stringify(payload),
+        body: payload.toString(),
       }
     );
 
-    const data = await response.json();
+    const responseText = await response.text();
+
+    let data: any = {};
+
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      return NextResponse.json(
+        {
+          error: "WiPay returned a non-JSON response",
+          details: responseText.slice(0, 300),
+        },
+        { status: 500 }
+      );
+    }
 
     if (!response.ok) {
       return NextResponse.json(
         {
-          error: data.message || "WiPay checkout failed",
+          error: data.message || data.error || "WiPay checkout failed",
+          details: data,
+        },
+        { status: 500 }
+      );
+    }
+
+    const checkoutUrl =
+      data.url ||
+      data.payment_url ||
+      data.redirect_url ||
+      data.checkout_url;
+
+    if (!checkoutUrl) {
+      return NextResponse.json(
+        {
+          error: "WiPay did not return a checkout URL",
+          details: data,
         },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      checkout_url: data.url || data.payment_url,
+      checkout_url: checkoutUrl,
+      details: data,
     });
   } catch (error: any) {
     return NextResponse.json(
