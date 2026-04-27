@@ -10,12 +10,20 @@ const packageNames: any = {
   "eternal-legacy": "Eternal Legacy",
 };
 
+const packagePrices: any = {
+  "starter-tribute": "0",
+  "standard-legacy": "59",
+  "premium-legacy": "129",
+  "eternal-legacy": "595",
+};
+
 function CreateMemorialForm() {
   const searchParams = useSearchParams();
 
   const packageSlug = searchParams.get("package") || "starter-tribute";
-  const packagePrice = searchParams.get("price") || "0";
+  const urlPrice = searchParams.get("price");
   const packageName = packageNames[packageSlug] || "Starter Tribute";
+  const packagePrice = urlPrice || packagePrices[packageSlug] || "0";
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -49,7 +57,6 @@ function CreateMemorialForm() {
         formData.append("cover_photo", coverPhoto);
       }
 
-      // Step 1: Create memorial
       const res = await fetch("/api/memorials", {
         method: "POST",
         body: formData,
@@ -62,20 +69,26 @@ function CreateMemorialForm() {
         return;
       }
 
-      // Free package → go dashboard
+      const memorialId =
+        data.memorial?.id || data.memorial_id || data.id;
+
+      if (!memorialId) {
+        alert("Memorial created, but no memorial ID was returned.");
+        return;
+      }
+
       if (Number(packagePrice) === 0) {
         window.location.href = "/dashboard";
         return;
       }
 
-      // Paid package → WiPay checkout
       const paymentRes = await fetch("/api/wipay-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          memorial_id: data.memorial.id,
+          memorial_id: memorialId,
           package_name: packageName,
           package_price: packagePrice,
           customer_name: fullName,
@@ -91,9 +104,10 @@ function CreateMemorialForm() {
 
       if (paymentData.checkout_url) {
         window.location.href = paymentData.checkout_url;
-      } else {
-        alert("Invalid payment link received");
+        return;
       }
+
+      alert("Invalid payment link received");
     } catch {
       alert("Failed to create memorial");
     } finally {
@@ -114,15 +128,9 @@ function CreateMemorialForm() {
 
         <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
           <p className="text-sm text-gray-400">Selected Package</p>
-
-          <p className="font-serif text-xl text-[#d4af37]">
-            {packageName}
-          </p>
-
+          <p className="font-serif text-xl text-[#d4af37]">{packageName}</p>
           <p className="text-gray-300">
-            {Number(packagePrice) === 0
-              ? "Free"
-              : `$${packagePrice} USD`}
+            {Number(packagePrice) === 0 ? "Free" : `$${packagePrice} USD`}
           </p>
         </div>
 
