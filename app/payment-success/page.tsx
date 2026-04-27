@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const memorialId = searchParams.get("memorial_id");
 
@@ -46,5 +46,21 @@ export default function PaymentSuccessPage() {
         </a>
       </div>
     </main>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8">
+            Loading payment confirmation...
+          </div>
+        </main>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }
