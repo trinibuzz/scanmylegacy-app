@@ -49,6 +49,7 @@ function CreateMemorialForm() {
         formData.append("cover_photo", coverPhoto);
       }
 
+      // Step 1: Create memorial
       const res = await fetch("/api/memorials", {
         method: "POST",
         body: formData,
@@ -61,7 +62,38 @@ function CreateMemorialForm() {
         return;
       }
 
-      window.location.href = "/dashboard";
+      // Free package → go dashboard
+      if (Number(packagePrice) === 0) {
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      // Paid package → WiPay checkout
+      const paymentRes = await fetch("/api/wipay-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memorial_id: data.memorial.id,
+          package_name: packageName,
+          package_price: packagePrice,
+          customer_name: fullName,
+        }),
+      });
+
+      const paymentData = await paymentRes.json();
+
+      if (!paymentRes.ok) {
+        alert(paymentData.error || "Payment initialization failed");
+        return;
+      }
+
+      if (paymentData.checkout_url) {
+        window.location.href = paymentData.checkout_url;
+      } else {
+        alert("Invalid payment link received");
+      }
     } catch {
       alert("Failed to create memorial");
     } finally {
@@ -82,11 +114,15 @@ function CreateMemorialForm() {
 
         <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
           <p className="text-sm text-gray-400">Selected Package</p>
+
           <p className="font-serif text-xl text-[#d4af37]">
             {packageName}
           </p>
+
           <p className="text-gray-300">
-            {Number(packagePrice) === 0 ? "Free" : `$${packagePrice} USD`}
+            {Number(packagePrice) === 0
+              ? "Free"
+              : `$${packagePrice} USD`}
           </p>
         </div>
 
@@ -132,7 +168,11 @@ function CreateMemorialForm() {
           disabled={saving}
           className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-60"
         >
-          {saving ? "Creating Memorial..." : "Create Memorial"}
+          {saving
+            ? "Creating Memorial..."
+            : Number(packagePrice) === 0
+            ? "Create Memorial"
+            : "Continue To Payment"}
         </button>
       </div>
     </main>
