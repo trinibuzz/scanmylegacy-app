@@ -19,5 +19,31 @@ export default async function MemorialPage({ params }: any) {
     );
   }
 
+  const price = Number(memorial.package_price || 0);
+  const isPaidPackage = price > 0;
+  const isActive =
+    !isPaidPackage ||
+    memorial.payment_status === "paid" ||
+    memorial.payment_status === "free";
+
+  if (!isActive) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+        <div className="max-w-xl rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center">
+          <div className="mb-4 text-5xl">🔒</div>
+
+          <h1 className="mb-4 font-serif text-3xl text-[#d4af37]">
+            Memorial Not Active Yet
+          </h1>
+
+          <p className="text-gray-300">
+            This memorial is pending payment and cannot be viewed until payment
+            is completed.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return <GuestAccess memorial={memorial} token={token} />;
 }
