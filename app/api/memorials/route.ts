@@ -70,29 +70,45 @@ export async function POST(req: Request) {
       coverPhotoPath = `/uploads/${fileName}`;
     }
 
-    const inviteToken = Math.random().toString(36).substring(2) + Date.now();
+    const inviteToken =
+      Math.random().toString(36).substring(2) + Date.now();
 
-    await db.execute(
+    const paymentStatus =
+      Number(package_price) === 0 ? "free" : "pending";
+
+    const [result]: any = await db.execute(
       `INSERT INTO memorials 
-      (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo, package_slug, package_name, package_price) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo, package_slug, package_name, package_price, payment_status) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         user.id,
         full_name,
-        birth_date,
-        death_date,
-        biography,
+        birth_date || null,
+        death_date || null,
+        biography || "",
         inviteToken,
         coverPhotoPath,
         package_slug,
         package_name,
         package_price,
+        paymentStatus,
       ]
     );
 
+    const memorialId = result.insertId;
+
     return NextResponse.json({
       success: true,
-      link: `/memorial/${inviteToken}`,
+      memorial: {
+        id: memorialId,
+        full_name,
+        invite_token: inviteToken,
+        link: `/memorial/${inviteToken}`,
+        package_slug,
+        package_name,
+        package_price,
+        payment_status: paymentStatus,
+      },
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
