@@ -4,16 +4,15 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <header className="bg-[#0b1320] border-b border-[#1f2a44]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-
+    <header className="border-b border-[#1f2a44] bg-[#0b1320]">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         {/* Logo */}
-        <div className="text-white font-serif text-xl">
+        <Link href="/" className="font-serif text-xl text-white">
           ScanMy <span className="text-[#d4af37]">Legacy</span>
-        </div>
+        </Link>
 
-        {/* Nav */}
-        <nav className="hidden md:flex items-center gap-6 text-sm text-gray-300">
+        {/* Navigation */}
+        <nav className="hidden items-center gap-6 text-sm text-gray-300 md:flex">
           <Link href="/">Home</Link>
           <Link href="/about">About Us</Link>
           <Link href="/how-it-works">How It Works</Link>
@@ -24,12 +23,11 @@ export default function Header() {
 
         {/* CTA */}
         <Link
-          href="/create-memorial"
-          className="bg-[#d4af37] text-black px-4 py-2 rounded-lg font-semibold"
+          href="/packages"
+          className="rounded-lg bg-[#d4af37] px-4 py-2 font-semibold text-black"
         >
           Book a Spot
         </Link>
-
       </div>
     </header>
   );
