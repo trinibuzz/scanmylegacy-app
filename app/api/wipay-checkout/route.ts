@@ -4,12 +4,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const {
-      memorial_id,
-      package_name,
-      package_price,
-      customer_name,
-    } = body;
+    const { memorial_id, package_name, package_price, customer_name } = body;
 
     if (!memorial_id || !package_price) {
       return NextResponse.json(
@@ -29,9 +24,7 @@ export async function POST(req: Request) {
     }
 
     const exchangeRate = 6.8;
-    const ttdAmount = (
-      Number(package_price) * exchangeRate
-    ).toFixed(2);
+    const ttdAmount = (Number(package_price) * exchangeRate).toFixed(2);
 
     const payload = new URLSearchParams();
 
@@ -67,16 +60,20 @@ export async function POST(req: Request) {
     try {
       data = JSON.parse(responseText);
     } catch {
+      console.log("WiPay RAW RESPONSE:", responseText);
+
       return NextResponse.json(
         {
           error: "WiPay returned invalid response",
-          details: responseText.slice(0, 500),
+          details: responseText.slice(0, 1000),
         },
         { status: 500 }
       );
     }
 
     if (!response.ok) {
+      console.log("WiPay JSON ERROR:", data);
+
       return NextResponse.json(
         {
           error: data.message || data.error || "WiPay checkout failed",
@@ -87,12 +84,11 @@ export async function POST(req: Request) {
     }
 
     const checkoutUrl =
-      data.url ||
-      data.payment_url ||
-      data.redirect_url ||
-      data.checkout_url;
+      data.url || data.payment_url || data.redirect_url || data.checkout_url;
 
     if (!checkoutUrl) {
+      console.log("WiPay NO CHECKOUT URL:", data);
+
       return NextResponse.json(
         {
           error: "WiPay did not return checkout URL",
@@ -109,6 +105,8 @@ export async function POST(req: Request) {
       ttd_amount: ttdAmount,
     });
   } catch (error: any) {
+    console.log("WiPay route error:", error);
+
     return NextResponse.json(
       {
         error: error.message,
