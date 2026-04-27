@@ -28,6 +28,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const exchangeRate = 6.8;
+    const ttdAmount = (
+      Number(package_price) * exchangeRate
+    ).toFixed(2);
+
     const payload = new URLSearchParams();
 
     payload.append("account_number", accountNumber);
@@ -42,7 +47,7 @@ export async function POST(req: Request) {
       "response_url",
       `${siteUrl}/payment-success?memorial_id=${memorial_id}`
     );
-    payload.append("total", String(package_price));
+    payload.append("total", ttdAmount);
 
     const response = await fetch(
       "https://tt.wipayfinancial.com/plugins/payments/request",
@@ -100,6 +105,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       checkout_url: checkoutUrl,
+      usd_amount: package_price,
+      ttd_amount: ttdAmount,
     });
   } catch (error: any) {
     return NextResponse.json(

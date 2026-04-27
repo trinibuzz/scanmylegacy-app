@@ -13,8 +13,8 @@ const packageNames: any = {
 const packagePrices: any = {
   "starter-tribute": "0",
   "standard-legacy": "59",
-  "premium-legacy": "129",
-  "eternal-legacy": "595",
+  "premium-legacy": "89",
+  "eternal-legacy": "129",
 };
 
 function CreateMemorialForm() {
@@ -128,9 +128,15 @@ function CreateMemorialForm() {
 
         <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
           <p className="text-sm text-gray-400">Selected Package</p>
-          <p className="font-serif text-xl text-[#d4af37]">{packageName}</p>
+
+          <p className="font-serif text-xl text-[#d4af37]">
+            {packageName}
+          </p>
+
           <p className="text-gray-300">
-            {Number(packagePrice) === 0 ? "Free" : `$${packagePrice} USD`}
+            {Number(packagePrice) === 0
+              ? "Free"
+              : `$${packagePrice} USD`}
           </p>
         </div>
 
