@@ -19,10 +19,9 @@ export async function POST(req: Request) {
     }
 
     const accountNumber = process.env.WIPAY_ACCOUNT_NUMBER;
-    const apiKey = process.env.WIPAY_API_KEY;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
-    if (!accountNumber || !apiKey || !siteUrl) {
+    if (!accountNumber || !siteUrl) {
       return NextResponse.json(
         { error: "WiPay environment variables missing" },
         { status: 500 }
@@ -32,31 +31,18 @@ export async function POST(req: Request) {
     const payload = new URLSearchParams();
 
     payload.append("account_number", accountNumber);
-    payload.append("apikey", apiKey);
     payload.append("country_code", "TT");
     payload.append("currency", "TTD");
     payload.append("environment", "live");
     payload.append("fee_structure", "customer_pay");
     payload.append("method", "credit_card");
-    payload.append("order_id", String(memorial_id));
+    payload.append("order_id", `memorial_${memorial_id}`);
     payload.append("origin", "ScanMyLegacy");
-    payload.append("avs", "0");
-    payload.append("total", String(package_price));
-    payload.append(
-      "description",
-      `${package_name} - ScanMyLegacy Memorial`
-    );
-    payload.append("name", customer_name || "Customer");
-
     payload.append(
       "response_url",
       `${siteUrl}/payment-success?memorial_id=${memorial_id}`
     );
-
-    payload.append(
-      "cancel_url",
-      `${siteUrl}/payment-cancelled?memorial_id=${memorial_id}`
-    );
+    payload.append("total", String(package_price));
 
     const response = await fetch(
       "https://tt.wipayfinancial.com/plugins/payments/request",
@@ -79,7 +65,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: "WiPay returned invalid response",
-          details: responseText,
+          details: responseText.slice(0, 500),
         },
         { status: 500 }
       );
@@ -88,7 +74,7 @@ export async function POST(req: Request) {
     if (!response.ok) {
       return NextResponse.json(
         {
-          error: data.message || "WiPay checkout failed",
+          error: data.message || data.error || "WiPay checkout failed",
           details: data,
         },
         { status: 500 }
