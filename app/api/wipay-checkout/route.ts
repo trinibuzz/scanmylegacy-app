@@ -4,7 +4,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const { memorial_id, package_name, package_price, customer_name } = body;
+    const {
+      memorial_id,
+      package_name,
+      package_price,
+      customer_name,
+    } = body;
 
     if (!memorial_id || !package_price) {
       return NextResponse.json(
@@ -28,19 +33,26 @@ export async function POST(req: Request) {
 
     payload.append("account_number", accountNumber);
     payload.append("apikey", apiKey);
-    payload.append("environment", "live");
-    payload.append("method", "credit_card");
     payload.append("country_code", "TT");
     payload.append("currency", "TTD");
-    payload.append("total", String(package_price));
+    payload.append("environment", "live");
     payload.append("fee_structure", "customer_pay");
+    payload.append("method", "credit_card");
     payload.append("order_id", String(memorial_id));
-    payload.append("description", `${package_name} - ScanMyLegacy Memorial`);
+    payload.append("origin", "ScanMyLegacy");
+    payload.append("avs", "0");
+    payload.append("total", String(package_price));
+    payload.append(
+      "description",
+      `${package_name} - ScanMyLegacy Memorial`
+    );
     payload.append("name", customer_name || "Customer");
+
     payload.append(
       "response_url",
       `${siteUrl}/payment-success?memorial_id=${memorial_id}`
     );
+
     payload.append(
       "cancel_url",
       `${siteUrl}/payment-cancelled?memorial_id=${memorial_id}`
@@ -59,15 +71,15 @@ export async function POST(req: Request) {
 
     const responseText = await response.text();
 
-    let data: any = {};
+    let data: any;
 
     try {
       data = JSON.parse(responseText);
     } catch {
       return NextResponse.json(
         {
-          error: "WiPay returned a non-JSON response",
-          details: responseText.slice(0, 300),
+          error: "WiPay returned invalid response",
+          details: responseText,
         },
         { status: 500 }
       );
@@ -76,7 +88,7 @@ export async function POST(req: Request) {
     if (!response.ok) {
       return NextResponse.json(
         {
-          error: data.message || data.error || "WiPay checkout failed",
+          error: data.message || "WiPay checkout failed",
           details: data,
         },
         { status: 500 }
@@ -92,7 +104,7 @@ export async function POST(req: Request) {
     if (!checkoutUrl) {
       return NextResponse.json(
         {
-          error: "WiPay did not return a checkout URL",
+          error: "WiPay did not return checkout URL",
           details: data,
         },
         { status: 500 }
@@ -100,8 +112,8 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
+      success: true,
       checkout_url: checkoutUrl,
-      details: data,
     });
   } catch (error: any) {
     return NextResponse.json(
