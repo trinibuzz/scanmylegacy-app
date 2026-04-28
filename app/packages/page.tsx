@@ -1,4 +1,10 @@
-export default function PackagesPage() {
+export default function PackagesPage({
+  searchParams,
+}: {
+  searchParams?: { ref?: string };
+}) {
+  const refCode = searchParams?.ref || "";
+
   const packages = [
     {
       name: "Starter Tribute",
@@ -7,7 +13,12 @@ export default function PackagesPage() {
       years: "14 Days",
       slug: "starter-tribute",
       amount: 0,
-      features: ["Guest Book", "Life Timeline", "Stories & Tributes", "Family Tree"],
+      features: [
+        "Guest Book",
+        "Life Timeline",
+        "Stories & Tributes",
+        "Family Tree",
+      ],
     },
     {
       name: "Standard Legacy",
@@ -16,7 +27,12 @@ export default function PackagesPage() {
       years: "3 Years",
       slug: "standard-legacy",
       amount: 59,
-      features: ["Secure Hosting", "Sharable Memorial Page", "Photo Upload", "Guest Access"],
+      features: [
+        "Secure Hosting",
+        "Sharable Memorial Page",
+        "Photo Upload",
+        "Guest Access",
+      ],
     },
     {
       name: "Premium Legacy",
@@ -25,7 +41,12 @@ export default function PackagesPage() {
       years: "5 Years",
       slug: "premium-legacy",
       amount: 89,
-      features: ["Priority Support", "Extended Storage", "Photo/Video/Audio Memories", "Guestbook"],
+      features: [
+        "Priority Support",
+        "Extended Storage",
+        "Photo/Video/Audio Memories",
+        "Guestbook",
+      ],
     },
     {
       name: "Eternal Legacy",
@@ -34,9 +55,24 @@ export default function PackagesPage() {
       years: "Lifetime",
       slug: "eternal-legacy",
       amount: 129,
-      features: ["Lifetime Access", "Permanent Hosting", "Unlimited Memory Preservation", "Premium Legacy Page"],
+      features: [
+        "Lifetime Access",
+        "Permanent Hosting",
+        "Unlimited Memory Preservation",
+        "Premium Legacy Page",
+      ],
     },
   ];
+
+  const buildPackageLink = (pkg: any) => {
+    const base = `/create-memorial?package=${pkg.slug}&price=${pkg.amount}`;
+
+    if (!refCode) {
+      return base;
+    }
+
+    return `${base}&ref=${encodeURIComponent(refCode)}`;
+  };
 
   return (
     <main className="min-h-screen bg-[#0b1320] px-6 py-16 text-white">
@@ -45,9 +81,21 @@ export default function PackagesPage() {
           Pricing & Packages
         </h1>
 
-        <p className="mb-12 text-center text-gray-400">
+        <p className="mb-6 text-center text-gray-400">
           Choose the legacy plan that best honors your loved one.
         </p>
+
+        {refCode && (
+          <div className="mx-auto mb-10 max-w-xl rounded-xl border border-[#d4af37]/40 bg-[#111a2e] p-4 text-center">
+            <p className="text-sm text-gray-400">
+              Referral code applied:
+            </p>
+
+            <p className="font-mono text-[#d4af37]">
+              {refCode}
+            </p>
+          </div>
+        )}
 
         <div className="grid gap-8 md:grid-cols-4">
           {packages.map((pkg) => (
@@ -80,7 +128,7 @@ export default function PackagesPage() {
               </ul>
 
               <a
-                href={`/create-memorial?package=${pkg.slug}&price=${pkg.amount}`}
+                href={buildPackageLink(pkg)}
                 className="mt-8 block rounded-lg bg-[#d4af37] px-6 py-3 text-center font-semibold text-black"
               >
                 Get Started
