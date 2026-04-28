@@ -5,12 +5,31 @@ import { useState } from "react";
 export default function AffiliateSignupPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
+
   const [loading, setLoading] = useState(false);
   const [affiliate, setAffiliate] = useState<any>(null);
 
   const handleSignup = async () => {
-    if (!fullName.trim() || !email.trim()) {
-      alert("Please enter your full name and email");
+    if (
+      !fullName.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !confirmPassword.trim()
+    ) {
+      alert("Please complete all fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match");
       return;
     }
 
@@ -25,6 +44,7 @@ export default function AffiliateSignupPage() {
         body: JSON.stringify({
           full_name: fullName,
           email,
+          password,
         }),
       });
 
@@ -66,9 +86,9 @@ export default function AffiliateSignupPage() {
           </h1>
 
           <p className="mt-4 text-gray-400">
-            Share your custom referral link and earn
-            commission every time someone purchases a
-            memorial package through your link.
+            Create your affiliate account, get your
+            referral link, and earn commission when
+            someone purchases through your link.
           </p>
         </div>
 
@@ -84,11 +104,33 @@ export default function AffiliateSignupPage() {
             />
 
             <input
-              className="mb-6 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4"
+              className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4"
               placeholder="Email Address"
               value={email}
               onChange={(e) =>
                 setEmail(e.target.value)
+              }
+            />
+
+            <input
+              type="password"
+              className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4"
+              placeholder="Password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+            />
+
+            <input
+              type="password"
+              className="mb-6 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) =>
+                setConfirmPassword(
+                  e.target.value
+                )
               }
             />
 
