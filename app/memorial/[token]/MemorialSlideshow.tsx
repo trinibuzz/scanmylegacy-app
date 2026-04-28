@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+"use client";
 
+export default function MemorialSlideshow({ token }: { token: string }) {
+  return null;
+}
 export default function MemorialSlideshow({ token }: { token: string }) {
   const [items, setItems] = useState<any[]>([]);
   const [active, setActive] = useState(0);
