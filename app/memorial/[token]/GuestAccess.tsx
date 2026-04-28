@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
-import MemorialSlideshow from "./MemorialSlideshow";
 
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
@@ -59,8 +58,14 @@ export default function GuestAccess({ memorial, token }: any) {
   const enterMemorial = async () => {
     const res = await fetch("/api/guest-access", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, guest_name: guestName, guest_email: guestEmail }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        guest_name: guestName,
+        guest_email: guestEmail,
+      }),
     });
 
     const data = await res.json();
@@ -83,7 +88,9 @@ export default function GuestAccess({ memorial, token }: any) {
 
     const res = await fetch("/api/reactions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         token,
         reaction_type: type,
@@ -101,6 +108,7 @@ export default function GuestAccess({ memorial, token }: any) {
     }
 
     await loadReactions();
+
     setShowCandleModal(false);
     setShowFlowerModal(false);
     setTributeMessage("");
@@ -108,6 +116,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const submitGuestbook = async () => {
     const formData = new FormData();
+
     formData.append("token", token);
     formData.append("guest_name", messageName);
     formData.append("message", message);
@@ -132,11 +141,17 @@ export default function GuestAccess({ memorial, token }: any) {
     setImage(null);
     setVideo(null);
     setAudio(null);
+
     await loadGuestbook();
   };
 
-  const candleReactions = reactions.filter((r) => r.reaction_type === "candle");
-  const flowerReactions = reactions.filter((r) => r.reaction_type === "flower");
+  const candleReactions = reactions.filter(
+    (reaction) => reaction.reaction_type === "candle"
+  );
+
+  const flowerReactions = reactions.filter(
+    (reaction) => reaction.reaction_type === "flower"
+  );
 
   if (!allowed) {
     return (
@@ -288,9 +303,13 @@ export default function GuestAccess({ memorial, token }: any) {
         <h1 className="mb-4 font-serif text-5xl">{memorial.full_name}</h1>
 
         <p className="mb-8 text-gray-400">
-          {memorial.birth_date ? new Date(memorial.birth_date).toLocaleDateString() : ""}
+          {memorial.birth_date
+            ? new Date(memorial.birth_date).toLocaleDateString()
+            : ""}
           {" — "}
-          {memorial.death_date ? new Date(memorial.death_date).toLocaleDateString() : ""}
+          {memorial.death_date
+            ? new Date(memorial.death_date).toLocaleDateString()
+            : ""}
         </p>
 
         <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
@@ -305,8 +324,6 @@ export default function GuestAccess({ memorial, token }: any) {
           />
         </div>
       )}
-
-      <MemorialSlideshow token={token} />
 
       <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-10 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
@@ -328,7 +345,9 @@ export default function GuestAccess({ memorial, token }: any) {
           >
             <div className="mb-3 text-4xl">🕯️</div>
             <h3 className="font-serif text-xl">Light a Candle</h3>
-            <p className="mt-2 text-sm text-gray-400">{candles} candles lit</p>
+            <p className="mt-2 text-sm text-gray-400">
+              {candles} candles lit
+            </p>
           </button>
 
           <button
@@ -342,7 +361,9 @@ export default function GuestAccess({ memorial, token }: any) {
           >
             <div className="mb-3 text-4xl">🌸</div>
             <h3 className="font-serif text-xl">Plant a Flower</h3>
-            <p className="mt-2 text-sm text-gray-400">{flowers} flowers planted</p>
+            <p className="mt-2 text-sm text-gray-400">
+              {flowers} flowers planted
+            </p>
           </button>
         </div>
       </section>
@@ -352,6 +373,10 @@ export default function GuestAccess({ memorial, token }: any) {
           <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
             Candle Room
           </h2>
+
+          <p className="mb-6 text-sm text-gray-400">
+            A quiet space of light, prayer, and remembrance.
+          </p>
 
           {candleReactions.length === 0 ? (
             <p className="text-gray-400">No candles lit yet.</p>
@@ -366,7 +391,10 @@ export default function GuestAccess({ memorial, token }: any) {
                     <span className="animate-pulse text-5xl">🕯️</span>
                   </div>
 
-                  <p className="font-semibold text-white">{reaction.guest_name}</p>
+                  <p className="font-semibold text-white">
+                    {reaction.guest_name}
+                  </p>
+
                   <p className="text-sm text-[#d4af37]">lit a candle</p>
 
                   {reaction.message && (
@@ -385,12 +413,17 @@ export default function GuestAccess({ memorial, token }: any) {
             Flower Garden
           </h2>
 
+          <p className="mb-6 text-sm text-gray-400">
+            Flowers planted in love and memory.
+          </p>
+
           {flowerReactions.length === 0 ? (
             <p className="text-gray-400">No flowers planted yet.</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {flowerReactions.map((reaction: any) => {
-                const selectedFlower = flowerOptions[reaction.flower_type] || "🌸";
+                const selectedFlower =
+                  flowerOptions[reaction.flower_type] || "🌸";
 
                 return (
                   <div
@@ -491,7 +524,10 @@ export default function GuestAccess({ memorial, token }: any) {
                 key={entry.id}
                 className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5"
               >
-                <h3 className="font-semibold text-white">{entry.guest_name}</h3>
+                <h3 className="font-semibold text-white">
+                  {entry.guest_name}
+                </h3>
+
                 <p className="mt-2 text-gray-300">{entry.message}</p>
 
                 {entry.image_url && (
