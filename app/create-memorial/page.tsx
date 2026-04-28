@@ -22,14 +22,21 @@ function CreateMemorialForm() {
 
   const packageSlug = searchParams.get("package") || "starter-tribute";
   const urlPrice = searchParams.get("price");
-  const packageName = packageNames[packageSlug] || "Starter Tribute";
-  const packagePrice = urlPrice || packagePrices[packageSlug] || "0";
+  const refCode = searchParams.get("ref") || "";
+
+  const packageName =
+    packageNames[packageSlug] || "Starter Tribute";
+
+  const packagePrice =
+    urlPrice || packagePrices[packageSlug] || "0";
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [deathDate, setDeathDate] = useState("");
   const [biography, setBiography] = useState("");
-  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
+  const [coverPhoto, setCoverPhoto] =
+    useState<File | null>(null);
+
   const [saving, setSaving] = useState(false);
 
   const saveMemorial = async () => {
@@ -53,6 +60,10 @@ function CreateMemorialForm() {
       formData.append("package_name", packageName);
       formData.append("package_price", packagePrice);
 
+      if (refCode) {
+        formData.append("referral_code", refCode);
+      }
+
       if (coverPhoto) {
         formData.append("cover_photo", coverPhoto);
       }
@@ -70,10 +81,14 @@ function CreateMemorialForm() {
       }
 
       const memorialId =
-        data.memorial?.id || data.memorial_id || data.id;
+        data.memorial?.id ||
+        data.memorial_id ||
+        data.id;
 
       if (!memorialId) {
-        alert("Memorial created, but no memorial ID was returned.");
+        alert(
+          "Memorial created, but no memorial ID was returned."
+        );
         return;
       }
 
@@ -82,28 +97,36 @@ function CreateMemorialForm() {
         return;
       }
 
-      const paymentRes = await fetch("/api/wipay-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          memorial_id: memorialId,
-          package_name: packageName,
-          package_price: packagePrice,
-          customer_name: fullName,
-        }),
-      });
+      const paymentRes = await fetch(
+        "/api/wipay-checkout",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            memorial_id: memorialId,
+            package_name: packageName,
+            package_price: packagePrice,
+            customer_name: fullName,
+            referral_code: refCode,
+          }),
+        }
+      );
 
       const paymentData = await paymentRes.json();
 
       if (!paymentRes.ok) {
-        alert(paymentData.error || "Payment initialization failed");
+        alert(
+          paymentData.error ||
+            "Payment initialization failed"
+        );
         return;
       }
 
       if (paymentData.checkout_url) {
-        window.location.href = paymentData.checkout_url;
+        window.location.href =
+          paymentData.checkout_url;
         return;
       }
 
@@ -127,7 +150,9 @@ function CreateMemorialForm() {
         </p>
 
         <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
-          <p className="text-sm text-gray-400">Selected Package</p>
+          <p className="text-sm text-gray-400">
+            Selected Package
+          </p>
 
           <p className="font-serif text-xl text-[#d4af37]">
             {packageName}
@@ -140,11 +165,25 @@ function CreateMemorialForm() {
           </p>
         </div>
 
+        {refCode && (
+          <div className="mb-6 rounded-lg border border-[#d4af37]/30 bg-[#0b1320] p-4 text-center">
+            <p className="text-sm text-gray-400">
+              Affiliate Referral Applied
+            </p>
+
+            <p className="font-mono text-[#d4af37]">
+              {refCode}
+            </p>
+          </div>
+        )}
+
         <input
           className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
           placeholder="Full Name"
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e) =>
+            setFullName(e.target.value)
+          }
         />
 
         <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -152,14 +191,18 @@ function CreateMemorialForm() {
             type="date"
             className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
             value={birthDate}
-            onChange={(e) => setBirthDate(e.target.value)}
+            onChange={(e) =>
+              setBirthDate(e.target.value)
+            }
           />
 
           <input
             type="date"
             className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
             value={deathDate}
-            onChange={(e) => setDeathDate(e.target.value)}
+            onChange={(e) =>
+              setDeathDate(e.target.value)
+            }
           />
         </div>
 
@@ -167,14 +210,20 @@ function CreateMemorialForm() {
           type="file"
           accept="image/*"
           className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white"
-          onChange={(e) => setCoverPhoto(e.target.files?.[0] || null)}
+          onChange={(e) =>
+            setCoverPhoto(
+              e.target.files?.[0] || null
+            )
+          }
         />
 
         <textarea
           className="mb-4 min-h-[120px] w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
           placeholder="Write a life story, tribute, or memories..."
           value={biography}
-          onChange={(e) => setBiography(e.target.value)}
+          onChange={(e) =>
+            setBiography(e.target.value)
+          }
         />
 
         <button
