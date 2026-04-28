@@ -1,82 +1,59 @@
-import { db } from "../../../lib/db";
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+"use client";
 
-export async function POST(req: Request) {
-  try {
-    const { email, password } = await req.json();
+import { useState } from "react";
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+export default function AffiliateLoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-    const [rows]: any = await db.execute(
-      "SELECT * FROM affiliates WHERE email = ? LIMIT 1",
-      [email.trim()]
-    );
-
-    if (rows.length === 0) {
-      return NextResponse.json(
-        { error: "Invalid login" },
-        { status: 401 }
-      );
-    }
-
-    const affiliate = rows[0];
-
-    if (!affiliate.password) {
-      return NextResponse.json(
-        { error: "Please create your affiliate account password first" },
-        { status: 401 }
-      );
-    }
-
-    const passwordMatch = await bcrypt.compare(
-      password,
-      affiliate.password
-    );
-
-    if (!passwordMatch) {
-      return NextResponse.json(
-        { error: "Invalid login" },
-        { status: 401 }
-      );
-    }
-
-    const sessionId =
-      Math.random().toString(36).substring(2) + Date.now();
-
-    await db.execute(
-      "INSERT INTO affiliate_sessions (id, affiliate_id) VALUES (?, ?)",
-      [sessionId, affiliate.id]
-    );
-
-    const response = NextResponse.json({
-      success: true,
-      affiliate: {
-        id: affiliate.id,
-        full_name: affiliate.full_name,
-        email: affiliate.email,
-        referral_code: affiliate.referral_code,
+  const login = async () => {
+    const res = await fetch("/api/affiliate-login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ email, password }),
     });
 
-    response.cookies.set("affiliate_session", sessionId, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30,
-    });
+    const data = await res.json();
 
-    return response;
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 }
-    );
-  }
+    if (!res.ok) {
+      alert(data.error || "Login failed");
+      return;
+    }
+
+    window.location.href = "/affiliate-dashboard";
+  };
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+      <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8">
+        <h1 className="mb-6 text-center font-serif text-3xl text-[#d4af37]">
+          Affiliate Login
+        </h1>
+
+        <input
+          className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          className="mb-6 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={login}
+          className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+        >
+          Login
+        </button>
+      </div>
+    </main>
+  );
 }
