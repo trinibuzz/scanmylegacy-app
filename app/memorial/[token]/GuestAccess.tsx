@@ -1,5 +1,5 @@
 "use client";
-
+import MemorialSlideshow from "./MemorialSlideshow";
 import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
 
@@ -339,7 +339,7 @@ export default function GuestAccess({ memorial, token }: any) {
         <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
       </section>
 
-      {memorial.cover_photo && (
+            {memorial.cover_photo && (
         <div className="mx-auto mb-10 max-w-3xl px-6">
           <img
             src={memorial.cover_photo}
@@ -348,6 +348,11 @@ export default function GuestAccess({ memorial, token }: any) {
           />
         </div>
       )}
+
+      {/* Memorial Slideshow */}
+      <MemorialSlideshow token={token} />
+
+      <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-10 md:grid-cols-3">
 
       <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-10 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
