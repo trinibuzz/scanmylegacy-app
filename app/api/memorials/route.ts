@@ -45,6 +45,7 @@ export async function POST(req: Request) {
     const package_slug = formData.get("package_slug") as string;
     const package_name = formData.get("package_name") as string;
     const package_price = formData.get("package_price") as string;
+    const referral_code = formData.get("referral_code") as string;
     const coverPhoto = formData.get("cover_photo") as File | null;
 
     let coverPhotoPath = "";
@@ -97,6 +98,37 @@ export async function POST(req: Request) {
 
     const memorialId = result.insertId;
 
+    if (referral_code) {
+      const [affiliateRows]: any = await db.execute(
+        "SELECT * FROM affiliates WHERE referral_code = ? AND status = 'active' LIMIT 1",
+        [referral_code]
+      );
+
+      if (affiliateRows.length > 0) {
+        const affiliate = affiliateRows[0];
+
+        const commissionRate = Number(affiliate.commission_rate || 10);
+        const packagePriceNumber = Number(package_price || 0);
+        const commissionAmount =
+          (packagePriceNumber * commissionRate) / 100;
+
+        await db.execute(
+          `INSERT INTO affiliate_referrals
+           (affiliate_id, memorial_id, customer_name, package_name, package_price, commission_amount, payment_status)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            affiliate.id,
+            memorialId,
+            full_name,
+            package_name,
+            packagePriceNumber,
+            commissionAmount,
+            paymentStatus === "free" ? "free" : "pending",
+          ]
+        );
+      }
+    }
+
     return NextResponse.json({
       success: true,
       memorial: {
@@ -108,6 +140,7 @@ export async function POST(req: Request) {
         package_name,
         package_price,
         payment_status: paymentStatus,
+        referral_code: referral_code || null,
       },
     });
   } catch (error: any) {
