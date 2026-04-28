@@ -32,8 +32,16 @@ export async function POST(req: Request) {
       [memorialId]
     );
 
+    await db.execute(
+      `UPDATE affiliate_referrals
+       SET payment_status = 'paid'
+       WHERE memorial_id = ?`,
+      [memorialId]
+    );
+
     return NextResponse.json({
       success: true,
+      message: "Memorial activated and affiliate commission marked paid",
     });
   } catch (error: any) {
     return NextResponse.json(
