@@ -1,5 +1,6 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 
 function makeReferralCode(name: string) {
   const cleanName = name
@@ -18,17 +19,25 @@ export async function POST(req: Request) {
 
     const fullName = body.full_name;
     const email = body.email;
+    const password = body.password;
 
-    if (!fullName || !email) {
+    if (!fullName || !email || !password) {
       return NextResponse.json(
-        { error: "Name and email are required" },
+        { error: "Name, email, and password are required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
 
     const [existingRows]: any = await db.execute(
       "SELECT * FROM affiliates WHERE email = ? LIMIT 1",
-      [email]
+      [email.trim()]
     );
 
     if (existingRows.length > 0) {
@@ -49,11 +58,20 @@ export async function POST(req: Request) {
       referralCode = `${referralCode}${Date.now()}`;
     }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const [result]: any = await db.execute(
       `INSERT INTO affiliates
-       (full_name, email, referral_code, commission_rate, status)
-       VALUES (?, ?, ?, ?, ?)`,
-      [fullName, email, referralCode, 10.0, "active"]
+       (full_name, email, password, referral_code, commission_rate, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        fullName.trim(),
+        email.trim(),
+        hashedPassword,
+        referralCode,
+        10.0,
+        "active",
+      ]
     );
 
     return NextResponse.json({
