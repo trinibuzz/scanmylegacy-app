@@ -43,6 +43,7 @@ export default function GuestAccess({ memorial, token }: any) {
   const loadReactions = async () => {
     const res = await fetch(`/api/reactions?token=${token}`);
     const data = await res.json();
+
     setCandles(data.candles || 0);
     setFlowers(data.flowers || 0);
     setReactions(data.reactions || []);
@@ -80,6 +81,19 @@ export default function GuestAccess({ memorial, token }: any) {
     setAllowed(true);
   };
 
+  const openCandleModal = () => {
+    setTributeName(messageName || guestName);
+    setTributeMessage("");
+    setShowCandleModal(true);
+  };
+
+  const openFlowerModal = () => {
+    setTributeName(messageName || guestName);
+    setTributeMessage("");
+    setFlowerType("rose");
+    setShowFlowerModal(true);
+  };
+
   const submitReaction = async (type: "candle" | "flower") => {
     if (!tributeName.trim()) {
       alert("Please enter your name");
@@ -112,6 +126,14 @@ export default function GuestAccess({ memorial, token }: any) {
     setShowCandleModal(false);
     setShowFlowerModal(false);
     setTributeMessage("");
+
+    if (type === "candle") {
+      alert("Candle lit 🕯️");
+    }
+
+    if (type === "flower") {
+      alert("Flower planted 🌸");
+    }
   };
 
   const submitGuestbook = async () => {
@@ -136,6 +158,8 @@ export default function GuestAccess({ memorial, token }: any) {
       alert(data.error);
       return;
     }
+
+    alert("Guestbook message posted ❤️");
 
     setMessage("");
     setImage(null);
@@ -336,11 +360,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
         <div className="space-y-4">
           <button
-            onClick={() => {
-              setTributeName(messageName || guestName);
-              setTributeMessage("");
-              setShowCandleModal(true);
-            }}
+            onClick={openCandleModal}
             className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
           >
             <div className="mb-3 text-4xl">🕯️</div>
@@ -351,12 +371,7 @@ export default function GuestAccess({ memorial, token }: any) {
           </button>
 
           <button
-            onClick={() => {
-              setTributeName(messageName || guestName);
-              setTributeMessage("");
-              setFlowerType("rose");
-              setShowFlowerModal(true);
-            }}
+            onClick={openFlowerModal}
             className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
           >
             <div className="mb-3 text-4xl">🌸</div>
