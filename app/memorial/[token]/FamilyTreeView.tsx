@@ -1,141 +1,276 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Info,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
-export default function FamilyTreeView({ token }: { token: string }) {
-  const [members, setMembers] = useState<any[]>([]);
-  const [treeOpen, setTreeOpen] = useState(true);
+type Member = {
+  id: number;
+  name: string;
+  relation?: string;
+  birth_year?: string;
+  death_year?: string;
+  spouse?: Member;
+  children?: Member[];
+};
 
-  useEffect(() => {
-    fetch(`/api/public-family-tree?token=${token}`)
-      .then((res) => res.json())
-      .then((data) => setMembers(data.members || []));
-  }, [token]);
+type TreeData = {
+  mother?: Member;
+  father?: Member;
+  deceased: Member;
+  siblings?: Member[];
+};
 
-  const parents = members.filter(
-    (m) => m.relationship === "Mother" || m.relationship === "Father"
-  );
-
-  const deceased = members.find((m) => m.relationship === "Deceased");
-
-  const spouse = members.find(
-    (m) =>
-      m.relationship === "Spouse" &&
-      Number(m.spouse_id) === Number(deceased?.id)
-  );
-
-  const siblings = members.filter(
-    (m) => m.relationship === "Brother" || m.relationship === "Sister"
-  );
-
-  const children = members.filter(
-    (m) => Number(m.parent_id) === Number(deceased?.id)
-  );
-
-  if (!deceased) return null;
-
-  const renderPerson = (person: any, highlight = false) => (
-    <div
-      className={`min-w-[150px] rounded-2xl border p-4 text-center shadow-xl ${
-        highlight
-          ? "border-[#d4af37] bg-[#111a2e]"
-          : "border-[#d4af37]/30 bg-[#111a2e]"
-      }`}
-    >
-      {person.photo_url ? (
-        <img
-          src={person.photo_url}
-          alt={person.name}
-          className="mx-auto mb-3 h-20 w-20 rounded-full object-cover"
-        />
-      ) : (
-        <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#0b1320] text-3xl">
-          👤
-        </div>
-      )}
-
-      <h3 className="text-sm font-semibold text-white">{person.name}</h3>
-
-      <p className="mt-1 text-xs text-[#d4af37]">
-        {person.relationship}
-      </p>
-    </div>
-  );
+function TreeNode({
+  member,
+  onClick,
+  isMain = false,
+  hasChildren = false,
+  isCollapsed = false,
+  onToggleCollapse,
+  hasSpouse = false,
+  isSpouseCollapsed = false,
+  onToggleSpouseCollapse,
+  spousePosition = "right",
+}: any) {
+  if (!member) return null;
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-20">
-      <div className="mb-10 text-center">
-        <div className="mb-4 text-4xl text-[#d4af37]">⌘</div>
+    <motion.div
+      whileHover={{ scale: 1.03 }}
+      onClick={() => onClick(member)}
+      className={`relative p-4 rounded-xl border cursor-pointer min-w-[160px] text-center
+      ${
+        isMain
+          ? "bg-[#1b2c4d] border-[#d4af37]"
+          : "bg-[#111a2e] border-[#2b3c5d]"
+      }`}
+    >
+      <h3 className="text-white font-semibold">{member.name}</h3>
 
-        <h2 className="font-serif text-5xl text-white">
-          Family Lineage
-        </h2>
-
-        <p className="mx-auto mt-4 max-w-2xl text-sm italic text-gray-400">
-          Honoring the roots and branches of this life.
-          Explore the generations that came before and those that follow.
+      {(member.birth_year || member.death_year) && (
+        <p className="text-xs text-gray-400 mt-1">
+          {member.birth_year || "?"} — {member.death_year || "Present"}
         </p>
-      </div>
+      )}
 
-      <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-8 shadow-2xl">
-        <div className="mb-6 flex justify-start">
-          <button
-            onClick={() => setTreeOpen(!treeOpen)}
-            className="rounded-xl border border-[#d4af37]/40 bg-[#0b1320] px-4 py-2 text-sm text-[#d4af37]"
-          >
-            {treeOpen ? "Hide Family Tree" : "Show Family Tree"}
-          </button>
-        </div>
+      {member.relation && (
+        <p className="text-xs text-[#d4af37] mt-2">{member.relation}</p>
+      )}
 
-        {treeOpen && (
-          <div className="overflow-x-auto">
-            <div className="min-w-max">
-              {/* Parents */}
-              {parents.length > 0 && (
-                <>
-                  <div className="mb-8 flex justify-center gap-8">
-                    {parents.map((parent) => (
-                      <div key={parent.id}>
-                        {renderPerson(parent)}
-                      </div>
-                    ))}
-                  </div>
+      {hasChildren && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleCollapse();
+          }}
+          className="absolute -bottom-3 left-1/2 -translate-x-1/2"
+        >
+          {isCollapsed ? (
+            <ChevronDown className="w-5 h-5 text-[#d4af37]" />
+          ) : (
+            <ChevronUp className="w-5 h-5 text-[#d4af37]" />
+          )}
+        </button>
+      )}
 
-                  <div className="mx-auto mb-8 h-10 w-px bg-[#d4af37]/30" />
-                </>
-              )}
+      {hasSpouse && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSpouseCollapse();
+          }}
+          className={`absolute top-1/2 -translate-y-1/2 ${
+            spousePosition === "left" ? "-left-3" : "-right-3"
+          }`}
+        >
+          {spousePosition === "left" ? (
+            isSpouseCollapsed ? (
+              <ChevronLeft className="w-5 h-5 text-[#d4af37]" />
+            ) : (
+              <ChevronRight className="w-5 h-5 text-[#d4af37]" />
+            )
+          ) : isSpouseCollapsed ? (
+            <ChevronRight className="w-5 h-5 text-[#d4af37]" />
+          ) : (
+            <ChevronLeft className="w-5 h-5 text-[#d4af37]" />
+          )}
+        </button>
+      )}
+    </motion.div>
+  );
+}
 
-              {/* Siblings + Deceased */}
-              <div className="relative mb-10 flex items-center justify-center gap-8">
-                {siblings.map((sibling) => (
-                  <div key={sibling.id}>
-                    {renderPerson(sibling)}
-                  </div>
-                ))}
+function FamilyBranch({
+  person,
+  onClick,
+  collapsedNodes,
+  toggleCollapse,
+  spouseCollapsedNodes,
+  toggleSpouseCollapse,
+  isMain = false,
+  spousePosition = "right",
+}: any) {
+  if (!person) return null;
 
-                <div>{renderPerson(deceased, true)}</div>
+  const children = person.children || [];
+  const hasChildren = children.length > 0;
+  const isCollapsed = collapsedNodes.has(person.id);
 
-                {spouse && <div>{renderPerson(spouse)}</div>}
-              </div>
+  const hasSpouse = !!person.spouse;
+  const spouseCollapsed = spouseCollapsedNodes.has(person.id);
 
-              {/* Children */}
-              {children.length > 0 && (
-                <>
-                  <div className="mx-auto mb-8 h-10 w-px bg-[#d4af37]/30" />
+  return (
+    <div className="flex flex-col items-center">
+      <div className="flex items-center gap-4">
+        {spousePosition === "left" && hasSpouse && !spouseCollapsed && (
+          <TreeNode member={person.spouse} onClick={onClick} />
+        )}
 
-                  <div className="flex justify-center gap-8">
-                    {children.map((child) => (
-                      <div key={child.id}>
-                        {renderPerson(child)}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+        <TreeNode
+          member={person}
+          onClick={onClick}
+          isMain={isMain}
+          hasChildren={hasChildren}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => toggleCollapse(person.id)}
+          hasSpouse={hasSpouse}
+          isSpouseCollapsed={spouseCollapsed}
+          onToggleSpouseCollapse={() => toggleSpouseCollapse(person.id)}
+          spousePosition={spousePosition}
+        />
+
+        {spousePosition === "right" && hasSpouse && !spouseCollapsed && (
+          <TreeNode member={person.spouse} onClick={onClick} />
         )}
       </div>
+
+      {!isCollapsed && hasChildren && (
+        <div className="mt-10 flex gap-8">
+          {children.map((child: Member) => (
+            <FamilyBranch
+              key={child.id}
+              person={child}
+              onClick={onClick}
+              collapsedNodes={collapsedNodes}
+              toggleCollapse={toggleCollapse}
+              spouseCollapsedNodes={spouseCollapsedNodes}
+              toggleSpouseCollapse={toggleSpouseCollapse}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function FamilyTreeView({
+  familyTreeData,
+}: {
+  familyTreeData: TreeData;
+}) {
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [collapsedNodes, setCollapsedNodes] = useState(new Set<number>());
+  const [spouseCollapsedNodes, setSpouseCollapsedNodes] = useState(
+    new Set<number>()
+  );
+
+  if (!familyTreeData?.deceased) {
+    return null;
+  }
+
+  const toggleCollapse = (id: number) => {
+    setCollapsedNodes((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSpouseCollapse = (id: number) => {
+    setSpouseCollapsedNodes((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  return (
+    <section className="w-full overflow-x-auto py-10">
+      <div className="min-w-max mx-auto flex flex-col items-center gap-10">
+
+        <div className="flex gap-10">
+          {familyTreeData.father && (
+            <TreeNode
+              member={familyTreeData.father}
+              onClick={setSelectedMember}
+            />
+          )}
+
+          {familyTreeData.mother && (
+            <TreeNode
+              member={familyTreeData.mother}
+              onClick={setSelectedMember}
+            />
+          )}
+        </div>
+
+        <div className="flex gap-8">
+          {familyTreeData.siblings?.map((sibling) => (
+            <FamilyBranch
+              key={sibling.id}
+              person={sibling}
+              onClick={setSelectedMember}
+              collapsedNodes={collapsedNodes}
+              toggleCollapse={toggleCollapse}
+              spouseCollapsedNodes={spouseCollapsedNodes}
+              toggleSpouseCollapse={toggleSpouseCollapse}
+            />
+          ))}
+
+          <FamilyBranch
+            person={familyTreeData.deceased}
+            isMain={true}
+            onClick={setSelectedMember}
+            collapsedNodes={collapsedNodes}
+            toggleCollapse={toggleCollapse}
+            spouseCollapsedNodes={spouseCollapsedNodes}
+            toggleSpouseCollapse={toggleSpouseCollapse}
+          />
+        </div>
+      </div>
+
+      {selectedMember && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#111a2e] border border-[#d4af37] rounded-xl p-6 w-[400px]">
+            <div className="flex items-center gap-3 mb-4">
+              <Info className="text-[#d4af37]" />
+              <h2 className="text-white text-xl">{selectedMember.name}</h2>
+            </div>
+
+            <p className="text-gray-300">
+              Born: {selectedMember.birth_year || "Unknown"}
+            </p>
+
+            <p className="text-gray-300">
+              Passed: {selectedMember.death_year || "Present"}
+            </p>
+
+            <button
+              onClick={() => setSelectedMember(null)}
+              className="mt-6 bg-[#d4af37] text-black px-4 py-2 rounded"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
