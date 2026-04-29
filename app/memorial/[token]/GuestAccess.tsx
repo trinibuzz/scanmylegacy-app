@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
+import ChatBox from "./ChatBox";
 
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
@@ -355,7 +356,9 @@ export default function GuestAccess({ memorial, token }: any) {
             Life Story
           </h2>
 
-          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
+          <p className="leading-relaxed text-gray-300">
+            {memorial.biography}
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -389,10 +392,6 @@ export default function GuestAccess({ memorial, token }: any) {
             Candle Room
           </h2>
 
-          <p className="mb-6 text-sm text-gray-400">
-            A quiet space of light, prayer, and remembrance.
-          </p>
-
           {candleReactions.length === 0 ? (
             <p className="text-gray-400">No candles lit yet.</p>
           ) : (
@@ -410,8 +409,6 @@ export default function GuestAccess({ memorial, token }: any) {
                     {reaction.guest_name}
                   </p>
 
-                  <p className="text-sm text-[#d4af37]">lit a candle</p>
-
                   {reaction.message && (
                     <p className="mt-3 text-sm italic text-gray-300">
                       “{reaction.message}”
@@ -428,10 +425,6 @@ export default function GuestAccess({ memorial, token }: any) {
             Flower Garden
           </h2>
 
-          <p className="mb-6 text-sm text-gray-400">
-            Flowers planted in love and memory.
-          </p>
-
           {flowerReactions.length === 0 ? (
             <p className="text-gray-400">No flowers planted yet.</p>
           ) : (
@@ -445,9 +438,7 @@ export default function GuestAccess({ memorial, token }: any) {
                     key={reaction.id}
                     className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
                   >
-                    <div className="mb-3 text-6xl transition hover:scale-110">
-                      {selectedFlower}
-                    </div>
+                    <div className="mb-3 text-6xl">{selectedFlower}</div>
 
                     <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
                       Planted by {reaction.guest_name}
@@ -467,6 +458,11 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
 
       <FamilyTreeView token={token} />
+
+      <ChatBox
+        memorialId={memorial.id}
+        guestName={messageName || guestName}
+      />
 
       <section className="mx-auto max-w-5xl px-6 pb-16">
         <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
