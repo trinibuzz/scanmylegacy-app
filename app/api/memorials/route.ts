@@ -11,41 +11,43 @@ export async function POST(req: Request) {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get("session");
 
-    if (!sessionCookie) {
-      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+    let userId: any = null;
+
+    if (sessionCookie) {
+      const [sessionRows]: any = await db.execute(
+        "SELECT * FROM sessions WHERE id = ? LIMIT 1",
+        [sessionCookie.value]
+      );
+
+      if (sessionRows.length > 0) {
+        const [userRows]: any = await db.execute(
+          "SELECT * FROM users WHERE id = ? LIMIT 1",
+          [sessionRows[0].user_id]
+        );
+
+        if (userRows.length > 0) {
+          userId = userRows[0].id;
+        }
+      }
     }
 
-    const [sessionRows]: any = await db.execute(
-      "SELECT * FROM sessions WHERE id = ? LIMIT 1",
-      [sessionCookie.value]
-    );
-
-    if (sessionRows.length === 0) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const session = sessionRows[0];
-
-    const [userRows]: any = await db.execute(
-      "SELECT * FROM users WHERE id = ? LIMIT 1",
-      [session.user_id]
-    );
-
-    if (userRows.length === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
-
-    const user = userRows[0];
     const formData = await req.formData();
+
+    const creator_name = formData.get("creator_name") as string;
+    const creator_email = formData.get("creator_email") as string;
+    const creator_phone = formData.get("creator_phone") as string;
+    const creator_relationship = formData.get("creator_relationship") as string;
 
     const full_name = formData.get("full_name") as string;
     const birth_date = formData.get("birth_date") as string;
     const death_date = formData.get("death_date") as string;
     const biography = formData.get("biography") as string;
+
     const package_slug = formData.get("package_slug") as string;
     const package_name = formData.get("package_name") as string;
     const package_price = formData.get("package_price") as string;
     const referral_code = formData.get("referral_code") as string;
+
     const coverPhoto = formData.get("cover_photo") as File | null;
 
     let coverPhotoPath = "";
@@ -79,10 +81,30 @@ export async function POST(req: Request) {
 
     const [result]: any = await db.execute(
       `INSERT INTO memorials 
-      (user_id, full_name, birth_date, death_date, biography, invite_token, cover_photo, package_slug, package_name, package_price, payment_status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (
+        user_id,
+        creator_name,
+        creator_email,
+        creator_phone,
+        creator_relationship,
+        full_name,
+        birth_date,
+        death_date,
+        biography,
+        invite_token,
+        cover_photo,
+        package_slug,
+        package_name,
+        package_price,
+        payment_status
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        user.id,
+        userId,
+        creator_name || "",
+        creator_email || "",
+        creator_phone || "",
+        creator_relationship || "",
         full_name,
         birth_date || null,
         death_date || null,
@@ -109,8 +131,7 @@ export async function POST(req: Request) {
 
         const commissionRate = Number(affiliate.commission_rate || 10);
         const packagePriceNumber = Number(package_price || 0);
-        const commissionAmount =
-          (packagePriceNumber * commissionRate) / 100;
+        const commissionAmount = (packagePriceNumber * commissionRate) / 100;
 
         await db.execute(
           `INSERT INTO affiliate_referrals
@@ -119,7 +140,7 @@ export async function POST(req: Request) {
           [
             affiliate.id,
             memorialId,
-            full_name,
+            creator_name || full_name,
             package_name,
             packagePriceNumber,
             commissionAmount,
@@ -134,13 +155,14 @@ export async function POST(req: Request) {
       memorial: {
         id: memorialId,
         full_name,
+        creator_name,
+        creator_email,
         invite_token: inviteToken,
         link: `/memorial/${inviteToken}`,
         package_slug,
         package_name,
         package_price,
         payment_status: paymentStatus,
-        referral_code: referral_code || null,
       },
     });
   } catch (error: any) {
