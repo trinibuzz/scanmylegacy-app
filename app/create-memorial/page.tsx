@@ -1,34 +1,21 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-const packageNames: any = {
-  "starter-tribute": "Starter Tribute",
-  "standard-legacy": "Standard Legacy",
-  "premium-legacy": "Premium Legacy",
-  "eternal-legacy": "Eternal Legacy",
-};
-
-const packagePrices: any = {
-  "starter-tribute": "0",
-  "standard-legacy": "59",
-  "premium-legacy": "89",
-  "eternal-legacy": "129",
-};
-
-function CreateMemorialForm() {
+export default function CreateMemorialPage() {
   const searchParams = useSearchParams();
 
-  const packageSlug = searchParams.get("package") || "starter-tribute";
-  const urlPrice = searchParams.get("price");
-  const refCode = searchParams.get("ref") || "";
+  const packageSlug = searchParams.get("package") || "";
+  const packagePrice = searchParams.get("price") || "0";
 
-  const packageName =
-    packageNames[packageSlug] || "Starter Tribute";
+  const [loading, setLoading] = useState(false);
 
-  const packagePrice =
-    urlPrice || packagePrices[packageSlug] || "0";
+  const [creatorName, setCreatorName] = useState("");
+  const [creatorEmail, setCreatorEmail] = useState("");
+  const [creatorPhone, setCreatorPhone] = useState("");
+  const [creatorRelationship, setCreatorRelationship] =
+    useState("");
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -37,36 +24,58 @@ function CreateMemorialForm() {
   const [coverPhoto, setCoverPhoto] =
     useState<File | null>(null);
 
-  const [saving, setSaving] = useState(false);
+  const [enableFamilyTree, setEnableFamilyTree] =
+    useState(false);
 
-  const saveMemorial = async () => {
-    if (saving) return;
+  const [enableReminders, setEnableReminders] =
+    useState(false);
 
-    if (!fullName.trim()) {
-      alert("Please enter the full name");
+  const submitMemorial = async () => {
+    if (!creatorName || !creatorEmail || !fullName) {
+      alert(
+        "Please complete all required fields."
+      );
       return;
     }
 
+    const formData = new FormData();
+
+    formData.append("creator_name", creatorName);
+    formData.append("creator_email", creatorEmail);
+    formData.append("creator_phone", creatorPhone);
+    formData.append(
+      "creator_relationship",
+      creatorRelationship
+    );
+
+    formData.append("full_name", fullName);
+    formData.append("birth_date", birthDate);
+    formData.append("death_date", deathDate);
+    formData.append("biography", biography);
+
+    formData.append("package_slug", packageSlug);
+    formData.append(
+      "package_name",
+      packageSlug.replace(/-/g, " ")
+    );
+    formData.append("package_price", packagePrice);
+
+    formData.append(
+      "enable_family_tree",
+      enableFamilyTree ? "1" : "0"
+    );
+
+    formData.append(
+      "enable_reminders",
+      enableReminders ? "1" : "0"
+    );
+
+    if (coverPhoto) {
+      formData.append("cover_photo", coverPhoto);
+    }
+
     try {
-      setSaving(true);
-
-      const formData = new FormData();
-
-      formData.append("full_name", fullName);
-      formData.append("birth_date", birthDate);
-      formData.append("death_date", deathDate);
-      formData.append("biography", biography);
-      formData.append("package_slug", packageSlug);
-      formData.append("package_name", packageName);
-      formData.append("package_price", packagePrice);
-
-      if (refCode) {
-        formData.append("referral_code", refCode);
-      }
-
-      if (coverPhoto) {
-        formData.append("cover_photo", coverPhoto);
-      }
+      setLoading(true);
 
       const res = await fetch("/api/memorials", {
         method: "POST",
@@ -80,180 +89,239 @@ function CreateMemorialForm() {
         return;
       }
 
-      const memorialId =
-        data.memorial?.id ||
-        data.memorial_id ||
-        data.id;
-
-      if (!memorialId) {
-        alert(
-          "Memorial created, but no memorial ID was returned."
+      if (Number(packagePrice) > 0) {
+        const paymentRes = await fetch(
+          "/api/wipay-checkout",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              memorial_id: data.memorial.id,
+              package_name:
+                data.memorial.package_name,
+              package_price:
+                data.memorial.package_price,
+              customer_name: creatorName,
+            }),
+          }
         );
-        return;
-      }
 
-      if (Number(packagePrice) === 0) {
-        window.location.href = "/dashboard";
-        return;
-      }
+        const paymentData =
+          await paymentRes.json();
 
-      const paymentRes = await fetch(
-        "/api/wipay-checkout",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            memorial_id: memorialId,
-            package_name: packageName,
-            package_price: packagePrice,
-            customer_name: fullName,
-            referral_code: refCode,
-          }),
+        if (!paymentRes.ok) {
+          alert(
+            paymentData.error ||
+              "Payment setup failed"
+          );
+          return;
         }
-      );
 
-      const paymentData = await paymentRes.json();
-
-      if (!paymentRes.ok) {
-        alert(
-          paymentData.error ||
-            "Payment initialization failed"
-        );
-        return;
-      }
-
-      if (paymentData.checkout_url) {
         window.location.href =
           paymentData.checkout_url;
         return;
       }
 
-      alert("Invalid payment link received");
+      window.location.href = "/dashboard";
     } catch {
-      alert("Failed to create memorial");
+      alert("Something went wrong.");
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-      <div className="w-full max-w-2xl rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 shadow-2xl">
-        <h1 className="mb-2 text-center font-serif text-3xl">
-          Preserve a Legacy
-        </h1>
+    <main className="min-h-screen bg-white px-6 py-12">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-10 text-center">
+          <h1 className="font-serif text-4xl font-bold text-[#0b1320]">
+            Begin the Journey
+          </h1>
 
-        <p className="mb-6 text-center text-gray-400">
-          Create a timeless memorial tribute.
-        </p>
-
-        <div className="mb-6 rounded-lg border border-[#d4af37]/40 bg-[#0b1320] p-4 text-center">
-          <p className="text-sm text-gray-400">
-            Selected Package
-          </p>
-
-          <p className="font-serif text-xl text-[#d4af37]">
-            {packageName}
-          </p>
-
-          <p className="text-gray-300">
-            {Number(packagePrice) === 0
-              ? "Free"
-              : `$${packagePrice} USD`}
+          <p className="mt-3 text-gray-600">
+            Create a dedicated digital sanctuary
+            for your loved one.
           </p>
         </div>
 
-        {refCode && (
-          <div className="mb-6 rounded-lg border border-[#d4af37]/30 bg-[#0b1320] p-4 text-center">
-            <p className="text-sm text-gray-400">
-              Affiliate Referral Applied
-            </p>
+        <div className="space-y-8">
+          {/* Selected Package */}
+          <div className="rounded-xl border p-6">
+            <h2 className="mb-4 text-xl font-semibold">
+              Selected Package
+            </h2>
 
-            <p className="font-mono text-[#d4af37]">
-              {refCode}
-            </p>
+            <input
+              readOnly
+              value={packageSlug}
+              className="w-full rounded border p-3"
+            />
+
+            <input
+              readOnly
+              value={`$${packagePrice}`}
+              className="mt-3 w-full rounded border p-3"
+            />
           </div>
-        )}
 
-        <input
-          className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
-          placeholder="Full Name"
-          value={fullName}
-          onChange={(e) =>
-            setFullName(e.target.value)
-          }
-        />
+          {/* Your Information */}
+          <div className="rounded-xl border p-6">
+            <h2 className="mb-4 text-xl font-semibold">
+              Your Information
+            </h2>
 
-        <div className="mb-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-          <input
-            type="date"
-            className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
-            value={birthDate}
-            onChange={(e) =>
-              setBirthDate(e.target.value)
-            }
-          />
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                placeholder="Owner / Creator Full Name"
+                value={creatorName}
+                onChange={(e) =>
+                  setCreatorName(e.target.value)
+                }
+                className="rounded border p-3"
+              />
 
-          <input
-            type="date"
-            className="rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
-            value={deathDate}
-            onChange={(e) =>
-              setDeathDate(e.target.value)
-            }
-          />
+              <input
+                placeholder="Owner / Creator Email Address"
+                value={creatorEmail}
+                onChange={(e) =>
+                  setCreatorEmail(
+                    e.target.value
+                  )
+                }
+                className="rounded border p-3"
+              />
+
+              <input
+                placeholder="Phone / WhatsApp Number"
+                value={creatorPhone}
+                onChange={(e) =>
+                  setCreatorPhone(
+                    e.target.value
+                  )
+                }
+                className="rounded border p-3"
+              />
+
+              <input
+                placeholder="Relationship to Loved One"
+                value={creatorRelationship}
+                onChange={(e) =>
+                  setCreatorRelationship(
+                    e.target.value
+                  )
+                }
+                className="rounded border p-3"
+              />
+            </div>
+          </div>
+
+          {/* Memorial Details */}
+          <div className="rounded-xl border p-6">
+            <h2 className="mb-4 text-xl font-semibold">
+              Memorial Details
+            </h2>
+
+            <input
+              placeholder="Loved One’s Full Name"
+              value={fullName}
+              onChange={(e) =>
+                setFullName(e.target.value)
+              }
+              className="mb-4 w-full rounded border p-3"
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                type="date"
+                value={birthDate}
+                onChange={(e) =>
+                  setBirthDate(
+                    e.target.value
+                  )
+                }
+                className="rounded border p-3"
+              />
+
+              <input
+                type="date"
+                value={deathDate}
+                onChange={(e) =>
+                  setDeathDate(
+                    e.target.value
+                  )
+                }
+                className="rounded border p-3"
+              />
+            </div>
+
+            <textarea
+              placeholder="Tell Their Story (Biography)"
+              value={biography}
+              onChange={(e) =>
+                setBiography(e.target.value)
+              }
+              className="mt-4 w-full rounded border p-3"
+              rows={5}
+            />
+
+            <input
+              type="file"
+              onChange={(e) =>
+                setCoverPhoto(
+                  e.target.files?.[0] || null
+                )
+              }
+              className="mt-4 w-full rounded border p-3"
+            />
+          </div>
+
+          {/* Additional Options */}
+          <div className="rounded-xl border p-6">
+            <h2 className="mb-4 text-xl font-semibold">
+              Additional Options
+            </h2>
+
+            <label className="mb-4 flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={enableFamilyTree}
+                onChange={(e) =>
+                  setEnableFamilyTree(
+                    e.target.checked
+                  )
+                }
+              />
+              Enable Family Tree
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={enableReminders}
+                onChange={(e) =>
+                  setEnableReminders(
+                    e.target.checked
+                  )
+                }
+              />
+              Enable Anniversary Reminders
+            </label>
+          </div>
+
+          <button
+            onClick={submitMemorial}
+            disabled={loading}
+            className="w-full rounded-lg bg-[#0b1320] py-4 font-semibold text-white"
+          >
+            {loading
+              ? "Creating Memorial..."
+              : "Continue to Payment"}
+          </button>
         </div>
-
-        <input
-          type="file"
-          accept="image/*"
-          className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white"
-          onChange={(e) =>
-            setCoverPhoto(
-              e.target.files?.[0] || null
-            )
-          }
-        />
-
-        <textarea
-          className="mb-4 min-h-[120px] w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-3 text-white outline-none"
-          placeholder="Write a life story, tribute, or memories..."
-          value={biography}
-          onChange={(e) =>
-            setBiography(e.target.value)
-          }
-        />
-
-        <button
-          onClick={saveMemorial}
-          disabled={saving}
-          className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-60"
-        >
-          {saving
-            ? "Creating Memorial..."
-            : Number(packagePrice) === 0
-            ? "Create Memorial"
-            : "Continue To Payment"}
-        </button>
       </div>
     </main>
-  );
-}
-
-export default function CreateMemorial() {
-  return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center">
-            Loading...
-          </div>
-        </main>
-      }
-    >
-      <CreateMemorialForm />
-    </Suspense>
   );
 }
