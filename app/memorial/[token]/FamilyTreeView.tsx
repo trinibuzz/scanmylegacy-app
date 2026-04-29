@@ -5,9 +5,6 @@ import { useEffect, useState } from "react";
 export default function FamilyTreeView({ token }: { token: string }) {
   const [members, setMembers] = useState<any[]>([]);
   const [treeOpen, setTreeOpen] = useState(true);
-  const [horizontalOpen, setHorizontalOpen] = useState(true);
-  const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
-  const [openSpouses, setOpenSpouses] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch(`/api/public-family-tree?token=${token}`)
@@ -15,30 +12,13 @@ export default function FamilyTreeView({ token }: { token: string }) {
       .then((data) => setMembers(data.members || []));
   }, [token]);
 
-  const toggleBranch = (id: number) => {
-    setOpenBranches((prev) => ({
-      ...prev,
-      [id]: prev[id] === false,
-    }));
-  };
-
-  const toggleSpouse = (id: number) => {
-    setOpenSpouses((prev) => ({
-      ...prev,
-      [id]: prev[id] === false,
-    }));
-  };
-
-  const isBranchOpen = (id: number) => openBranches[id] !== false;
-  const isSpouseOpen = (id: number) => openSpouses[id] !== false;
-
   const parents = members.filter(
     (m) => m.relationship === "Mother" || m.relationship === "Father"
   );
 
   const deceased = members.find((m) => m.relationship === "Deceased");
 
-  const deceasedSpouse = members.find(
+  const spouse = members.find(
     (m) =>
       m.relationship === "Spouse" &&
       Number(m.spouse_id) === Number(deceased?.id)
@@ -48,57 +28,24 @@ export default function FamilyTreeView({ token }: { token: string }) {
     (m) => m.relationship === "Brother" || m.relationship === "Sister"
   );
 
-  const midPoint = Math.ceil(siblings.length / 2);
-  const leftSiblings = siblings.slice(0, midPoint);
-  const rightSiblings = siblings.slice(midPoint);
-
-  const getSpouseFor = (person: any) =>
-    members.find(
-      (m) =>
-        (m.relationship === "Brother-in-law" ||
-          m.relationship === "Sister-in-law") &&
-        Number(m.spouse_id) === Number(person.id)
-    );
-
-  const getChildrenFor = (person: any) =>
-    members.filter((m) => Number(m.parent_id) === Number(person.id));
-
-  const DownToggle = ({ id }: { id: number }) => (
-    <button
-      onClick={() => toggleBranch(id)}
-      className="absolute -bottom-3 left-1/2 z-20 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
-      title="Expand or collapse branch"
-    >
-      {isBranchOpen(id) ? "⌃" : "⌄"}
-    </button>
+  const children = members.filter(
+    (m) => Number(m.parent_id) === Number(deceased?.id)
   );
 
-  const SpouseToggle = ({ id }: { id: number }) => (
-    <button
-      onClick={() => toggleSpouse(id)}
-      className="absolute -right-3 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
-      title="Show or hide spouse"
-    >
-      {isSpouseOpen(id) ? "‹" : "›"}
-    </button>
-  );
+  if (!deceased) return null;
 
-  const RowToggle = () => (
-    <button
-      onClick={() => setHorizontalOpen(!horizontalOpen)}
-      className="absolute -right-4 top-1/2 z-30 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg transition hover:bg-[#111a2e]"
-      title="Show or hide siblings"
+  const renderPerson = (person: any, highlight = false) => (
+    <div
+      className={`min-w-[150px] rounded-2xl border p-4 text-center shadow-xl ${
+        highlight
+          ? "border-[#d4af37] bg-[#111a2e]"
+          : "border-[#d4af37]/30 bg-[#111a2e]"
+      }`}
     >
-      {horizontalOpen ? "‹" : "›"}
-    </button>
-  );
-
-  const renderPerson = (m: any, canToggleDown = false) => (
-    <div className="relative z-10 min-w-[150px] rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-4 pb-6 text-center shadow-xl">
-      {m.photo_url ? (
+      {person.photo_url ? (
         <img
-          src={m.photo_url}
-          alt={m.name}
+          src={person.photo_url}
+          alt={person.name}
           className="mx-auto mb-3 h-20 w-20 rounded-full object-cover"
         />
       ) : (
@@ -107,167 +54,88 @@ export default function FamilyTreeView({ token }: { token: string }) {
         </div>
       )}
 
-      <h3 className="text-sm font-semibold">{m.name}</h3>
-      <p className="text-xs text-[#d4af37]">{m.relationship}</p>
+      <h3 className="text-sm font-semibold text-white">{person.name}</h3>
 
-      {canToggleDown && <DownToggle id={m.id} />}
+      <p className="mt-1 text-xs text-[#d4af37]">
+        {person.relationship}
+      </p>
     </div>
   );
 
-  const renderCouple = (person: any, partner?: any, canToggleDown = false) => {
-    const spouseVisible = partner && isSpouseOpen(person.id);
-
-    return (
-      <div className="relative inline-flex items-center justify-center gap-3">
-        <div className="relative">
-          {renderPerson(person, canToggleDown)}
-          {partner && <SpouseToggle id={person.id} />}
-        </div>
-
-        {spouseVisible && (
-          <>
-            <span className="text-[#d4af37]">—</span>
-            {renderPerson(partner, false)}
-          </>
-        )}
-      </div>
-    );
-  };
-
-  const renderDescendants = (
-    person: any,
-    firstLabel: string,
-    secondLabel: string
-  ) => {
-    const children = getChildrenFor(person);
-
-    if (children.length === 0 || !isBranchOpen(person.id)) {
-      return null;
-    }
-
-    return (
-      <div className="mt-10 text-center">
-        <div className="mx-auto mb-4 h-8 w-px bg-[#d4af37]/40" />
-
-        <p className="mb-4 text-xs uppercase tracking-widest text-gray-400">
-          {firstLabel}
-        </p>
-
-        <div className="flex justify-center gap-6">
-          {children.map((child) => {
-            const lowerChildren = getChildrenFor(child);
-
-            return (
-              <div key={child.id} className="text-center">
-                {renderPerson(child, lowerChildren.length > 0)}
-
-                {lowerChildren.length > 0 && isBranchOpen(child.id) && (
-                  <div className="mt-10">
-                    <div className="mx-auto mb-4 h-8 w-px bg-[#d4af37]/40" />
-
-                    <p className="mb-4 text-xs uppercase tracking-widest text-gray-400">
-                      {secondLabel}
-                    </p>
-
-                    <div className="flex justify-center gap-4">
-                      {lowerChildren.map((lower) => (
-                        <div key={lower.id}>{renderPerson(lower)}</div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  const renderSiblingBranch = (sibling: any) => {
-    const spouse = getSpouseFor(sibling);
-    const children = getChildrenFor(sibling);
-
-    return (
-      <div key={sibling.id} className="min-w-[330px] text-center">
-        {renderCouple(sibling, spouse, children.length > 0)}
-        {renderDescendants(sibling, "Nephews / Nieces", "Cousins")}
-      </div>
-    );
-  };
-
-  if (members.length === 0 || !deceased) return null;
-
   return (
-    <section className="mx-auto max-w-7xl px-6 pb-16">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="font-serif text-3xl text-[#d4af37]">Family Tree</h2>
+    <section className="mx-auto max-w-6xl px-6 py-20">
+      <div className="mb-10 text-center">
+        <div className="mb-4 text-4xl text-[#d4af37]">⌘</div>
 
-        <button
-          onClick={() => setTreeOpen(!treeOpen)}
-          className="rounded border border-[#d4af37] px-4 py-2 text-[#d4af37]"
-        >
-          {treeOpen ? "⌃ Collapse Tree" : "⌄ Expand Tree"}
-        </button>
+        <h2 className="font-serif text-5xl text-white">
+          Family Lineage
+        </h2>
+
+        <p className="mx-auto mt-4 max-w-2xl text-sm italic text-gray-400">
+          Honoring the roots and branches of this life.
+          Explore the generations that came before and those that follow.
+        </p>
       </div>
 
-      {treeOpen && (
-        <div className="overflow-x-auto rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-6">
-          <div className={horizontalOpen ? "min-w-max" : "mx-auto w-fit"}>
-            <div className="text-center">
-              <p className="mb-4 text-sm uppercase tracking-widest text-gray-400">
-                Parents
-              </p>
+      <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-8 shadow-2xl">
+        <div className="mb-6 flex justify-start">
+          <button
+            onClick={() => setTreeOpen(!treeOpen)}
+            className="rounded-xl border border-[#d4af37]/40 bg-[#0b1320] px-4 py-2 text-sm text-[#d4af37]"
+          >
+            {treeOpen ? "Hide Family Tree" : "Show Family Tree"}
+          </button>
+        </div>
 
-              <div className="flex justify-center gap-4">
-                {parents.map((p) => (
-                  <div key={p.id}>{renderPerson(p)}</div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mx-auto h-10 w-px bg-[#d4af37]/40" />
-
-            <div className="relative">
-              <p className="mb-4 text-center text-sm uppercase tracking-widest text-gray-400">
-                Siblings • Deceased • Spouses
-              </p>
-
-              <div className="relative">
-                <div
-                  className={
-                    horizontalOpen
-                      ? "absolute left-0 right-0 top-[86px] h-px bg-[#d4af37]/40"
-                      : "absolute left-1/2 top-[86px] h-px w-[260px] -translate-x-1/2 bg-[#d4af37]/40"
-                  }
-                />
-
-                <div className="relative flex w-fit items-start justify-center gap-10 px-8 py-2">
-                  <RowToggle />
-
-                  {horizontalOpen && leftSiblings.map(renderSiblingBranch)}
-
-                  <div className="min-w-[360px] text-center">
-                    {renderCouple(
-                      deceased,
-                      deceasedSpouse,
-                      getChildrenFor(deceased).length > 0
-                    )}
-
-                    {renderDescendants(
-                      deceased,
-                      "Children",
-                      "Grandchildren"
-                    )}
+        {treeOpen && (
+          <div className="overflow-x-auto">
+            <div className="min-w-max">
+              {/* Parents */}
+              {parents.length > 0 && (
+                <>
+                  <div className="mb-8 flex justify-center gap-8">
+                    {parents.map((parent) => (
+                      <div key={parent.id}>
+                        {renderPerson(parent)}
+                      </div>
+                    ))}
                   </div>
 
-                  {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
-                </div>
+                  <div className="mx-auto mb-8 h-10 w-px bg-[#d4af37]/30" />
+                </>
+              )}
+
+              {/* Siblings + Deceased */}
+              <div className="relative mb-10 flex items-center justify-center gap-8">
+                {siblings.map((sibling) => (
+                  <div key={sibling.id}>
+                    {renderPerson(sibling)}
+                  </div>
+                ))}
+
+                <div>{renderPerson(deceased, true)}</div>
+
+                {spouse && <div>{renderPerson(spouse)}</div>}
               </div>
+
+              {/* Children */}
+              {children.length > 0 && (
+                <>
+                  <div className="mx-auto mb-8 h-10 w-px bg-[#d4af37]/30" />
+
+                  <div className="flex justify-center gap-8">
+                    {children.map((child) => (
+                      <div key={child.id}>
+                        {renderPerson(child)}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   );
 }
