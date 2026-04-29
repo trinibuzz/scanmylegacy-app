@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function ChatBox({
   memorialId,
@@ -12,12 +12,10 @@ export default function ChatBox({
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const loadMessages = async () => {
-    const res = await fetch(
-      `/api/memorial-chat?memorial_id=${memorialId}`
-    );
-
+    const res = await fetch(`/api/memorial-chat?memorial_id=${memorialId}`);
     const data = await res.json();
 
     if (res.ok) {
@@ -30,12 +28,14 @@ export default function ChatBox({
 
     loadMessages();
 
-    const interval = setInterval(() => {
-      loadMessages();
-    }, 5000);
+    const interval = setInterval(loadMessages, 5000);
 
     return () => clearInterval(interval);
   }, [memorialId]);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) {
@@ -81,60 +81,103 @@ export default function ChatBox({
 
   return (
     <section className="mx-auto max-w-5xl px-6 pb-10">
-      <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-        <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-          Family Chat
-        </h2>
+      <div className="overflow-hidden rounded-2xl border border-[#1f2a44] bg-[#111a2e] shadow-2xl">
+        <div className="border-b border-[#1f2a44] bg-[#0b1320] px-6 py-4">
+          <h2 className="font-serif text-2xl text-[#d4af37]">
+            Family Chat
+          </h2>
 
-        <p className="mb-6 text-sm text-gray-400">
-          Share memories and speak with family in real time.
-        </p>
+          <p className="text-sm text-gray-400">
+            A private room for family and friends to share memories.
+          </p>
+        </div>
 
-        <div className="mb-6 max-h-[400px] space-y-4 overflow-y-auto rounded-xl border border-[#2a3550] bg-[#0b1320] p-4">
+        <div className="h-[360px] overflow-y-auto bg-[#0b1320] p-5">
           {messages.length === 0 ? (
-            <p className="text-gray-400">
-              No chat messages yet.
-            </p>
+            <div className="flex h-full items-center justify-center text-center text-gray-400">
+              No messages yet. Start the conversation.
+            </div>
           ) : (
-            messages.map((msg) => (
-              <div
-                key={msg.id}
-                className="rounded-xl border border-[#1f2a44] bg-[#111a2e] p-4"
-              >
-                <p className="font-semibold text-white">
-                  {msg.guest_name}
-                </p>
+            <div className="space-y-3">
+              {messages.map((msg) => {
+                const isMe = msg.guest_name === guestName;
 
-                <p className="mt-2 text-gray-300">
-                  {msg.body}
-                </p>
+                return (
+                  <div
+                    key={msg.id}
+                    className={`flex ${
+                      isMe ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        isMe
+                          ? "bg-[#d4af37] text-black"
+                          : "bg-[#111a2e] text-white border border-[#1f2a44]"
+                      }`}
+                    >
+                      <p
+                        className={`mb-1 text-xs font-semibold ${
+                          isMe ? "text-black/70" : "text-[#d4af37]"
+                        }`}
+                      >
+                        {msg.guest_name}
+                      </p>
 
-                <p className="mt-2 text-xs text-gray-500">
-                  {new Date(
-                    msg.created_at
-                  ).toLocaleString()}
-                </p>
-              </div>
-            ))
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {msg.body}
+                      </p>
+
+                      <p
+                        className={`mt-2 text-[10px] ${
+                          isMe ? "text-black/60" : "text-gray-500"
+                        }`}
+                      >
+                        {new Date(msg.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div ref={bottomRef} />
+            </div>
           )}
         </div>
 
-        <textarea
-          value={message}
-          onChange={(e) =>
-            setMessage(e.target.value)
-          }
-          placeholder="Write a message..."
-          className="mb-4 min-h-[100px] w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white"
-        />
+        <div className="border-t border-[#1f2a44] bg-[#111a2e] p-4">
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write a message..."
+            className="mb-3 h-20 w-full resize-none rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-white outline-none placeholder:text-gray-500"
+          />
 
-        <button
-          onClick={sendMessage}
-          disabled={sending}
-          className="w-full rounded-lg bg-[#d4af37] py-3 font-semibold text-black"
-        >
-          {sending ? "Sending..." : "Send Message"}
-        </button>
+          <div className="mb-3 grid gap-3 md:grid-cols-3">
+            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
+              📷 Add Photo
+              <input type="file" accept="image/*" className="hidden" />
+            </label>
+
+            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
+              🎥 Add Video
+              <input type="file" accept="video/*" className="hidden" />
+            </label>
+
+            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
+              🎙️ Add Audio
+              <input type="file" accept="audio/*" className="hidden" />
+            </label>
+          </div>
+
+          <button
+            onClick={sendMessage}
+            disabled={sending}
+            className="w-full rounded-xl bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-60"
+          >
+            {sending ? "Sending..." : "Send Message"}
+          </button>
+        </div>
       </div>
     </section>
   );
