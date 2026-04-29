@@ -43,9 +43,9 @@ export default function ChatBox({
     chatContainer.clientHeight + 100;
 
   if (isNearBottom) {
-    bottomRef.current?.scrollIntoView({
+    chatContainer.scrollTo({
+      top: chatContainer.scrollHeight,
       behavior: "smooth",
-      block: "nearest",
     });
   }
 }, [messages]);
