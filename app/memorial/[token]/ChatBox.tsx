@@ -34,8 +34,21 @@ export default function ChatBox({
   }, [memorialId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const chatContainer = bottomRef.current?.parentElement;
+
+  if (!chatContainer) return;
+
+  const isNearBottom =
+    chatContainer.scrollHeight - chatContainer.scrollTop <=
+    chatContainer.clientHeight + 100;
+
+  if (isNearBottom) {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }
+}, [messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) {
