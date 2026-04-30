@@ -10,6 +10,8 @@ export default function GuestAccess({ memorial, token }: any) {
   const [guestEmail, setGuestEmail] = useState("");
   const [visitorCount, setVisitorCount] = useState(0);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -37,17 +39,17 @@ export default function GuestAccess({ memorial, token }: any) {
     orchid: "💮",
   };
 
- const galleryPhotos =
-  memorial.gallery_photos && memorial.gallery_photos.length > 0
-    ? memorial.gallery_photos
-    : memorial.cover_photo
-    ? [memorial.cover_photo]
-    : [
-        "/images/memorial/photo1.jpg",
-        "/images/memorial/photo2.jpg",
-        "/images/memorial/photo3.jpg",
-        "/images/memorial/photo4.jpg",
-      ];
+  const galleryPhotos =
+    memorial.gallery_photos && memorial.gallery_photos.length > 0
+      ? memorial.gallery_photos
+      : memorial.cover_photo
+      ? [memorial.cover_photo]
+      : [
+          "/images/memorial/photo1.jpg",
+          "/images/memorial/photo2.jpg",
+          "/images/memorial/photo3.jpg",
+          "/images/memorial/photo4.jpg",
+        ];
 
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
@@ -70,6 +72,18 @@ export default function GuestAccess({ memorial, token }: any) {
       loadReactions();
     }
   }, [allowed]);
+
+  useEffect(() => {
+    if (!isSlideshowPlaying || galleryPhotos.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setActivePhoto((current) =>
+        current === galleryPhotos.length - 1 ? 0 : current + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isSlideshowPlaying, galleryPhotos.length]);
 
   const enterMemorial = async () => {
     const res = await fetch("/api/guest-access", {
@@ -160,6 +174,24 @@ export default function GuestAccess({ memorial, token }: any) {
 
     if (type === "candle") alert("Candle lit 🕯️");
     if (type === "flower") alert("Flower planted 🌸");
+  };
+
+  const toggleMusic = () => {
+    const audio = document.getElementById("memorial-music") as HTMLAudioElement;
+
+    if (!audio) return;
+
+    if (isMusicPlaying) {
+      audio.pause();
+      setIsMusicPlaying(false);
+    } else {
+      audio
+        .play()
+        .then(() => setIsMusicPlaying(true))
+        .catch(() => {
+          alert("Please tap Play Music again to start the memorial music.");
+        });
+    }
   };
 
   const submitGuestbook = async () => {
@@ -404,12 +436,12 @@ export default function GuestAccess({ memorial, token }: any) {
             </p>
 
             <h2 className="font-serif text-3xl md:text-4xl">
-              Memorial Gallery
+              Memorial Slideshow
             </h2>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-400">
-              A beautiful collection of memories, moments, and stories shared
-              with family and friends.
+              A beautiful collection of memories that gently plays through each
+              photo like a tribute film.
             </p>
           </div>
 
@@ -417,11 +449,11 @@ export default function GuestAccess({ memorial, token }: any) {
             <div className="relative aspect-[16/9] bg-black">
               <img
                 src={galleryPhotos[activePhoto]}
-                alt="Memorial gallery"
+                alt="Memorial slideshow"
                 className="h-full w-full object-cover transition duration-700"
               />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
               {galleryPhotos.length > 1 && (
                 <>
@@ -460,6 +492,28 @@ export default function GuestAccess({ memorial, token }: any) {
               )}
             </div>
 
+            <audio id="memorial-music" loop>
+              <source src="/music/memorial.mp3" type="audio/mpeg" />
+            </audio>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-4">
+              <button
+                type="button"
+                onClick={() => setIsSlideshowPlaying(!isSlideshowPlaying)}
+                className="rounded-full border border-[#d4af37]/40 px-5 py-2 text-sm text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+              >
+                {isSlideshowPlaying ? "Pause Slideshow" : "Play Slideshow"}
+              </button>
+
+              <button
+                type="button"
+                onClick={toggleMusic}
+                className="rounded-full border border-[#d4af37]/40 px-5 py-2 text-sm text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+              >
+                {isMusicPlaying ? "Pause Music" : "Play Music"}
+              </button>
+            </div>
+
             {galleryPhotos.length > 1 && (
               <div className="grid grid-cols-4 gap-3 bg-[#081827]/80 p-4 md:grid-cols-6">
                 {galleryPhotos.map((photo: string, index: number) => (
@@ -475,7 +529,7 @@ export default function GuestAccess({ memorial, token }: any) {
                   >
                     <img
                       src={photo}
-                      alt={`Gallery thumbnail ${index + 1}`}
+                      alt={`Slideshow thumbnail ${index + 1}`}
                       className="h-20 w-full object-cover md:h-24"
                     />
                   </button>
