@@ -20,7 +20,7 @@ export default async function MemorialPage({ params }: any) {
   }
 
   const [galleryRows]: any = await db.execute(
-    "SELECT file_url FROM memorial_gallery WHERE memorial_id = ? ORDER BY id ASC"
+    "SELECT file_url FROM memorial_gallery WHERE memorial_id = ? ORDER BY id ASC",
     [memorial.id]
   );
 
