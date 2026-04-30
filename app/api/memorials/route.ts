@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
     const creator_email = formData.get("creator_email") as string;
     const creator_phone = formData.get("creator_phone") as string;
     const creator_relationship = formData.get("creator_relationship") as string;
+    const password = formData.get("password") as string;
 
     const full_name = formData.get("full_name") as string;
     const birth_date = formData.get("birth_date") as string;
@@ -59,21 +61,31 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!userId && (!password || password.length < 6)) {
+      return NextResponse.json(
+        { error: "Please create a password with at least 6 characters." },
+        { status: 400 }
+      );
+    }
+
     if (!userId && creator_email) {
       const [existingUsers]: any = await db.execute(
         "SELECT * FROM users WHERE email = ? LIMIT 1",
-        [creator_email]
+        [creator_email.trim()]
       );
 
       if (existingUsers.length > 0) {
         userId = existingUsers[0].id;
       } else {
-        const generatedPassword =
-          Math.random().toString(36).substring(2, 10) + Date.now();
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         const [newUser]: any = await db.execute(
           "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-          [creator_name || full_name || "Memorial Owner", creator_email, generatedPassword]
+          [
+            creator_name || full_name || "Memorial Owner",
+            creator_email.trim(),
+            hashedPassword,
+          ]
         );
 
         userId = newUser.insertId;
