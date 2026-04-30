@@ -1,4 +1,5 @@
 "use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
@@ -82,6 +83,21 @@ export default function GuestAccess({ memorial, token }: any) {
     setAllowed(true);
   };
 
+  const shareMemorial = async () => {
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: `${memorial.full_name} Memorial`,
+        text: `Visit the memorial of ${memorial.full_name}`,
+        url: shareUrl,
+      });
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert("Memorial link copied to clipboard");
+    }
+  };
+
   const openCandleModal = () => {
     setTributeName(messageName || guestName);
     setTributeMessage("");
@@ -128,13 +144,8 @@ export default function GuestAccess({ memorial, token }: any) {
     setShowFlowerModal(false);
     setTributeMessage("");
 
-    if (type === "candle") {
-      alert("Candle lit 🕯️");
-    }
-
-    if (type === "flower") {
-      alert("Flower planted 🌸");
-    }
+    if (type === "candle") alert("Candle lit 🕯️");
+    if (type === "flower") alert("Flower planted 🌸");
   };
 
   const submitGuestbook = async () => {
@@ -338,6 +349,15 @@ export default function GuestAccess({ memorial, token }: any) {
         </p>
 
         <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
+
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={shareMemorial}
+            className="rounded-xl border border-[#d4af37]/40 bg-[#111a2e] px-6 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+          >
+            Share Memorial
+          </button>
+        </div>
       </section>
 
       {memorial.cover_photo && (
