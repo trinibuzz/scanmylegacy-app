@@ -52,6 +52,34 @@ export async function POST(req: Request) {
     const memorialMusic = formData.get("memorial_music") as File | null;
     const galleryPhotos = formData.getAll("gallery_photos") as File[];
 
+    if (!creator_name || !creator_email || !full_name) {
+      return NextResponse.json(
+        { error: "Creator name, creator email, and memorial full name are required." },
+        { status: 400 }
+      );
+    }
+
+    if (!userId && creator_email) {
+      const [existingUsers]: any = await db.execute(
+        "SELECT * FROM users WHERE email = ? LIMIT 1",
+        [creator_email]
+      );
+
+      if (existingUsers.length > 0) {
+        userId = existingUsers[0].id;
+      } else {
+        const generatedPassword =
+          Math.random().toString(36).substring(2, 10) + Date.now();
+
+        const [newUser]: any = await db.execute(
+          "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+          [creator_name || full_name || "Memorial Owner", creator_email, generatedPassword]
+        );
+
+        userId = newUser.insertId;
+      }
+    }
+
     const uploadsRoot = path.join(process.cwd(), "public", "uploads");
     const musicRoot = path.join(uploadsRoot, "music");
     const galleryRoot = path.join(uploadsRoot, "gallery");
@@ -161,10 +189,10 @@ export async function POST(req: Request) {
         const photoPath = `/uploads/gallery/${fileName}`;
 
         await db.execute(
-  `INSERT INTO memorial_gallery (memorial_id, file_url)
-   VALUES (?, ?)`,
-  [memorialId, photoPath]
-);
+          `INSERT INTO memorial_gallery (memorial_id, file_url)
+           VALUES (?, ?)`,
+          [memorialId, photoPath]
+        );
       }
     }
 
@@ -202,6 +230,7 @@ export async function POST(req: Request) {
       success: true,
       memorial: {
         id: memorialId,
+        user_id: userId,
         full_name,
         creator_name,
         creator_email,
