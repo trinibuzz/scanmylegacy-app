@@ -49,28 +49,50 @@ export async function POST(req: Request) {
     const referral_code = formData.get("referral_code") as string;
 
     const coverPhoto = formData.get("cover_photo") as File | null;
+    const memorialMusic = formData.get("memorial_music") as File | null;
+    const galleryPhotos = formData.getAll("gallery_photos") as File[];
+
+    const uploadsRoot = path.join(process.cwd(), "public", "uploads");
+    const musicRoot = path.join(uploadsRoot, "music");
+    const galleryRoot = path.join(uploadsRoot, "gallery");
+
+    await mkdir(uploadsRoot, { recursive: true });
+    await mkdir(musicRoot, { recursive: true });
+    await mkdir(galleryRoot, { recursive: true });
 
     let coverPhotoPath = "";
+    let memorialMusicPath = "";
 
     if (coverPhoto && coverPhoto.size > 0) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
-
-      const uploadDir =
-        "/home/u569694274/domains/deepskyblue-donkey-850675.hostingersite.com/public_html/uploads";
-
-      await mkdir(uploadDir, { recursive: true });
 
       const safeName = coverPhoto.name
         .toLowerCase()
         .replace(/[^a-z0-9.]/g, "-");
 
       const fileName = `${Date.now()}-${safeName}`;
-      const filePath = path.join(uploadDir, fileName);
+      const filePath = path.join(uploadsRoot, fileName);
 
       await writeFile(filePath, buffer);
 
       coverPhotoPath = `/uploads/${fileName}`;
+    }
+
+    if (memorialMusic && memorialMusic.size > 0) {
+      const bytes = await memorialMusic.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      const safeName = memorialMusic.name
+        .toLowerCase()
+        .replace(/[^a-z0-9.]/g, "-");
+
+      const fileName = `${Date.now()}-${safeName}`;
+      const filePath = path.join(musicRoot, fileName);
+
+      await writeFile(filePath, buffer);
+
+      memorialMusicPath = `/uploads/music/${fileName}`;
     }
 
     const inviteToken =
@@ -93,12 +115,13 @@ export async function POST(req: Request) {
         biography,
         invite_token,
         cover_photo,
+        memorial_music,
         package_slug,
         package_name,
         package_price,
         payment_status
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         creator_name || "",
@@ -111,6 +134,7 @@ export async function POST(req: Request) {
         biography || "",
         inviteToken,
         coverPhotoPath,
+        memorialMusicPath,
         package_slug,
         package_name,
         package_price,
@@ -119,6 +143,30 @@ export async function POST(req: Request) {
     );
 
     const memorialId = result.insertId;
+
+    for (const photo of galleryPhotos) {
+      if (photo && photo.size > 0) {
+        const bytes = await photo.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
+        const safeName = photo.name
+          .toLowerCase()
+          .replace(/[^a-z0-9.]/g, "-");
+
+        const fileName = `${Date.now()}-${safeName}`;
+        const filePath = path.join(galleryRoot, fileName);
+
+        await writeFile(filePath, buffer);
+
+        const photoPath = `/uploads/gallery/${fileName}`;
+
+        await db.execute(
+          `INSERT INTO memorial_gallery (memorial_id, image_path)
+           VALUES (?, ?)`,
+          [memorialId, photoPath]
+        );
+      }
+    }
 
     if (referral_code) {
       const [affiliateRows]: any = await db.execute(
