@@ -22,6 +22,7 @@ function CreateMemorialForm() {
   const [biography, setBiography] = useState("");
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [memorialMusic, setMemorialMusic] = useState<File | null>(null);
+  const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
 
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
 
@@ -60,6 +61,10 @@ function CreateMemorialForm() {
     if (memorialMusic) {
       formData.append("memorial_music", memorialMusic);
     }
+
+    galleryPhotos.forEach((photo) => {
+      formData.append("gallery_photos", photo);
+    });
 
     try {
       setLoading(true);
@@ -230,6 +235,34 @@ function CreateMemorialForm() {
               <p className="mt-2 text-xs text-gray-500">
                 This image appears at the top of the memorial page.
               </p>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
+              <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                Memorial Gallery Photos (Optional)
+              </label>
+
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) =>
+                  setGalleryPhotos(Array.from(e.target.files || []))
+                }
+                className={inputStyle}
+              />
+
+              <p className="mt-2 text-xs text-gray-500">
+                Upload multiple family photos for the memorial slideshow.
+                Recommended: JPG, PNG, or WEBP.
+              </p>
+
+              {galleryPhotos.length > 0 && (
+                <p className="mt-2 text-xs text-[#d4af37]">
+                  {galleryPhotos.length} gallery photo
+                  {galleryPhotos.length === 1 ? "" : "s"} selected.
+                </p>
+              )}
             </div>
 
             <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
