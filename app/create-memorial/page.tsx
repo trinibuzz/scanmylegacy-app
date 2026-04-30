@@ -15,6 +15,8 @@ function CreateMemorialForm() {
   const [creatorEmail, setCreatorEmail] = useState("");
   const [creatorPhone, setCreatorPhone] = useState("");
   const [creatorRelationship, setCreatorRelationship] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -25,12 +27,21 @@ function CreateMemorialForm() {
   const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
 
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
-
   const [enableReminders, setEnableReminders] = useState(false);
 
   const submitMemorial = async () => {
     if (!creatorName || !creatorEmail || !fullName) {
       alert("Please complete all required fields.");
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      alert("Please create a password with at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      alert("Passwords do not match.");
       return;
     }
 
@@ -40,6 +51,7 @@ function CreateMemorialForm() {
     formData.append("creator_email", creatorEmail);
     formData.append("creator_phone", creatorPhone);
     formData.append("creator_relationship", creatorRelationship);
+    formData.append("password", password);
 
     formData.append("full_name", fullName);
     formData.append("birth_date", birthDate);
@@ -51,7 +63,6 @@ function CreateMemorialForm() {
     formData.append("package_price", packagePrice);
 
     formData.append("enable_family_tree", enableFamilyTree ? "1" : "0");
-
     formData.append("enable_reminders", enableReminders ? "1" : "0");
 
     if (coverPhoto) {
@@ -161,6 +172,7 @@ function CreateMemorialForm() {
               />
 
               <input
+                type="email"
                 placeholder="Owner / Creator Email Address"
                 value={creatorEmail}
                 onChange={(e) => setCreatorEmail(e.target.value)}
@@ -181,6 +193,39 @@ function CreateMemorialForm() {
                 className={inputStyle}
               />
             </div>
+          </div>
+
+          {/* Account Password */}
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
+              Create Your Login Password
+            </h2>
+
+            <p className="mb-4 text-sm text-gray-400">
+              This password lets you log in later to manage this memorial.
+            </p>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                type="password"
+                placeholder="Create Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputStyle}
+              />
+
+              <input
+                type="password"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className={inputStyle}
+              />
+            </div>
+
+            <p className="mt-2 text-xs text-gray-500">
+              Password must be at least 6 characters.
+            </p>
           </div>
 
           {/* Memorial Details */}
