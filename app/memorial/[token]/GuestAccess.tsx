@@ -1,5 +1,4 @@
 "use client";
-"use client";
 
 import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
@@ -331,46 +330,50 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       )}
 
-      <section className="px-6 py-16 text-center">
-        <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
-          In Loving Memory
-        </p>
-
-        <h1 className="mb-4 font-serif text-5xl">{memorial.full_name}</h1>
-
-        <p className="mb-8 text-gray-400">
-          {memorial.birth_date
-            ? new Date(memorial.birth_date).toLocaleDateString()
-            : ""}
-          {" — "}
-          {memorial.death_date
-            ? new Date(memorial.death_date).toLocaleDateString()
-            : ""}
-        </p>
-
-        <div className="mx-auto h-px max-w-xl bg-[#d4af37]/40" />
-
-        <div className="mt-6 flex justify-center">
-          <button
-            onClick={shareMemorial}
-            className="rounded-xl border border-[#d4af37]/40 bg-[#111a2e] px-6 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
-          >
-            Share Memorial
-          </button>
-        </div>
-      </section>
-
-      {memorial.cover_photo && (
-        <div className="mx-auto mb-10 max-w-3xl px-6">
+      <section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden text-center">
+        {memorial.cover_photo && (
           <img
             src={memorial.cover_photo}
             alt={memorial.full_name}
-            className="h-[380px] w-full rounded-2xl border border-[#1f2a44] object-cover shadow-2xl"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-        </div>
-      )}
+        )}
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-6 pb-10 md:grid-cols-3">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-[#0b1320]/75 to-[#0b1320]" />
+
+        <div className="relative z-10 mx-auto max-w-4xl px-6">
+          <p className="mb-4 text-sm uppercase tracking-[0.35em] text-[#d4af37]">
+            In Loving Memory
+          </p>
+
+          <h1 className="mb-6 font-serif text-5xl md:text-7xl">
+            {memorial.full_name}
+          </h1>
+
+          <p className="mb-8 text-lg text-gray-300">
+            {memorial.birth_date
+              ? new Date(memorial.birth_date).toLocaleDateString()
+              : ""}
+            {" — "}
+            {memorial.death_date
+              ? new Date(memorial.death_date).toLocaleDateString()
+              : ""}
+          </p>
+
+          <div className="mx-auto mb-8 h-px max-w-md bg-[#d4af37]/40" />
+
+          <div className="flex justify-center">
+            <button
+              onClick={shareMemorial}
+              className="rounded-xl border border-[#d4af37]/40 bg-black/30 px-6 py-3 text-sm font-semibold text-[#d4af37] backdrop-blur transition hover:bg-[#d4af37] hover:text-black"
+            >
+              Share Memorial
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-5xl gap-6 px-6 py-14 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Life Story
