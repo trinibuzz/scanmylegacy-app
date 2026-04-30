@@ -19,6 +19,13 @@ export default async function MemorialPage({ params }: any) {
     );
   }
 
+  const [galleryRows]: any = await db.execute(
+    "SELECT image_path FROM memorial_gallery WHERE memorial_id = ? ORDER BY id ASC",
+    [memorial.id]
+  );
+
+  memorial.gallery_photos = galleryRows.map((photo: any) => photo.image_path);
+
   const price = Number(memorial.package_price || 0);
   const isPaidPackage = price > 0;
   const isActive =
