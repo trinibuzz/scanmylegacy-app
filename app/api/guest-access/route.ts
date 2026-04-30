@@ -6,7 +6,10 @@ export async function POST(req: Request) {
     const { token, guest_name, guest_email } = await req.json();
 
     if (!token || !guest_name) {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Name is required" },
+        { status: 400 }
+      );
     }
 
     const [rows]: any = await db.execute(
@@ -15,18 +18,34 @@ export async function POST(req: Request) {
     );
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Invalid memorial link" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Invalid memorial link" },
+        { status: 404 }
+      );
     }
 
     const memorial = rows[0];
 
     await db.execute(
-      "INSERT INTO memorial_guests (memorial_id, guest_name, guest_email) VALUES (?, ?, ?)",
+      `INSERT INTO memorial_guests 
+       (memorial_id, guest_name, guest_email) 
+       VALUES (?, ?, ?)`,
       [memorial.id, guest_name, guest_email || null]
     );
 
-    return NextResponse.json({ success: true });
+    const [countRows]: any = await db.execute(
+      "SELECT COUNT(*) AS total FROM memorial_guests WHERE memorial_id = ?",
+      [memorial.id]
+    );
+
+    return NextResponse.json({
+      success: true,
+      visitor_count: countRows[0]?.total || 0,
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }
