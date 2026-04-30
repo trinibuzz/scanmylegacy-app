@@ -161,8 +161,8 @@ export async function POST(req: Request) {
         const photoPath = `/uploads/gallery/${fileName}`;
 
         await db.execute(
-          `INSERT INTO memorial_gallery (memorial_id, image_path)
-           VALUES (?, ?)`,
+         INSERT INTO memorial_gallery (memorial_id, file_url)
+VALUES (?, ?)
           [memorialId, photoPath]
         );
       }
