@@ -492,10 +492,12 @@ export default function GuestAccess({ memorial, token }: any) {
               )}
             </div>
 
-            <audio id="memorial-music" loop>
-              <source src="/music/memorial.mp3" type="audio/mpeg" />
-            </audio>
-
+ <audio id="memorial-music" loop>
+  <source
+    src={memorial.memorial_music || "/music/memorial.mp3"}
+    type="audio/mpeg"
+  />
+</audio>
             <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-4">
               <button
                 type="button"
