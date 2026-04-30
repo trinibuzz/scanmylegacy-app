@@ -9,6 +9,7 @@ export default function GuestAccess({ memorial, token }: any) {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [visitorCount, setVisitorCount] = useState(0);
+  const [activePhoto, setActivePhoto] = useState(0);
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -35,6 +36,13 @@ export default function GuestAccess({ memorial, token }: any) {
     hibiscus: "🌺",
     orchid: "💮",
   };
+
+  const galleryPhotos =
+    memorial.gallery_photos && memorial.gallery_photos.length > 0
+      ? memorial.gallery_photos
+      : memorial.cover_photo
+      ? [memorial.cover_photo]
+      : [];
 
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
@@ -382,6 +390,96 @@ export default function GuestAccess({ memorial, token }: any) {
           </div>
         </div>
       </section>
+
+      {galleryPhotos.length > 0 && (
+        <section className="mx-auto max-w-6xl px-6 py-14">
+          <div className="mb-8 text-center">
+            <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              Treasured Moments
+            </p>
+
+            <h2 className="font-serif text-3xl md:text-4xl">
+              Memorial Gallery
+            </h2>
+
+            <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-400">
+              A beautiful collection of memories, moments, and stories shared
+              with family and friends.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
+            <div className="relative aspect-[16/9] bg-black">
+              <img
+                src={galleryPhotos[activePhoto]}
+                alt="Memorial gallery"
+                className="h-full w-full object-cover transition duration-700"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+              {galleryPhotos.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActivePhoto(
+                        activePhoto === 0
+                          ? galleryPhotos.length - 1
+                          : activePhoto - 1
+                      )
+                    }
+                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full border border-[#d4af37]/40 bg-black/50 px-4 py-3 text-2xl text-white backdrop-blur transition hover:bg-[#d4af37] hover:text-black"
+                  >
+                    ‹
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActivePhoto(
+                        activePhoto === galleryPhotos.length - 1
+                          ? 0
+                          : activePhoto + 1
+                      )
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full border border-[#d4af37]/40 bg-black/50 px-4 py-3 text-2xl text-white backdrop-blur transition hover:bg-[#d4af37] hover:text-black"
+                  >
+                    ›
+                  </button>
+
+                  <div className="absolute bottom-4 left-0 right-0 text-center text-sm text-gray-200">
+                    {activePhoto + 1} / {galleryPhotos.length}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {galleryPhotos.length > 1 && (
+              <div className="grid grid-cols-4 gap-3 bg-[#081827]/80 p-4 md:grid-cols-6">
+                {galleryPhotos.map((photo: string, index: number) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setActivePhoto(index)}
+                    className={`overflow-hidden rounded-xl border transition ${
+                      activePhoto === index
+                        ? "scale-105 border-[#d4af37]"
+                        : "border-white/10 opacity-70 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={photo}
+                      alt={`Gallery thumbnail ${index + 1}`}
+                      className="h-20 w-full object-cover md:h-24"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto grid max-w-5xl gap-6 px-6 py-14 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
