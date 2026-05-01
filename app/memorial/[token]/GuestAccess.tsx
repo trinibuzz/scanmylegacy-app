@@ -856,4 +856,4 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
     </main>
   );
-}const
+}
