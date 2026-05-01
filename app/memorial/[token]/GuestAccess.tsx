@@ -53,6 +53,106 @@ export default function GuestAccess({ memorial, token }: any) {
     setMenuOpen(false);
   };
 
+  const MemorialHeader = ({ simple = false }: { simple?: boolean }) => (
+    <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+        <a href={simple ? "/" : "#top"} onClick={closeMenu} className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
+            🕯️
+          </div>
+
+          <div>
+            <div className="font-serif text-lg font-bold leading-tight text-white sm:text-xl">
+              Scan<span className="text-[#d4af37]">My</span>Legacy
+            </div>
+            <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
+              Memorial Tribute
+            </div>
+          </div>
+        </a>
+
+        {!simple && (
+          <nav className="hidden items-center gap-5 text-sm lg:flex">
+            {navItems.map((item) => (
+              <a key={item.href} href={item.href} className="text-gray-300 transition hover:text-[#d4af37]">
+                {item.label}
+              </a>
+            ))}
+
+            <button type="button" onClick={shareMemorial} className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90">
+              Share
+            </button>
+          </nav>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen(!menuOpen)}
+          className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-2xl leading-none text-[#d4af37] lg:hidden"
+          aria-label="Open memorial menu"
+        >
+          {menuOpen ? "×" : "☰"}
+        </button>
+      </div>
+
+      {menuOpen && (
+        <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4 lg:hidden">
+          <div className="mx-auto grid max-w-7xl gap-2">
+            {simple ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    document.getElementById("enter-memorial-box")?.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+                >
+                  Enter Memorial
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    shareMemorial();
+                  }}
+                  className="rounded-xl bg-[#d4af37] px-4 py-3 text-left text-sm font-semibold text-black"
+                >
+                  Share Memorial
+                </button>
+              </>
+            ) : (
+              <>
+                {navItems.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+                  >
+                    {item.label}
+                  </a>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    shareMemorial();
+                  }}
+                  className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
+                >
+                  Share Memorial
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </header>
+  );
+
   const galleryPhotos =
     memorial.gallery_photos && memorial.gallery_photos.length > 0
       ? memorial.gallery_photos
@@ -249,68 +349,16 @@ export default function GuestAccess({ memorial, token }: any) {
     (reaction) => reaction.reaction_type === "flower"
   );
 
-if (!allowed) {
-  return (
-    <main className="min-h-screen bg-[#0b1320] text-white">
-      <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <a href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
-              🕯️
-            </div>
+  if (!allowed) {
+    return (
+      <main className="min-h-screen bg-[#0b1320] text-white">
+        <MemorialHeader simple />
 
-            <div>
-              <div className="font-serif text-lg font-bold leading-tight text-white sm:text-xl">
-                Scan<span className="text-[#d4af37]">My</span>Legacy
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
-                Memorial Tribute
-              </div>
-            </div>
-          </a>
-
-          <button
-            type="button"
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-2xl leading-none text-[#d4af37]"
-            aria-label="Open memorial menu"
+        <section className="flex min-h-screen items-center justify-center p-6 pt-28">
+          <div
+            id="enter-memorial-box"
+            className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8"
           >
-            {menuOpen ? "×" : "☰"}
-          </button>
-        </div>
-
-        {menuOpen && (
-          <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4">
-            <div className="mx-auto grid max-w-7xl gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  document
-                    .getElementById("enter-memorial-box")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
-              >
-                Enter Memorial
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  shareMemorial();
-                }}
-                className="rounded-xl bg-[#d4af37] px-4 py-3 text-left text-sm font-semibold text-black"
-              >
-                Share Memorial
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
-
-      <section className="flex min-h-screen items-center justify-center p-6 pt-28">        <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8">
           <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
             You are invited to view
           </p>
@@ -343,92 +391,15 @@ if (!allowed) {
           >
             Enter Memorial
           </button>
-        </div>
+          </div>
+        </section>
       </main>
     );
   }
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
-      <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          <a
-            href="#top"
-            onClick={closeMenu}
-            className="flex items-center gap-3"
-          >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
-              🕯️
-            </div>
-
-            <div>
-              <div className="font-serif text-lg font-bold leading-tight text-white sm:text-xl">
-                Scan<span className="text-[#d4af37]">My</span>Legacy
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
-                Memorial Tribute
-              </div>
-            </div>
-          </a>
-
-          <nav className="hidden items-center gap-5 text-sm lg:flex">
-            {navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="text-gray-300 transition hover:text-[#d4af37]"
-              >
-                {item.label}
-              </a>
-            ))}
-
-            <button
-              type="button"
-              onClick={shareMemorial}
-              className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
-            >
-              Share
-            </button>
-          </nav>
-
-          <button
-            type="button"
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-2xl leading-none text-[#d4af37] lg:hidden"
-            aria-label="Open memorial menu"
-          >
-            {menuOpen ? "×" : "☰"}
-          </button>
-        </div>
-
-        {menuOpen && (
-          <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4 lg:hidden">
-            <div className="mx-auto grid max-w-7xl gap-2">
-              {navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
-                >
-                  {item.label}
-                </a>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => {
-                  closeMenu();
-                  shareMemorial();
-                }}
-                className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
-              >
-                Share Memorial
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
+      <MemorialHeader />
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
