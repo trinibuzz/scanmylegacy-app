@@ -249,10 +249,68 @@ export default function GuestAccess({ memorial, token }: any) {
     (reaction) => reaction.reaction_type === "flower"
   );
 
-  if (!allowed) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-        <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8">
+if (!allowed) {
+  return (
+    <main className="min-h-screen bg-[#0b1320] text-white">
+      <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          <a href="/" className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
+              🕯️
+            </div>
+
+            <div>
+              <div className="font-serif text-lg font-bold leading-tight text-white sm:text-xl">
+                Scan<span className="text-[#d4af37]">My</span>Legacy
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
+                Memorial Tribute
+              </div>
+            </div>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-2xl leading-none text-[#d4af37]"
+            aria-label="Open memorial menu"
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
+        </div>
+
+        {menuOpen && (
+          <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4">
+            <div className="mx-auto grid max-w-7xl gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  document
+                    .getElementById("enter-memorial-box")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+              >
+                Enter Memorial
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  shareMemorial();
+                }}
+                className="rounded-xl bg-[#d4af37] px-4 py-3 text-left text-sm font-semibold text-black"
+              >
+                Share Memorial
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      <section className="flex min-h-screen items-center justify-center p-6 pt-28">        <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8">
           <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
             You are invited to view
           </p>
