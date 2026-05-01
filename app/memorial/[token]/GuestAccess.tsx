@@ -49,6 +49,14 @@ export default function GuestAccess({ memorial, token }: any) {
     { label: "Guestbook", href: "#guestbook" },
   ];
 
+  const publicNavItems = [
+    { label: "Home", href: "/" },
+    { label: "About Us", href: "/about" },
+    { label: "Packages", href: "/packages" },
+    { label: "FAQ", href: "/faq" },
+    { label: "Login", href: "/login" },
+  ];
+
   const closeMenu = () => {
     setMenuOpen(false);
   };
@@ -71,19 +79,36 @@ export default function GuestAccess({ memorial, token }: any) {
           </div>
         </a>
 
-        {!simple && (
-          <nav className="hidden items-center gap-5 text-sm lg:flex">
-            {navItems.map((item) => (
-              <a key={item.href} href={item.href} className="text-gray-300 transition hover:text-[#d4af37]">
+        <nav className="hidden items-center gap-5 text-sm lg:flex">
+          {publicNavItems.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="text-gray-300 transition hover:text-[#d4af37]"
+            >
+              {item.label}
+            </a>
+          ))}
+
+          {!simple &&
+            navItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-gray-300 transition hover:text-[#d4af37]"
+              >
                 {item.label}
               </a>
             ))}
 
-            <button type="button" onClick={shareMemorial} className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90">
-              Share
-            </button>
-          </nav>
-        )}
+          <button
+            type="button"
+            onClick={shareMemorial}
+            className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
+          >
+            Share
+          </button>
+        </nav>
 
         <button
           type="button"
@@ -98,55 +123,53 @@ export default function GuestAccess({ memorial, token }: any) {
       {menuOpen && (
         <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4 lg:hidden">
           <div className="mx-auto grid max-w-7xl gap-2">
+            {publicNavItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={closeMenu}
+                className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+              >
+                {item.label}
+              </a>
+            ))}
+
             {simple ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    document.getElementById("enter-memorial-box")?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
-                >
-                  Enter Memorial
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    shareMemorial();
-                  }}
-                  className="rounded-xl bg-[#d4af37] px-4 py-3 text-left text-sm font-semibold text-black"
-                >
-                  Share Memorial
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  document
+                    .getElementById("enter-memorial-box")
+                    ?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="rounded-xl border border-[#d4af37]/40 bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-[#d4af37] transition hover:border-[#d4af37]"
+              >
+                Enter Memorial
+              </button>
             ) : (
-              <>
-                {navItems.map((item) => (
-                  <a
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMenu}
-                    className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
-                  >
-                    {item.label}
-                  </a>
-                ))}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeMenu();
-                    shareMemorial();
-                  }}
-                  className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
+              navItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
                 >
-                  Share Memorial
-                </button>
-              </>
+                  {item.label}
+                </a>
+              ))
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                shareMemorial();
+              }}
+              className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
+            >
+              Share Memorial
+            </button>
           </div>
         </div>
       )}
