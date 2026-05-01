@@ -282,7 +282,8 @@ export default async function Dashboard() {
                             </a>
 
                             <a
-                              href={`/admin/memorial/${m.id}`}
+                              <a
+                                href={`/dashboard/memorial/${m.id}`}
                               className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
                             >
                               Manage Memorial
