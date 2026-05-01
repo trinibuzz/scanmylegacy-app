@@ -24,7 +24,11 @@ export default async function MemorialPage({ params }: any) {
     [memorial.id]
   );
 
-  memorial.gallery_photos = galleryRows.map((photo: any) => photo.file_url);
+  memorial.gallery_photos = galleryRows.map((photo: any) =>
+  photo.file_url.startsWith("/")
+    ? photo.file_url
+    : `/${photo.file_url}`
+);
 
   const price = Number(memorial.package_price || 0);
   const isPaidPackage = price > 0;
