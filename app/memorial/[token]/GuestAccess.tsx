@@ -276,35 +276,36 @@ export default function GuestAccess({ memorial, token }: any) {
     );
   }
 
-  return (
-    <main className="min-h-screen bg-[#0b1320] text-white">
-  <style>{`
-    @keyframes memorialCinematic {
-      0% {
-        opacity: 0;
-        transform: scale(1);
-        filter: blur(8px);
-      }
+return (
+  <>
+    <style jsx>{`
+      @keyframes memorialCinematic {
+        0% {
+          opacity: 0;
+          transform: scale(1);
+          filter: blur(8px);
+        }
 
-      20% {
-        opacity: 1;
-        filter: blur(0px);
-      }
+        20% {
+          opacity: 1;
+          filter: blur(0px);
+        }
 
-      80% {
-        opacity: 1;
-        transform: scale(1.08);
-        filter: blur(0px);
-      }
+        80% {
+          opacity: 1;
+          transform: scale(1.08);
+          filter: blur(0px);
+        }
 
-      100% {
-        opacity: 0;
-        transform: scale(1.12);
-        filter: blur(4px);
+        100% {
+          opacity: 0;
+          transform: scale(1.12);
+          filter: blur(4px);
+        }
       }
-    }
-  `}</style>
-      {showCandleModal && (
+    `}</style>
+
+    <main className="min-h-screen bg-[#0b1320] text-white">      {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
             <div className="mb-4 text-center text-5xl">🕯️</div>
@@ -787,5 +788,6 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       </section>
     </main>
+    </>
   );
 }
