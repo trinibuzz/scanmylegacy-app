@@ -273,7 +273,7 @@ export default async function Dashboard() {
                         </div>
 
                         {m.invite_token && (
-                          <div className="mt-5 flex flex-wrap gap-3">
+                          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                             <a
                               href={`/memorial/${m.invite_token}`}
                               className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"

@@ -419,7 +419,7 @@ export default function GuestAccess({ memorial, token }: any) {
             In Loving Memory
           </p>
 
-          <h1 className="mb-6 font-serif text-5xl md:text-7xl">
+          className="mb-6 font-serif text-3xl sm:text-4xl md:text-7xl"
             {memorial.full_name}
           </h1>
 
@@ -455,7 +455,7 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
 
       {galleryPhotos.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-14">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14">
           <div className="mb-8 text-center">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
               Treasured Moments
@@ -571,7 +571,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-6 py-14 md:grid-cols-3">
+      <section className="mx-auto grid max-w-5xl gap-6 px-6 py-14 grid-cols-1 sm:grid-cols-2 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Life Story
@@ -705,7 +705,7 @@ export default function GuestAccess({ memorial, token }: any) {
             onChange={(e) => setMessage(e.target.value)}
           />
 
-          <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <div className="mb-4 grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
               Photo
               <input
