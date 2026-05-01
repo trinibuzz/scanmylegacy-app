@@ -292,7 +292,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
-      <header className="sticky top-0 z-40 border-b border-[#d4af37]/20 bg-[#0b1320]/95 shadow-lg backdrop-blur">
+      <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <a
             href="#top"
@@ -470,7 +470,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       )}
 
-      <section id="top" className="relative flex min-h-[70vh] items-center justify-center overflow-hidden text-center">
+      <section id="top" className="relative flex min-h-[70vh] items-center justify-center overflow-hidden pt-20 text-center">
         {memorial.cover_photo && (
           <img
             src={memorial.cover_photo}
@@ -856,4 +856,4 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
     </main>
   );
-}
+}const
