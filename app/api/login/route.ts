@@ -23,6 +23,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid login" }, { status: 401 });
     }
 
+    const now = new Date();
+    const trialEndsAt = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
+
+    const trialExpired =
+      user.plan === "free" && trialEndsAt && now > trialEndsAt;
+
+    if (trialExpired) {
+      await db.execute(
+        "UPDATE users SET is_active = 0 WHERE id = ?",
+        [user.id]
+      );
+    }
+
     const sessionId =
       Math.random().toString(36).substring(2) + Date.now();
 
@@ -31,7 +44,11 @@ export async function POST(req: Request) {
       [sessionId, user.id]
     );
 
-    const response = NextResponse.json({ success: true });
+    const response = NextResponse.json({
+      success: true,
+      trial_expired: trialExpired,
+      redirect_url: trialExpired ? "/packages?expired=1" : "/dashboard",
+    });
 
     response.cookies.set("session", sessionId, {
       httpOnly: true,
