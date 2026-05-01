@@ -12,6 +12,7 @@ export default function GuestAccess({ memorial, token }: any) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -37,6 +38,19 @@ export default function GuestAccess({ memorial, token }: any) {
     lily: "🌸",
     hibiscus: "🌺",
     orchid: "💮",
+  };
+
+  const navItems = [
+    { label: "Slideshow", href: "#slideshow" },
+    { label: "Life Story", href: "#life-story" },
+    { label: "Tributes", href: "#tributes" },
+    { label: "Family Tree", href: "#family-tree" },
+    { label: "Chat", href: "#chat" },
+    { label: "Guestbook", href: "#guestbook" },
+  ];
+
+  const closeMenu = () => {
+    setMenuOpen(false);
   };
 
   const galleryPhotos =
@@ -238,7 +252,7 @@ export default function GuestAccess({ memorial, token }: any) {
   if (!allowed) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-        <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8">
+        <div className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8">
           <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
             You are invited to view
           </p>
@@ -278,6 +292,85 @@ export default function GuestAccess({ memorial, token }: any) {
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
+      <header className="sticky top-0 z-40 border-b border-[#d4af37]/20 bg-[#0b1320]/95 shadow-lg backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+          <a
+            href="#top"
+            onClick={closeMenu}
+            className="flex items-center gap-3"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
+              🕯️
+            </div>
+
+            <div>
+              <div className="font-serif text-lg font-bold leading-tight text-white sm:text-xl">
+                Scan<span className="text-[#d4af37]">My</span>Legacy
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
+                Memorial Tribute
+              </div>
+            </div>
+          </a>
+
+          <nav className="hidden items-center gap-5 text-sm lg:flex">
+            {navItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-gray-300 transition hover:text-[#d4af37]"
+              >
+                {item.label}
+              </a>
+            ))}
+
+            <button
+              type="button"
+              onClick={shareMemorial}
+              className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
+            >
+              Share
+            </button>
+          </nav>
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-2xl leading-none text-[#d4af37] lg:hidden"
+            aria-label="Open memorial menu"
+          >
+            {menuOpen ? "×" : "☰"}
+          </button>
+        </div>
+
+        {menuOpen && (
+          <div className="border-t border-[#d4af37]/20 bg-[#081827] px-4 py-4 lg:hidden">
+            <div className="mx-auto grid max-w-7xl gap-2">
+              {navItems.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={closeMenu}
+                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+                >
+                  {item.label}
+                </a>
+              ))}
+
+              <button
+                type="button"
+                onClick={() => {
+                  closeMenu();
+                  shareMemorial();
+                }}
+                className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
+              >
+                Share Memorial
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
@@ -301,7 +394,7 @@ export default function GuestAccess({ memorial, token }: any) {
               onChange={(e) => setTributeMessage(e.target.value)}
             />
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => submitReaction("candle")}
                 className="flex-1 rounded bg-[#d4af37] py-3 font-semibold text-black"
@@ -358,7 +451,7 @@ export default function GuestAccess({ memorial, token }: any) {
               onChange={(e) => setTributeMessage(e.target.value)}
             />
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 onClick={() => submitReaction("flower")}
                 className="flex-1 rounded bg-[#d4af37] py-3 font-semibold text-black"
@@ -377,7 +470,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       )}
 
-      <section className="relative flex min-h-[70vh] items-center justify-center overflow-hidden text-center">
+      <section id="top" className="relative flex min-h-[70vh] items-center justify-center overflow-hidden text-center">
         {memorial.cover_photo && (
           <img
             src={memorial.cover_photo}
@@ -393,7 +486,7 @@ export default function GuestAccess({ memorial, token }: any) {
             In Loving Memory
           </p>
 
-          <h1 className="mb-6 font-serif text-5xl md:text-7xl">
+          <h1 className="mb-6 font-serif text-3xl sm:text-4xl md:text-7xl">
             {memorial.full_name}
           </h1>
 
@@ -429,7 +522,7 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
 
       {galleryPhotos.length > 0 && (
-        <section className="mx-auto max-w-6xl px-6 py-14">
+        <section id="slideshow" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
           <div className="mb-8 text-center">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
               Treasured Moments
@@ -447,7 +540,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
           <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
             <div className="relative aspect-[16/9] bg-black">
-<img
+              <img
                 key={activePhoto}
                 src={galleryPhotos[activePhoto]}
                 alt="Memorial slideshow"
@@ -517,7 +610,7 @@ export default function GuestAccess({ memorial, token }: any) {
             </div>
 
             {galleryPhotos.length > 1 && (
-              <div className="grid grid-cols-4 gap-3 bg-[#081827]/80 p-4 md:grid-cols-6">
+              <div className="grid grid-cols-3 gap-2 bg-[#081827]/80 p-3 sm:grid-cols-4 sm:gap-3 sm:p-4 md:grid-cols-6">
                 {galleryPhotos.map((photo: string, index: number) => (
                   <button
                     key={index}
@@ -532,7 +625,7 @@ export default function GuestAccess({ memorial, token }: any) {
                     <img
                       src={photo}
                       alt={`Slideshow thumbnail ${index + 1}`}
-                      className="h-20 w-full object-cover md:h-24"
+                      className="h-16 w-full object-cover sm:h-20 md:h-24"
                     />
                   </button>
                 ))}
@@ -542,7 +635,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
-      <section className="mx-auto grid max-w-5xl gap-6 px-6 py-14 md:grid-cols-3">
+      <section id="life-story" className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Life Story
@@ -578,7 +671,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-10 md:grid-cols-2">
+      <section id="tributes" className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2">
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
           <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
             Candle Room
@@ -649,14 +742,18 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       </section>
 
-      <FamilyTreeView token={token} />
+      <section id="family-tree" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <FamilyTreeView token={token} />
+      </section>
 
-      <ChatBox
-        memorialId={memorial.id}
-        guestName={messageName || guestName}
-      />
+      <section id="chat" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+        <ChatBox
+          memorialId={memorial.id}
+          guestName={messageName || guestName}
+        />
+      </section>
 
-      <section className="mx-auto max-w-5xl px-6 pb-16">
+      <section id="guestbook" className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Guestbook
@@ -676,7 +773,7 @@ export default function GuestAccess({ memorial, token }: any) {
             onChange={(e) => setMessage(e.target.value)}
           />
 
-          <div className="mb-4 grid gap-3 md:grid-cols-3">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
             <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
               Photo
               <input
