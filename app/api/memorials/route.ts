@@ -107,7 +107,8 @@ export async function POST(req: Request) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const safeName = coverPhoto.name
+      const originalName = coverPhoto.name.split("/").pop() || "cover-photo";
+      const safeName = originalName
         .toLowerCase()
         .replace(/[^a-z0-9.]/g, "-");
 
@@ -123,7 +124,8 @@ export async function POST(req: Request) {
       const bytes = await memorialMusic.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const safeName = memorialMusic.name
+      const originalName = memorialMusic.name.split("/").pop() || "memorial-music";
+      const safeName = originalName
         .toLowerCase()
         .replace(/[^a-z0-9.]/g, "-");
 
@@ -189,7 +191,8 @@ export async function POST(req: Request) {
         const bytes = await photo.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const safeName = photo.name
+        const originalName = photo.name.split("/").pop() || "gallery-photo";
+        const safeName = originalName
           .toLowerCase()
           .replace(/[^a-z0-9.]/g, "-");
 
@@ -200,10 +203,14 @@ export async function POST(req: Request) {
 
         const photoPath = `/uploads/gallery/${fileName}`;
 
+        const cleanPhotoPath = photoPath
+          .replace(/(\/uploads\/gallery\/)+/g, "/uploads/gallery/")
+          .replace(/^uploads\/gallery\//, "/uploads/gallery/");
+
         await db.execute(
           `INSERT INTO memorial_gallery (memorial_id, file_url)
            VALUES (?, ?)`,
-          [memorialId, photoPath]
+          [memorialId, cleanPhotoPath]
         );
       }
     }
