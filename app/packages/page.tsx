@@ -1,9 +1,10 @@
 export default function PackagesPage({
   searchParams,
 }: {
-  searchParams?: { ref?: string };
+  searchParams?: { ref?: string; expired?: string };
 }) {
   const refCode = searchParams?.ref || "";
+  const expiredTrial = searchParams?.expired === "1";
 
   const packages = [
     {
@@ -84,6 +85,24 @@ export default function PackagesPage({
         <p className="mb-6 text-center text-gray-400">
           Choose the legacy plan that best honors your loved one.
         </p>
+
+        {expiredTrial && (
+          <div className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[#d4af37]/50 bg-[#111a2e] p-8 text-center shadow-2xl">
+            <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              Keep Their Story Alive
+            </p>
+
+            <h2 className="mb-4 font-serif text-3xl text-white">
+              Your Free Memorial Trial Has Ended
+            </h2>
+
+            <p className="mx-auto max-w-2xl text-gray-300">
+              Your free memorial trial has ended, but the memories don’t have
+              to stop here. Choose a package to continue celebrating,
+              preserving, and sharing your loved one’s legacy.
+            </p>
+          </div>
+        )}
 
         {refCode && (
           <div className="mx-auto mb-10 max-w-xl rounded-xl border border-[#d4af37]/40 bg-[#111a2e] p-4 text-center">
