@@ -80,7 +80,7 @@ export default function GuestAccess({ memorial, token }: any) {
       setActivePhoto((current) =>
         current === galleryPhotos.length - 1 ? 0 : current + 1
       );
-    }, 5000);
+    }, 8000);
 
     return () => clearInterval(interval);
   }, [isSlideshowPlaying, galleryPhotos.length]);
@@ -278,6 +278,32 @@ export default function GuestAccess({ memorial, token }: any) {
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
+  <style>{`
+    @keyframes memorialCinematic {
+      0% {
+        opacity: 0;
+        transform: scale(1);
+        filter: blur(8px);
+      }
+
+      20% {
+        opacity: 1;
+        filter: blur(0px);
+      }
+
+      80% {
+        opacity: 1;
+        transform: scale(1.08);
+        filter: blur(0px);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.12);
+        filter: blur(4px);
+      }
+    }
+  `}</style>
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
@@ -447,12 +473,15 @@ export default function GuestAccess({ memorial, token }: any) {
 
           <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
             <div className="relative aspect-[16/9] bg-black">
-              <img
-                src={galleryPhotos[activePhoto]}
-                alt="Memorial slideshow"
-                className="h-full w-full object-cover transition duration-700"
-              />
-
+<img
+  key={activePhoto}
+  src={galleryPhotos[activePhoto]}
+  alt="Memorial slideshow"
+  className="h-full w-full object-cover"
+  style={{
+    animation: "memorialCinematic 8s ease-in-out",
+  }}
+/>
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
               {galleryPhotos.length > 1 && (
