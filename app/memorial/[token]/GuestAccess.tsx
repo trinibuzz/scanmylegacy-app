@@ -447,6 +447,9 @@ export default function GuestAccess({ memorial, token }: any) {
 
           <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
             <div className="relative aspect-[16/9] bg-black">
+            <div className="absolute left-4 top-4 z-20 rounded bg-black/70 px-3 py-2 text-xs text-white">
+  {galleryPhotos[activePhoto]}
+</div>
               <img
                 src={galleryPhotos[activePhoto]}
                 alt="Memorial slideshow"
