@@ -5,36 +5,41 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-const uploadDir =
-  "/home/u569694274/domains/deepskyblue-donkey-850675.hostingersite.com/public_html/uploads";
-
 function safeFileName(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9.]/g, "-");
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9.]/g, "-")
+    .replace(/-+/g, "-");
 }
 
-async function saveFile(file: File | null, folderPrefix: string) {
+async function saveFile(file: File | null, folderName: string) {
   if (!file || file.size === 0) return "";
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
+  const uploadDir = path.join(process.cwd(), "public", "uploads", "guestbook", folderName);
   await mkdir(uploadDir, { recursive: true });
 
-  const fileName = `${Date.now()}-${folderPrefix}-${safeFileName(file.name)}`;
+  const originalName = file.name.split("/").pop() || "guestbook-file";
+  const fileName = `${Date.now()}-${safeFileName(originalName)}`;
   const filePath = path.join(uploadDir, fileName);
 
   await writeFile(filePath, buffer);
 
-  return `/uploads/${fileName}`;
+  return `/uploads/guestbook/${folderName}/${fileName}`;
 }
 
 export async function GET(req: Request) {
   try {
-    const url = new URL(req.url);
-    const token = url.searchParams.get("token");
+    const { searchParams } = new URL(req.url);
+    const token = searchParams.get("token");
 
     if (!token) {
-      return NextResponse.json({ error: "Missing token" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing memorial token." },
+        { status: 400 }
+      );
     }
 
     const [memorialRows]: any = await db.execute(
@@ -43,14 +48,27 @@ export async function GET(req: Request) {
     );
 
     if (memorialRows.length === 0) {
-      return NextResponse.json({ error: "Invalid memorial" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Memorial not found." },
+        { status: 404 }
+      );
     }
 
-    const memorial = memorialRows[0];
+    const memorialId = memorialRows[0].id;
 
     const [entries]: any = await db.execute(
-      "SELECT * FROM guestbook_entries WHERE memorial_id = ? ORDER BY created_at DESC",
-      [memorial.id]
+      `SELECT
+        id,
+        guest_name,
+        message,
+        image_url,
+        video_url,
+        audio_url,
+        created_at
+       FROM guestbook_entries
+       WHERE memorial_id = ?
+       ORDER BY created_at DESC`,
+      [memorialId]
     );
 
     return NextResponse.json({ entries });
@@ -71,9 +89,23 @@ export async function POST(req: Request) {
     const video = formData.get("video") as File | null;
     const audio = formData.get("audio") as File | null;
 
-    if (!token || !guest_name) {
+    if (!token) {
       return NextResponse.json(
-        { error: "Name is required" },
+        { error: "Missing memorial token." },
+        { status: 400 }
+      );
+    }
+
+    if (!guest_name || !guest_name.trim()) {
+      return NextResponse.json(
+        { error: "Please enter your name." },
+        { status: 400 }
+      );
+    }
+
+    if (!message || !message.trim()) {
+      return NextResponse.json(
+        { error: "Please write a tribute message." },
         { status: 400 }
       );
     }
@@ -84,18 +116,30 @@ export async function POST(req: Request) {
     );
 
     if (memorialRows.length === 0) {
-      return NextResponse.json({ error: "Invalid memorial" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Memorial not found." },
+        { status: 404 }
+      );
     }
 
-    const memorial = memorialRows[0];
+    const memorialId = memorialRows[0].id;
 
-    const imageUrl = await saveFile(image, "image");
-    const videoUrl = await saveFile(video, "video");
+    const imageUrl = await saveFile(image, "images");
+    const videoUrl = await saveFile(video, "videos");
     const audioUrl = await saveFile(audio, "audio");
 
     await db.execute(
-      "INSERT INTO guestbook_entries (memorial_id, guest_name, message, image_url, video_url, audio_url) VALUES (?, ?, ?, ?, ?, ?)",
-      [memorial.id, guest_name, message, imageUrl, videoUrl, audioUrl]
+      `INSERT INTO guestbook_entries
+       (memorial_id, guest_name, message, image_url, video_url, audio_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        memorialId,
+        guest_name.trim(),
+        message.trim(),
+        imageUrl || null,
+        videoUrl || null,
+        audioUrl || null,
+      ]
     );
 
     return NextResponse.json({ success: true });
