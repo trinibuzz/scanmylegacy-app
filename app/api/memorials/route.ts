@@ -79,12 +79,20 @@ export async function POST(req: Request) {
       } else {
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
         const [newUser]: any = await db.execute(
-          "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
+          `INSERT INTO users 
+          (name, email, password, plan, trial_ends_at, is_active) 
+          VALUES (?, ?, ?, ?, ?, ?)`,
           [
             creator_name || full_name || "Memorial Owner",
             creator_email.trim(),
             hashedPassword,
+            "free",
+            trialEndsAt,
+            1,
           ]
         );
 
@@ -108,14 +116,10 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(bytes);
 
       const originalName = coverPhoto.name.split("/").pop() || "cover-photo";
-      const safeName = originalName
-        .toLowerCase()
-        .replace(/[^a-z0-9.]/g, "-");
+      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
 
       const fileName = `${Date.now()}-${safeName}`;
-      const filePath = path.join(uploadsRoot, fileName);
-
-      await writeFile(filePath, buffer);
+      await writeFile(path.join(uploadsRoot, fileName), buffer);
 
       coverPhotoPath = `/uploads/${fileName}`;
     }
@@ -125,14 +129,10 @@ export async function POST(req: Request) {
       const buffer = Buffer.from(bytes);
 
       const originalName = memorialMusic.name.split("/").pop() || "memorial-music";
-      const safeName = originalName
-        .toLowerCase()
-        .replace(/[^a-z0-9.]/g, "-");
+      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
 
       const fileName = `${Date.now()}-${safeName}`;
-      const filePath = path.join(musicRoot, fileName);
-
-      await writeFile(filePath, buffer);
+      await writeFile(path.join(musicRoot, fileName), buffer);
 
       memorialMusicPath = `/uploads/music/${fileName}`;
     }
@@ -192,55 +192,17 @@ export async function POST(req: Request) {
         const buffer = Buffer.from(bytes);
 
         const originalName = photo.name.split("/").pop() || "gallery-photo";
-        const safeName = originalName
-          .toLowerCase()
-          .replace(/[^a-z0-9.]/g, "-");
+        const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
 
         const fileName = `${Date.now()}-${safeName}`;
-        const filePath = path.join(galleryRoot, fileName);
-
-        await writeFile(filePath, buffer);
+        await writeFile(path.join(galleryRoot, fileName), buffer);
 
         const photoPath = `/uploads/gallery/${fileName}`;
-
-        const cleanPhotoPath = photoPath
-          .replace(/(\/uploads\/gallery\/)+/g, "/uploads/gallery/")
-          .replace(/^uploads\/gallery\//, "/uploads/gallery/");
 
         await db.execute(
           `INSERT INTO memorial_gallery (memorial_id, file_url)
            VALUES (?, ?)`,
-          [memorialId, cleanPhotoPath]
-        );
-      }
-    }
-
-    if (referral_code) {
-      const [affiliateRows]: any = await db.execute(
-        "SELECT * FROM affiliates WHERE referral_code = ? AND status = 'active' LIMIT 1",
-        [referral_code]
-      );
-
-      if (affiliateRows.length > 0) {
-        const affiliate = affiliateRows[0];
-
-        const commissionRate = Number(affiliate.commission_rate || 10);
-        const packagePriceNumber = Number(package_price || 0);
-        const commissionAmount = (packagePriceNumber * commissionRate) / 100;
-
-        await db.execute(
-          `INSERT INTO affiliate_referrals
-           (affiliate_id, memorial_id, customer_name, package_name, package_price, commission_amount, payment_status)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            affiliate.id,
-            memorialId,
-            creator_name || full_name,
-            package_name,
-            packagePriceNumber,
-            commissionAmount,
-            paymentStatus === "free" ? "free" : "pending",
-          ]
+          [memorialId, photoPath]
         );
       }
     }
