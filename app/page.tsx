@@ -1,6 +1,10 @@
+import SiteHeader from "./components/SiteHeader";
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
+      <SiteHeader />
+
       {/* HERO */}
       <section className="relative min-h-[75vh] overflow-hidden">
         <img
@@ -17,27 +21,27 @@ export default function HomePage() {
               ScanMy Legacy
             </p>
 
-            <h1 className="mb-6 font-serif text-5xl leading-tight md:text-6xl">
+            <h1 className="mb-6 font-serif text-4xl leading-tight sm:text-5xl md:text-6xl">
               Their story deserves to live forever.
             </h1>
 
-            <p className="mb-8 text-lg leading-relaxed text-gray-300">
+            <p className="mb-8 text-base leading-relaxed text-gray-300 sm:text-lg">
               Preserve photos, videos, voice notes, stories, and heartfelt
               tributes in one private digital memorial your family can visit
               anytime.
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
               <a
                 href="/packages"
-                className="rounded-lg bg-[#d4af37] px-6 py-3 font-semibold text-black"
+                className="rounded-lg bg-[#d4af37] px-6 py-3 text-center font-semibold text-black"
               >
                 Create a Legacy
               </a>
 
               <a
                 href="/login"
-                className="rounded-lg border border-[#d4af37] px-6 py-3 text-[#d4af37]"
+                className="rounded-lg border border-[#d4af37] px-6 py-3 text-center text-[#d4af37]"
               >
                 Login
               </a>
@@ -47,18 +51,18 @@ export default function HomePage() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="mx-auto max-w-7xl px-6 py-20">
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
         <div className="mb-12 text-center">
           <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
             How It Works
           </p>
 
-          <h2 className="font-serif text-4xl">
+          <h2 className="font-serif text-3xl sm:text-4xl">
             Create a lasting tribute in minutes
           </h2>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {[
             {
               title: "Choose a Package",
@@ -99,19 +103,19 @@ export default function HomePage() {
       </section>
 
       {/* FEATURES */}
-      <section className="bg-[#111a2e] px-6 py-20">
+      <section className="bg-[#111a2e] px-4 py-16 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
               Features
             </p>
 
-            <h2 className="font-serif text-4xl">
+            <h2 className="font-serif text-3xl sm:text-4xl">
               Everything families need to remember
             </h2>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
             {[
               "Stories & Tributes",
               "Guestbook",
@@ -135,11 +139,11 @@ export default function HomePage() {
       </section>
 
       {/* TRUST SECTION */}
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-20 md:grid-cols-2">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-2">
         <img
           src="/images/about-hero.jpg"
           alt="Family remembering a loved one"
-          className="h-[420px] w-full rounded-2xl object-cover shadow-2xl"
+          className="h-[320px] w-full rounded-2xl object-cover shadow-2xl sm:h-[420px]"
         />
 
         <div className="flex flex-col justify-center">
@@ -147,7 +151,7 @@ export default function HomePage() {
             Built For Families
           </p>
 
-          <h2 className="mb-6 font-serif text-4xl">
+          <h2 className="mb-6 font-serif text-3xl sm:text-4xl">
             Because love should never be forgotten.
           </h2>
 
@@ -168,8 +172,8 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-[#1f2a44] px-6 py-16 text-center">
-        <h2 className="mb-4 font-serif text-4xl">
+      <section className="border-t border-[#1f2a44] px-4 py-16 text-center sm:px-6">
+        <h2 className="mb-4 font-serif text-3xl sm:text-4xl">
           Start preserving a legacy today.
         </h2>
 
