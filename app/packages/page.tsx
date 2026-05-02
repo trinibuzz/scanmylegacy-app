@@ -1,12 +1,17 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import SiteHeader from "../components/SiteHeader";
 
-export default function PackagesPage({
-  searchParams,
-}: {
-  searchParams?: { ref?: string; expired?: string };
-}) {
-  const refCode = searchParams?.ref || "";
-  const expiredTrial = searchParams?.expired === "1";
+export default function PackagesPage() {
+  const [refCode, setRefCode] = useState("");
+  const [expiredTrial, setExpiredTrial] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRefCode(params.get("ref") || "");
+    setExpiredTrial(params.get("expired") === "1");
+  }, []);
 
   const packages = [
     {
@@ -67,7 +72,7 @@ export default function PackagesPage({
     },
   ];
 
-  const buildPackageLink = (pkg: any) => {
+  const buildPackageLink = (pkg: { slug: string; amount: number }) => {
     const base = `/create-memorial?package=${pkg.slug}&price=${pkg.amount}`;
 
     if (!refCode) {
@@ -84,7 +89,7 @@ export default function PackagesPage({
       {/* HERO */}
       <section className="relative min-h-[68vh] overflow-hidden bg-[#26447F]">
         <img
-          src="/images/packages-hero.jpg"
+          src="/images/home-hero.jpg"
           alt="ScanMyLegacy packages"
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
