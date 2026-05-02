@@ -8,6 +8,7 @@ body {
   color: white;
   font-family: Arial, Helvetica, sans-serif;
 }
+
 @keyframes memorialCinematic {
   0% {
     opacity: 0;
@@ -35,4 +36,19 @@ body {
 
 .memorial-cinematic {
   animation: memorialCinematic 8s ease-in-out;
+}
+
+/* Make date picker calendar icon visible on dark fields */
+input[type="date"] {
+  color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  filter: invert(77%) sepia(48%) saturate(540%) hue-rotate(5deg)
+    brightness(95%) contrast(92%);
+  background-color: #d4af37;
+  border-radius: 9999px;
+  padding: 4px;
 }
