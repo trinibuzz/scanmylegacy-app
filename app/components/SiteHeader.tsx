@@ -16,7 +16,7 @@ export default function SiteHeader() {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-[9999] border-b border-[#d4af37]/25 bg-[#0b1320]/95 shadow-xl backdrop-blur">
+    <header className="sticky top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#26447F] shadow-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
         <a href="/" onClick={closeMenu} className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
