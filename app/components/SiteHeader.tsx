@@ -9,7 +9,7 @@ export default function SiteHeader() {
     { label: "Home", href: "/" },
     { label: "About Us", href: "/about" },
     { label: "Packages", href: "/packages" },
-    { label: "FAQ", href: "/faq" },
+    { label: "FAQ", href: "/faqs" },
     { label: "Login", href: "/login" },
   ];
 
