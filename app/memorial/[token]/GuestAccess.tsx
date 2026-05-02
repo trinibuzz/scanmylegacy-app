@@ -596,7 +596,7 @@ export default function GuestAccess({ memorial, token }: any) {
                 key={activePhoto}
                 src={galleryPhotos[activePhoto]}
                 alt="Memorial slideshow"
-                className="h-full w-full object-cover memorial-cinematic"
+                className="h-full w-full object-contain memorial-cinematic"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
