@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import SiteHeader from "../components/SiteHeader";
 
 function CreateMemorialForm() {
   const searchParams = useSearchParams();
@@ -28,6 +29,14 @@ function CreateMemorialForm() {
 
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
   const [enableReminders, setEnableReminders] = useState(false);
+
+  const packageName = packageSlug
+    ? packageSlug
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase())
+    : "No package selected";
+
+  const isPaidPackage = Number(packagePrice) > 0;
 
   const submitMemorial = async () => {
     if (!creatorName || !creatorEmail || !fullName) {
@@ -126,46 +135,110 @@ function CreateMemorialForm() {
   };
 
   const inputStyle =
-    "w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white placeholder:text-gray-500";
+    "w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/40";
+
+  const fileInputStyle =
+    "w-full cursor-pointer rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-[#d4af37] file:px-4 file:py-2 file:font-semibold file:text-[#0b1320] hover:border-[#d4af37]/60";
 
   return (
-    <main className="min-h-screen bg-[#0b1320] px-6 py-12 text-white">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-10 text-center">
-          <h1 className="font-serif text-4xl font-bold text-[#d4af37]">
-            Begin the Journey
-          </h1>
+    <main className="min-h-screen bg-[#0b1320] text-white">
+      <SiteHeader />
 
-          <p className="mt-3 text-gray-400">
-            Create a dedicated digital sanctuary for your loved one.
+      {/* HERO */}
+      <section className="relative min-h-[62vh] overflow-hidden bg-[#26447F]">
+        <img
+          src="/images/create-hero.jpg"
+          alt="Create a ScanMyLegacy memorial"
+          className="absolute inset-0 h-full w-full object-cover opacity-30"
+        />
+
+        <div className="absolute inset-0 bg-gradient-to-r from-[#26447F]/95 via-[#26447F]/84 to-[#0b1320]/50" />
+
+        <div className="relative z-10 mx-auto flex min-h-[62vh] max-w-7xl items-center px-6 py-20 sm:px-8">
+          <div className="max-w-3xl">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[#d4af37]">
+              Create Memorial
+            </p>
+
+            <h1 className="font-serif text-4xl font-bold leading-tight text-[#f8f5ee] sm:text-5xl md:text-7xl">
+              Begin the journey of preserving a legacy.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
+              Create a private digital sanctuary with photos, stories, music,
+              tributes, and memories your family can visit anytime.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FORM */}
+      <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
+        <div className="mb-10 text-center">
+          <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
+            Memorial Setup
+          </p>
+
+          <h2 className="font-serif text-3xl sm:text-4xl">
+            Tell us about you and your loved one
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+            Complete the details below. You can always manage and add more
+            memories from your dashboard later.
           </p>
         </div>
 
         <div className="space-y-8">
           {/* Selected Package */}
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
-              Selected Package
-            </h2>
+          <div className="rounded-3xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl sm:p-8">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                  Selected Package
+                </p>
 
-            <input readOnly value={packageSlug} className={inputStyle} />
+                <h3 className="font-serif text-3xl text-white">
+                  {packageName}
+                </h3>
+              </div>
 
-            <input
-              readOnly
-              value={`$${packagePrice}`}
-              className={`mt-4 ${inputStyle}`}
-            />
+              <div className="rounded-2xl border border-[#d4af37]/30 bg-[#0b1320] px-6 py-4 text-center">
+                <p className="text-sm text-gray-400">Package Price</p>
+                <p className="text-2xl font-bold text-[#d4af37]">
+                  ${packagePrice}
+                </p>
+              </div>
+            </div>
+
+            {!packageSlug && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+                No package was selected. Please return to the Packages page and
+                choose a plan before continuing.
+              </p>
+            )}
           </div>
 
           {/* Your Information */}
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
-              Your Information
-            </h2>
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Step 1
+              </p>
+
+              <h2 className="font-serif text-2xl sm:text-3xl">
+                Your Information
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-400">
+                This creates your owner account so you can manage the memorial
+                later.
+              </p>
+            </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <input
-                placeholder="Owner / Creator Full Name"
+                placeholder="Owner / Creator Full Name *"
                 value={creatorName}
                 onChange={(e) => setCreatorName(e.target.value)}
                 className={inputStyle}
@@ -173,7 +246,7 @@ function CreateMemorialForm() {
 
               <input
                 type="email"
-                placeholder="Owner / Creator Email Address"
+                placeholder="Owner / Creator Email Address *"
                 value={creatorEmail}
                 onChange={(e) => setCreatorEmail(e.target.value)}
                 className={inputStyle}
@@ -196,19 +269,25 @@ function CreateMemorialForm() {
           </div>
 
           {/* Account Password */}
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
-              Create Your Login Password
-            </h2>
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Step 2
+              </p>
 
-            <p className="mb-4 text-sm text-gray-400">
-              This password lets you log in later to manage this memorial.
-            </p>
+              <h2 className="font-serif text-2xl sm:text-3xl">
+                Create Your Login Password
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-400">
+                This password lets you log in later to manage this memorial.
+              </p>
+            </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <input
                 type="password"
-                placeholder="Create Password"
+                placeholder="Create Password *"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className={inputStyle}
@@ -216,56 +295,76 @@ function CreateMemorialForm() {
 
               <input
                 type="password"
-                placeholder="Confirm Password"
+                placeholder="Confirm Password *"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className={inputStyle}
               />
             </div>
 
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-gray-500">
               Password must be at least 6 characters.
             </p>
           </div>
 
           {/* Memorial Details */}
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
-              Memorial Details
-            </h2>
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Step 3
+              </p>
+
+              <h2 className="font-serif text-2xl sm:text-3xl">
+                Memorial Details
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-400">
+                Add the first details for your loved one’s memorial page.
+              </p>
+            </div>
 
             <input
-              placeholder="Loved One’s Full Name"
+              placeholder="Loved One’s Full Name *"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className={inputStyle}
             />
 
             <div className="mt-4 grid gap-4 md:grid-cols-2">
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                className={inputStyle}
-              />
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className={inputStyle}
+                />
+              </div>
 
-              <input
-                type="date"
-                value={deathDate}
-                onChange={(e) => setDeathDate(e.target.value)}
-                className={inputStyle}
-              />
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                  Date of Passing
+                </label>
+                <input
+                  type="date"
+                  value={deathDate}
+                  onChange={(e) => setDeathDate(e.target.value)}
+                  className={inputStyle}
+                />
+              </div>
             </div>
 
             <textarea
               placeholder="Tell Their Story (Biography)"
               value={biography}
               onChange={(e) => setBiography(e.target.value)}
-              rows={5}
+              rows={6}
               className={`mt-4 ${inputStyle}`}
             />
 
-            <div className="mt-4">
+            <div className="mt-6 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
               <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
                 Cover Photo
               </label>
@@ -274,17 +373,23 @@ function CreateMemorialForm() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => setCoverPhoto(e.target.files?.[0] || null)}
-                className={inputStyle}
+                className={fileInputStyle}
               />
 
               <p className="mt-2 text-xs text-gray-500">
                 This image appears at the top of the memorial page.
               </p>
+
+              {coverPhoto && (
+                <p className="mt-2 text-xs text-[#d4af37]">
+                  Selected: {coverPhoto.name}
+                </p>
+              )}
             </div>
 
-            <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
+            <div className="mt-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
               <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                Memorial Gallery Photos (Optional)
+                Memorial Gallery Photos Optional
               </label>
 
               <input
@@ -294,7 +399,7 @@ function CreateMemorialForm() {
                 onChange={(e) =>
                   setGalleryPhotos(Array.from(e.target.files || []))
                 }
-                className={inputStyle}
+                className={fileInputStyle}
               />
 
               <p className="mt-2 text-xs text-gray-500">
@@ -310,59 +415,100 @@ function CreateMemorialForm() {
               )}
             </div>
 
-            <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
+            <div className="mt-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
               <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                Memorial Song (Optional)
+                Memorial Song Optional
               </label>
 
               <input
                 type="file"
                 accept="audio/mpeg,audio/mp3,audio/wav,audio/mp4,audio/x-m4a,.mp3,.wav,.m4a"
                 onChange={(e) => setMemorialMusic(e.target.files?.[0] || null)}
-                className={inputStyle}
+                className={fileInputStyle}
               />
 
               <p className="mt-2 text-xs text-gray-500">
                 Upload a special song, instrumental, or voice note for the
                 slideshow. Recommended file types: MP3, WAV, or M4A.
               </p>
+
+              {memorialMusic && (
+                <p className="mt-2 text-xs text-[#d4af37]">
+                  Selected: {memorialMusic.name}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Additional Options */}
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-            <h2 className="mb-4 text-xl font-semibold text-[#d4af37]">
-              Additional Options
-            </h2>
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Step 4
+              </p>
 
-            <label className="mb-4 flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={enableFamilyTree}
-                onChange={(e) => setEnableFamilyTree(e.target.checked)}
-              />
-              Enable Family Tree
-            </label>
+              <h2 className="font-serif text-2xl sm:text-3xl">
+                Additional Options
+              </h2>
+            </div>
 
-            <label className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked={enableReminders}
-                onChange={(e) => setEnableReminders(e.target.checked)}
-              />
-              Enable Anniversary Reminders
-            </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5 transition hover:border-[#d4af37]/60">
+                <input
+                  type="checkbox"
+                  checked={enableFamilyTree}
+                  onChange={(e) => setEnableFamilyTree(e.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block font-semibold text-[#d4af37]">
+                    Enable Family Tree
+                  </span>
+                  <span className="mt-1 block text-sm leading-relaxed text-gray-400">
+                    Add a family tree section to help future generations
+                    understand their roots.
+                  </span>
+                </span>
+              </label>
+
+              <label className="flex cursor-pointer items-start gap-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5 transition hover:border-[#d4af37]/60">
+                <input
+                  type="checkbox"
+                  checked={enableReminders}
+                  onChange={(e) => setEnableReminders(e.target.checked)}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block font-semibold text-[#d4af37]">
+                    Enable Anniversary Reminders
+                  </span>
+                  <span className="mt-1 block text-sm leading-relaxed text-gray-400">
+                    Prepare this memorial for future remembrance reminders when
+                    email reminders are enabled.
+                  </span>
+                </span>
+              </label>
+            </div>
           </div>
 
           <button
             onClick={submitMemorial}
-            disabled={loading}
-            className="w-full rounded-lg bg-[#d4af37] py-4 font-semibold text-black"
+            disabled={loading || !packageSlug}
+            className="w-full rounded-full bg-[#d4af37] py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Creating Memorial..." : "Continue to Payment"}
+            {loading
+              ? "Creating Memorial..."
+              : isPaidPackage
+                ? "Continue to Payment"
+                : "Create Free Memorial"}
           </button>
+
+          <p className="text-center text-sm text-gray-500">
+            You’ll be able to manage this memorial from your dashboard after it
+            is created.
+          </p>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
