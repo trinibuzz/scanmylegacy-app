@@ -1,3 +1,6 @@
+import SiteHeader from "../components/SiteHeader";
+<main className="min-h-screen bg-[#0b1320] text-white">
+  </main>
 export default function PackagesPage({
   searchParams,
 }: {
