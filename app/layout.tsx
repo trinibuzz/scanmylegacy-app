@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import Header from "../components/Header";
+import LiveChat from "./components/LiveChat";
 
 export const metadata: Metadata = {
   title: "ScanMyLegacy",
-  description: "Preserve memories. Celebrate lives. Keep their legacy alive forever.",
+  description:
+    "Preserve memories. Celebrate lives. Keep their legacy alive forever.",
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-  <LiveChat />
 }>) {
   return (
     <html lang="en">
       <body>
-        <Header />
         {children}
+        <LiveChat />
       </body>
     </html>
   );
