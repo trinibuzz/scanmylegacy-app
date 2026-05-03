@@ -9,8 +9,10 @@ function CreateMemorialForm() {
 
   const packageSlug = searchParams.get("package") || "";
   const packagePrice = searchParams.get("price") || "0";
+  const refCode = searchParams.get("ref") || "";
 
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [creatorName, setCreatorName] = useState("");
   const [creatorEmail, setCreatorEmail] = useState("");
@@ -38,19 +40,36 @@ function CreateMemorialForm() {
 
   const isPaidPackage = Number(packagePrice) > 0;
 
+  const showError = (message: string) => {
+    setErrorMessage(message);
+
+    setTimeout(() => {
+      document
+        .getElementById("create-memorial-error")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+  };
+
   const submitMemorial = async () => {
+    setErrorMessage("");
+
     if (!creatorName || !creatorEmail || !fullName) {
-      alert("Please complete all required fields.");
+      showError("Please complete all required fields before continuing.");
       return;
     }
 
     if (!password || password.length < 6) {
-      alert("Please create a password with at least 6 characters.");
+      showError("Please create a password with at least 6 characters.");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match.");
+      showError("Passwords do not match. Please check and try again.");
+      return;
+    }
+
+    if (!packageSlug) {
+      showError("No package was selected. Please return to the Packages page and choose a plan.");
       return;
     }
 
@@ -70,6 +89,7 @@ function CreateMemorialForm() {
     formData.append("package_slug", packageSlug);
     formData.append("package_name", packageSlug.replace(/-/g, " "));
     formData.append("package_price", packagePrice);
+    formData.append("referral_code", refCode);
 
     formData.append("enable_family_tree", enableFamilyTree ? "1" : "0");
     formData.append("enable_reminders", enableReminders ? "1" : "0");
@@ -97,7 +117,7 @@ function CreateMemorialForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to create memorial");
+        showError(data.error || "Failed to create memorial. Please try again.");
         return;
       }
 
@@ -118,7 +138,7 @@ function CreateMemorialForm() {
         const paymentData = await paymentRes.json();
 
         if (!paymentRes.ok) {
-          alert(paymentData.error || "Payment setup failed");
+          showError(paymentData.error || "Payment setup failed. Please try again.");
           return;
         }
 
@@ -128,14 +148,15 @@ function CreateMemorialForm() {
 
       window.location.href = "/dashboard";
     } catch {
-      alert("Something went wrong.");
+      showError("Something went wrong. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
-const inputStyle =
-  "w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/40 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-100";
+  const inputStyle =
+    "w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/40 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-100";
+
   const fileInputStyle =
     "w-full cursor-pointer rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-[#d4af37] file:px-4 file:py-2 file:font-semibold file:text-[#0b1320] hover:border-[#d4af37]/60";
 
@@ -188,6 +209,30 @@ const inputStyle =
           </p>
         </div>
 
+        {errorMessage && (
+          <div
+            id="create-memorial-error"
+            className="mb-8 rounded-2xl border border-red-400/40 bg-red-500/10 p-5 text-center shadow-xl"
+          >
+            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-red-300">
+              Please Check This
+            </p>
+
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-red-100 sm:text-base">
+              {errorMessage}
+            </p>
+
+            {errorMessage.toLowerCase().includes("free trial") && (
+              <a
+                href="/packages?expired=1"
+                className="mt-4 inline-block rounded-full bg-[#d4af37] px-6 py-3 text-sm font-semibold text-[#0b1320] transition hover:bg-[#f0c94a]"
+              >
+                Choose a Paid Package
+              </a>
+            )}
+          </div>
+        )}
+
         <div className="space-y-8">
           {/* Selected Package */}
           <div className="rounded-3xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl sm:p-8">
@@ -214,6 +259,13 @@ const inputStyle =
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                 No package was selected. Please return to the Packages page and
                 choose a plan before continuing.
+              </p>
+            )}
+
+            {refCode && (
+              <p className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-sm text-gray-300">
+                Referral code applied:{" "}
+                <span className="font-mono text-[#d4af37]">{refCode}</span>
               </p>
             )}
           </div>
@@ -498,8 +550,8 @@ const inputStyle =
             {loading
               ? "Creating Memorial..."
               : isPaidPackage
-                ? "Continue to Payment"
-                : "Create Free Memorial"}
+              ? "Continue to Payment"
+              : "Create Free Memorial"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
