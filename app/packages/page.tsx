@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import SiteHeader from "../components/SiteHeader";
 
-export default function PackagesPage() {
-  const [refCode, setRefCode] = useState("");
-  const [expiredTrial, setExpiredTrial] = useState(false);
+function PackagesContent() {
+  const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setRefCode(params.get("ref") || "");
-    setExpiredTrial(params.get("expired") === "1");
-  }, []);
+  const refCode = searchParams.get("ref") || "";
+  const expiredTrial = searchParams.get("expired") === "1";
 
   const packages = [
     {
@@ -137,7 +134,6 @@ export default function PackagesPage() {
         {refCode && (
           <div className="mx-auto mb-10 max-w-xl rounded-xl border border-[#d4af37]/40 bg-[#111a2e] p-4 text-center">
             <p className="text-sm text-gray-400">Referral code applied:</p>
-
             <p className="font-mono text-[#d4af37]">{refCode}</p>
           </div>
         )}
@@ -151,16 +147,24 @@ export default function PackagesPage() {
                 key={pkg.slug}
                 className={`flex min-h-[520px] flex-col rounded-2xl border p-8 shadow-xl transition ${
                   freeTrialBlocked
-                    ? "border-gray-700 bg-[#111a2e]/50 opacity-60"
+                    ? "border-gray-700 bg-[#111a2e]/40 opacity-50"
                     : "border-[#d4af37]/40 bg-[#111a2e] hover:-translate-y-1 hover:border-[#d4af37]"
                 }`}
               >
                 <div className="text-center">
-                  <h2 className="mb-3 font-serif text-2xl text-white">
+                  <h2
+                    className={`mb-3 font-serif text-2xl ${
+                      freeTrialBlocked ? "text-gray-400" : "text-white"
+                    }`}
+                  >
                     {pkg.name}
                   </h2>
 
-                  <div className="text-3xl font-bold text-[#d4af37]">
+                  <div
+                    className={`text-3xl font-bold ${
+                      freeTrialBlocked ? "text-gray-500" : "text-[#d4af37]"
+                    }`}
+                  >
                     {pkg.usd}
                   </div>
 
@@ -205,5 +209,19 @@ export default function PackagesPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function PackagesPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+          Loading packages...
+        </main>
+      }
+    >
+      <PackagesContent />
+    </Suspense>
   );
 }
