@@ -11,6 +11,7 @@ export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
+  <LiveChat />
 }>) {
   return (
     <html lang="en">
