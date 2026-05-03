@@ -42,19 +42,60 @@ export default async function Dashboard() {
     "https://deepskyblue-donkey-850675.hostingersite.com";
 
   const now = new Date();
-  const trialEndsAt = user.trial_ends_at ? new Date(user.trial_ends_at) : null;
   const isFreePlan = !user.plan || user.plan === "free";
-  const trialExpired = isFreePlan && trialEndsAt && now > trialEndsAt;
+
+  /*
+    Trial rules:
+    - Prefer users.trial_ends_at when it exists.
+    - If it does not exist, fall back to created_at + 14 days.
+    This prevents free users from showing "0 days left" while still active forever.
+  */
+  let trialEndsAt: Date | null = null;
+
+  if (isFreePlan) {
+    if (user.trial_ends_at) {
+      trialEndsAt = new Date(user.trial_ends_at);
+    } else if (user.created_at) {
+      trialEndsAt = new Date(user.created_at);
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+    }
+  }
+
+  const trialExpired =
+    isFreePlan && trialEndsAt ? now.getTime() > trialEndsAt.getTime() : false;
+
+  const msLeft = trialEndsAt
+    ? trialEndsAt.getTime() - now.getTime()
+    : 0;
 
   const daysLeft =
-    trialEndsAt && !trialExpired
-      ? Math.max(
-          0,
-          Math.ceil(
-            (trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-          )
-        )
+    isFreePlan && trialEndsAt && !trialExpired
+      ? Math.ceil(msLeft / (1000 * 60 * 60 * 24))
       : 0;
+
+  const trialStatusLabel = !isFreePlan
+    ? "Not on trial"
+    : !trialEndsAt
+    ? "Trial date missing"
+    : trialExpired
+    ? "Trial expired"
+    : daysLeft <= 0
+    ? "Expires today"
+    : daysLeft === 1
+    ? "1 day left"
+    : `${daysLeft} days left`;
+
+  const packageStatusText = !isFreePlan
+    ? "Your memorial package is active."
+    : !trialEndsAt
+    ? "Free trial date needs to be checked."
+    : trialExpired
+    ? "Your free trial has expired."
+    : daysLeft <= 0
+    ? "Your free trial expires today."
+    : `${trialStatusLabel} in your free trial`;
+
+  const accountIsActive = Number(user.is_active) !== 0 && !trialExpired;
 
   const planLabel =
     user.plan === "standard-legacy"
@@ -97,17 +138,9 @@ export default async function Dashboard() {
                   {planLabel}
                 </h2>
 
-                {isFreePlan ? (
-                  <p className="mt-2 text-sm text-gray-300">
-                    {trialEndsAt
-                      ? `${daysLeft} day${daysLeft === 1 ? "" : "s"} left in your free trial`
-                      : "Free trial active"}
-                  </p>
-                ) : (
-                  <p className="mt-2 text-sm text-gray-300">
-                    Your memorial package is active.
-                  </p>
-                )}
+                <p className="mt-2 text-sm text-gray-300">
+                  {packageStatusText}
+                </p>
 
                 {isFreePlan && (
                   <a
@@ -139,15 +172,27 @@ export default async function Dashboard() {
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
             <p className="text-sm text-gray-400">Trial Status</p>
-            <h3 className="mt-2 text-xl font-semibold text-white">
-              {isFreePlan ? `${daysLeft} days left` : "Not on trial"}
+            <h3
+              className={`mt-2 text-xl font-semibold ${
+                trialExpired
+                  ? "text-red-300"
+                  : isFreePlan && daysLeft <= 0
+                  ? "text-yellow-300"
+                  : "text-white"
+              }`}
+            >
+              {trialStatusLabel}
             </h3>
           </div>
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
             <p className="text-sm text-gray-400">Account</p>
-            <h3 className="mt-2 text-xl font-semibold text-green-300">
-              Active
+            <h3
+              className={`mt-2 text-xl font-semibold ${
+                accountIsActive ? "text-green-300" : "text-red-300"
+              }`}
+            >
+              {accountIsActive ? "Active" : "Inactive"}
             </h3>
           </div>
         </section>
