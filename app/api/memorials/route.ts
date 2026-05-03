@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     const sessionCookie = cookieStore.get("session");
 
     let userId: any = null;
+    let existingUser: any = null;
 
     if (sessionCookie) {
       const [sessionRows]: any = await db.execute(
@@ -27,7 +28,8 @@ export async function POST(req: Request) {
         );
 
         if (userRows.length > 0) {
-          userId = userRows[0].id;
+          existingUser = userRows[0];
+          userId = existingUser.id;
         }
       }
     }
@@ -54,9 +56,15 @@ export async function POST(req: Request) {
     const memorialMusic = formData.get("memorial_music") as File | null;
     const galleryPhotos = formData.getAll("gallery_photos") as File[];
 
+    const isFreeTrialRequest =
+      Number(package_price) === 0 || package_slug === "starter-tribute";
+
     if (!creator_name || !creator_email || !full_name) {
       return NextResponse.json(
-        { error: "Creator name, creator email, and memorial full name are required." },
+        {
+          error:
+            "Creator name, creator email, and memorial full name are required.",
+        },
         { status: 400 }
       );
     }
@@ -75,29 +83,48 @@ export async function POST(req: Request) {
       );
 
       if (existingUsers.length > 0) {
-        userId = existingUsers[0].id;
-      } else {
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const trialEndsAt = new Date();
-        trialEndsAt.setDate(trialEndsAt.getDate() + 14);
-
-        const [newUser]: any = await db.execute(
-          `INSERT INTO users 
-          (name, email, password, plan, trial_ends_at, is_active) 
-          VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            creator_name || full_name || "Memorial Owner",
-            creator_email.trim(),
-            hashedPassword,
-            "free",
-            trialEndsAt,
-            1,
-          ]
-        );
-
-        userId = newUser.insertId;
+        existingUser = existingUsers[0];
+        userId = existingUser.id;
       }
+    }
+
+    /*
+      Free trial protection:
+      - If this email/user already exists, do not allow another Starter Tribute.
+      - This blocks expired users from bypassing the packages page.
+      - Paid packages are still allowed.
+    */
+    if (isFreeTrialRequest && existingUser) {
+      return NextResponse.json(
+        {
+          error:
+            "This free trial has already been used. Please choose a paid package to continue preserving this memorial.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (!userId && creator_email) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const trialEndsAt = new Date();
+      trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+      const [newUser]: any = await db.execute(
+        `INSERT INTO users 
+        (name, email, password, plan, trial_ends_at, is_active) 
+        VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          creator_name || full_name || "Memorial Owner",
+          creator_email.trim(),
+          hashedPassword,
+          "free",
+          trialEndsAt,
+          1,
+        ]
+      );
+
+      userId = newUser.insertId;
     }
 
     const uploadsRoot = path.join(process.cwd(), "public", "uploads");
@@ -128,7 +155,8 @@ export async function POST(req: Request) {
       const bytes = await memorialMusic.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const originalName = memorialMusic.name.split("/").pop() || "memorial-music";
+      const originalName =
+        memorialMusic.name.split("/").pop() || "memorial-music";
       const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
 
       const fileName = `${Date.now()}-${safeName}`;
@@ -137,11 +165,9 @@ export async function POST(req: Request) {
       memorialMusicPath = `/uploads/music/${fileName}`;
     }
 
-    const inviteToken =
-      Math.random().toString(36).substring(2) + Date.now();
+    const inviteToken = Math.random().toString(36).substring(2) + Date.now();
 
-    const paymentStatus =
-      Number(package_price) === 0 ? "free" : "pending";
+    const paymentStatus = Number(package_price) === 0 ? "free" : "pending";
 
     const [result]: any = await db.execute(
       `INSERT INTO memorials 

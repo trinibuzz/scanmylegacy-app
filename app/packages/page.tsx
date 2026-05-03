@@ -128,8 +128,8 @@ export default function PackagesPage() {
 
             <p className="mx-auto max-w-2xl text-gray-300">
               Your free memorial trial has ended, but the memories don’t have
-              to stop here. Choose a package to continue celebrating,
-              preserving, and sharing your loved one’s legacy.
+              to stop here. Please choose a paid package to continue
+              celebrating, preserving, and sharing your loved one’s legacy.
             </p>
           </div>
         )}
@@ -143,41 +143,65 @@ export default function PackagesPage() {
         )}
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {packages.map((pkg) => (
-            <div
-              key={pkg.slug}
-              className="flex min-h-[520px] flex-col rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-8 shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37]"
-            >
-              <div className="text-center">
-                <h2 className="mb-3 font-serif text-2xl text-white">
-                  {pkg.name}
-                </h2>
+          {packages.map((pkg) => {
+            const freeTrialBlocked = expiredTrial && pkg.amount === 0;
 
-                <div className="text-3xl font-bold text-[#d4af37]">
-                  {pkg.usd}
-                </div>
-
-                <div className="mt-1 text-lg text-gray-300">{pkg.ttd}</div>
-
-                <div className="mt-2 text-sm uppercase tracking-widest text-gray-400">
-                  {pkg.years}
-                </div>
-              </div>
-
-              <ul className="mt-8 flex-1 space-y-3 text-gray-300">
-                {pkg.features.map((feature) => (
-                  <li key={feature}>✓ {feature}</li>
-                ))}
-              </ul>
-
-              <a
-                href={buildPackageLink(pkg)}
-                className="mt-8 block rounded-full bg-[#d4af37] px-6 py-4 text-center font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+            return (
+              <div
+                key={pkg.slug}
+                className={`flex min-h-[520px] flex-col rounded-2xl border p-8 shadow-xl transition ${
+                  freeTrialBlocked
+                    ? "border-gray-700 bg-[#111a2e]/50 opacity-60"
+                    : "border-[#d4af37]/40 bg-[#111a2e] hover:-translate-y-1 hover:border-[#d4af37]"
+                }`}
               >
-                Get Started
-              </a>
-            </div>
-          ))}
+                <div className="text-center">
+                  <h2 className="mb-3 font-serif text-2xl text-white">
+                    {pkg.name}
+                  </h2>
+
+                  <div className="text-3xl font-bold text-[#d4af37]">
+                    {pkg.usd}
+                  </div>
+
+                  <div className="mt-1 text-lg text-gray-300">{pkg.ttd}</div>
+
+                  <div className="mt-2 text-sm uppercase tracking-widest text-gray-400">
+                    {pkg.years}
+                  </div>
+
+                  {freeTrialBlocked && (
+                    <div className="mt-4 rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200">
+                      Free Trial Already Used
+                    </div>
+                  )}
+                </div>
+
+                <ul className="mt-8 flex-1 space-y-3 text-gray-300">
+                  {pkg.features.map((feature) => (
+                    <li key={feature}>✓ {feature}</li>
+                  ))}
+                </ul>
+
+                {freeTrialBlocked ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-8 block cursor-not-allowed rounded-full bg-gray-700 px-6 py-4 text-center font-semibold text-gray-300"
+                  >
+                    Free Trial Used
+                  </button>
+                ) : (
+                  <a
+                    href={buildPackageLink(pkg)}
+                    className="mt-8 block rounded-full bg-[#d4af37] px-6 py-4 text-center font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+                  >
+                    Get Started
+                  </a>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </main>
