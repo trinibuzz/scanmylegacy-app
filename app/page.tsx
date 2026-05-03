@@ -129,25 +129,71 @@ export default function HomePage() {
             <h2 className="font-serif text-3xl sm:text-4xl">
               Everything families need to remember
             </h2>
+
+            <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+              Beautiful tools designed to help families preserve memories,
+              honor loved ones, and stay connected across generations.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              "Stories & Tributes",
-              "Guestbook",
-              "Photo Uploads",
-              "Video Memories",
-              "Audio Messages",
-              "Private Invite Links",
-              "QR Code Access",
-              "Memorial Garden",
+              {
+                title: "Stories & Tributes",
+                desc: "Preserve meaningful stories, memories, and heartfelt tributes from loved ones.",
+                icon: "✦",
+              },
+              {
+                title: "Guestbook",
+                desc: "Give family and friends a place to leave messages of love and remembrance.",
+                icon: "🕊️",
+              },
+              {
+                title: "Photo Uploads",
+                desc: "Keep cherished family photos together in one beautiful memorial space.",
+                icon: "📷",
+              },
+              {
+                title: "Video Memories",
+                desc: "Capture special moments and preserve video memories for generations to come.",
+                icon: "🎞️",
+              },
+              {
+                title: "Audio Messages",
+                desc: "Save voice notes, songs, and spoken memories that keep loved ones close.",
+                icon: "🎵",
+              },
+              {
+                title: "Private Invite Links",
+                desc: "Share memorials securely with family and friends through private access links.",
+                icon: "🔗",
+              },
+              {
+                title: "QR Code Access",
+                desc: "Let loved ones quickly access memorial pages through convenient QR codes.",
+                icon: "▣",
+              },
+              {
+                title: "Memorial Garden",
+                desc: "Create a beautiful space where visitors can leave flowers and digital tributes.",
+                icon: "🌹",
+              },
             ].map((feature) => (
               <div
-                key={feature}
-                className="rounded-xl border border-[#d4af37]/30 bg-[#0b1320] p-5 text-center shadow-lg"
+                key={feature.title}
+                className="rounded-2xl border border-[#d4af37]/15 bg-[#0b1320]/90 p-6 shadow-lg"
               >
-                <p className="text-[#d4af37]">✦</p>
-                <h3 className="mt-2 font-semibold">{feature}</h3>
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#d4af37]/15 text-xl text-[#d4af37]">
+                  {feature.icon}
+                </div>
+
+                <h3 className="mb-3 font-serif text-xl text-white">
+                  {feature.title}
+                </h3>
+
+                <p className="text-sm leading-relaxed text-gray-400">
+                  {feature.desc}
+                </p>
               </div>
             ))}
           </div>
