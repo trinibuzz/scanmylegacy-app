@@ -53,7 +53,7 @@ export default function GuestAccess({ memorial, token }: any) {
     { label: "Home", href: "/" },
     { label: "About Us", href: "/about" },
     { label: "Packages", href: "/packages" },
-    { label: "FAQ", href: "/faq" },
+    { label: "FAQ", href: "/faqs" },
     { label: "Login", href: "/login" },
   ];
 
@@ -687,110 +687,197 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
-      <section id="life-story" className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3">
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
-          <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-            Life Story
-          </h2>
+      <section
+        id="life-story"
+        className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14"
+      >
+        <div className="overflow-hidden rounded-3xl border border-[#d4af37]/15 bg-[#111a2e] shadow-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-5">
+            <div className="relative min-h-[280px] lg:col-span-2 lg:min-h-full">
+              <img
+                src={memorial.cover_photo || galleryPhotos[0]}
+                alt={memorial.full_name}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
 
-          <p className="leading-relaxed text-gray-300">
-            {memorial.biography}
-          </p>
-        </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0b1320]/15 via-[#0b1320]/35 to-[#111a2e]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#111a2e] via-transparent to-black/20 lg:hidden" />
 
-        <div className="space-y-4">
-          <button
-            onClick={openCandleModal}
-            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-          >
-            <div className="mb-3 text-4xl">🕯️</div>
-            <h3 className="font-serif text-xl">Light a Candle</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              {candles} candles lit
-            </p>
-          </button>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="inline-flex rounded-full border border-[#d4af37]/35 bg-black/30 px-4 py-2 text-xs uppercase tracking-[0.25em] text-[#d4af37] backdrop-blur">
+                  Life Story
+                </div>
+              </div>
+            </div>
 
-          <button
-            onClick={openFlowerModal}
-            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-          >
-            <div className="mb-3 text-4xl">🌸</div>
-            <h3 className="font-serif text-xl">Plant a Flower</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              {flowers} flowers planted
-            </p>
-          </button>
+            <div className="p-6 sm:p-8 md:p-10 lg:col-span-3">
+              <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
+                A Life Remembered
+              </p>
+
+              <h2 className="font-serif text-3xl text-white sm:text-4xl">
+                {memorial.full_name}
+              </h2>
+
+              <p className="mt-3 text-sm text-gray-400 sm:text-base">
+                {memorial.birth_date
+                  ? new Date(memorial.birth_date).toLocaleDateString()
+                  : ""}
+                {memorial.birth_date || memorial.death_date ? " — " : ""}
+                {memorial.death_date
+                  ? new Date(memorial.death_date).toLocaleDateString()
+                  : ""}
+              </p>
+
+              <div className="my-6 h-px w-24 bg-[#d4af37]/40" />
+
+              <div className="max-h-[340px] overflow-y-auto pr-1">
+                <p className="whitespace-pre-line text-sm leading-relaxed text-gray-300 sm:text-base md:text-lg md:leading-8">
+                  {memorial.biography?.trim()
+                    ? memorial.biography
+                    : "This memorial has been lovingly created to honor and preserve a beautiful life story. Family and friends can continue sharing memories, tributes, and heartfelt reflections here."}
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <div className="rounded-full border border-[#d4af37]/25 bg-[#0b1320] px-4 py-2 text-sm text-gray-200">
+                  🕯️ {candles} candles lit
+                </div>
+
+                <div className="rounded-full border border-[#d4af37]/25 bg-[#0b1320] px-4 py-2 text-sm text-gray-200">
+                  🌸 {flowers} flowers planted
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section id="tributes" className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-            Candle Room
-          </h2>
+      <section
+        id="tributes"
+        className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16"
+      >
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Candle Room */}
+          <div className="rounded-3xl border border-[#d4af37]/15 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                  Tribute Space
+                </p>
 
-          {candleReactions.length === 0 ? (
-            <p className="text-gray-400">No candles lit yet.</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {candleReactions.map((reaction: any) => (
-                <div
-                  key={reaction.id}
-                  className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
-                >
-                  <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/10 shadow-[0_0_30px_rgba(212,175,55,0.35)]">
-                    <span className="animate-pulse text-5xl">🕯️</span>
-                  </div>
+                <h2 className="font-serif text-2xl text-[#d4af37] sm:text-3xl">
+                  Candle Room
+                </h2>
 
-                  <p className="font-semibold text-white">
-                    {reaction.guest_name}
-                  </p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Light a candle and leave a gentle message of remembrance.
+                </p>
+              </div>
 
-                  {reaction.message && (
-                    <p className="mt-3 text-sm italic text-gray-300">
-                      “{reaction.message}”
-                    </p>
-                  )}
-                </div>
-              ))}
+              <button
+                onClick={openCandleModal}
+                className="rounded-full bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black transition hover:scale-105 hover:bg-[#f0c94a]"
+              >
+                Light a Candle
+              </button>
             </div>
-          )}
-        </div>
 
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-            Flower Garden
-          </h2>
-
-          {flowerReactions.length === 0 ? (
-            <p className="text-gray-400">No flowers planted yet.</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {flowerReactions.map((reaction: any) => {
-                const selectedFlower =
-                  flowerOptions[reaction.flower_type] || "🌸";
-
-                return (
+            {candleReactions.length === 0 ? (
+              <div className="rounded-2xl border border-[#d4af37]/10 bg-[#0b1320] p-8 text-center">
+                <div className="mb-4 text-5xl">🕯️</div>
+                <p className="font-semibold text-white">No candles lit yet.</p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Be the first to light a candle in loving memory.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {candleReactions.map((reaction: any) => (
                   <div
                     key={reaction.id}
-                    className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
+                    className="rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5 text-center"
                   >
-                    <div className="mb-3 text-6xl">{selectedFlower}</div>
-
-                    <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
-                      Planted by {reaction.guest_name}
+                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/10 shadow-[0_0_30px_rgba(212,175,55,0.35)]">
+                      <span className="animate-pulse text-5xl">🕯️</span>
                     </div>
 
+                    <p className="font-semibold text-white">
+                      {reaction.guest_name}
+                    </p>
+
                     {reaction.message && (
-                      <p className="mt-3 text-sm italic text-gray-300">
+                      <p className="mt-3 text-sm italic leading-relaxed text-gray-300">
                         “{reaction.message}”
                       </p>
                     )}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Flower Garden */}
+          <div className="rounded-3xl border border-[#d4af37]/15 bg-[#111a2e] p-6 shadow-xl sm:p-8">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                  Tribute Space
+                </p>
+
+                <h2 className="font-serif text-2xl text-[#d4af37] sm:text-3xl">
+                  Flower Garden
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-400">
+                  Plant a flower and leave a beautiful tribute in their honor.
+                </p>
+              </div>
+
+              <button
+                onClick={openFlowerModal}
+                className="rounded-full bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black transition hover:scale-105 hover:bg-[#f0c94a]"
+              >
+                Plant a Flower
+              </button>
             </div>
-          )}
+
+            {flowerReactions.length === 0 ? (
+              <div className="rounded-2xl border border-[#d4af37]/10 bg-[#0b1320] p-8 text-center">
+                <div className="mb-4 text-5xl">🌸</div>
+                <p className="font-semibold text-white">No flowers planted yet.</p>
+                <p className="mt-2 text-sm text-gray-400">
+                  Be the first to plant a flower in remembrance.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {flowerReactions.map((reaction: any) => {
+                  const selectedFlower =
+                    flowerOptions[reaction.flower_type] || "🌸";
+
+                  return (
+                    <div
+                      key={reaction.id}
+                      className="rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5 text-center"
+                    >
+                      <div className="mb-3 text-6xl">{selectedFlower}</div>
+
+                      <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
+                        Planted by {reaction.guest_name}
+                      </div>
+
+                      {reaction.message && (
+                        <p className="mt-3 text-sm italic leading-relaxed text-gray-300">
+                          “{reaction.message}”
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
