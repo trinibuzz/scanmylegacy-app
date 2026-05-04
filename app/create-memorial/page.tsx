@@ -69,7 +69,9 @@ function CreateMemorialForm() {
     }
 
     if (!packageSlug) {
-      showError("No package was selected. Please return to the Packages page and choose a plan.");
+      showError(
+        "No package was selected. Please return to the Packages page and choose a plan."
+      );
       return;
     }
 
@@ -122,33 +124,23 @@ function CreateMemorialForm() {
       }
 
       if (Number(packagePrice) > 0) {
-        const paymentRes = await fetch("/api/wipay-checkout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            memorial_id: data.memorial.id,
-            package_name: data.memorial.package_name,
-            package_price: data.memorial.package_price,
-            customer_name: creatorName,
-          }),
-        });
+        const paymentOptionsUrl = `/payment-options?memorial_id=${encodeURIComponent(
+          data.memorial.id
+        )}&package_name=${encodeURIComponent(
+          data.memorial.package_name
+        )}&package_price=${encodeURIComponent(
+          data.memorial.package_price
+        )}&customer_name=${encodeURIComponent(creatorName)}`;
 
-        const paymentData = await paymentRes.json();
-
-        if (!paymentRes.ok) {
-          showError(paymentData.error || "Payment setup failed. Please try again.");
-          return;
-        }
-
-        window.location.href = paymentData.checkout_url;
+        window.location.href = paymentOptionsUrl;
         return;
       }
 
       window.location.href = "/dashboard";
     } catch {
-      showError("Something went wrong. Please check your connection and try again.");
+      showError(
+        "Something went wrong. Please check your connection and try again."
+      );
     } finally {
       setLoading(false);
     }
