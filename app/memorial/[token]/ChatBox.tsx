@@ -11,16 +11,22 @@ export default function ChatBox({
 }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadMessages = async () => {
-    const res = await fetch(`/api/memorial-chat?memorial_id=${memorialId}`);
-    const data = await res.json();
+    try {
+      const res = await fetch(`/api/memorial-chat?memorial_id=${memorialId}`);
+      const data = await res.json();
 
-    if (res.ok) {
-      setMessages(data.messages || []);
+      if (res.ok) {
+        setMessages(data.messages || []);
+      }
+    } catch {
+      // Keep chat from crashing the whole memorial page
     }
   };
 
@@ -52,42 +58,50 @@ export default function ChatBox({
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!message.trim()) {
-      alert("Please enter a message");
+    if (!message.trim() && !selectedImage) {
+      alert("Please enter a message or attach a photo.");
       return;
     }
 
     if (!guestName.trim()) {
-      alert("Guest name missing");
+      alert("Guest name missing.");
       return;
     }
 
     try {
       setSending(true);
 
+      const formData = new FormData();
+      formData.append("memorial_id", String(memorialId));
+      formData.append("guest_name", guestName);
+      formData.append("body", message.trim());
+
+      if (selectedImage) {
+        formData.append("image", selectedImage);
+      }
+
       const res = await fetch("/api/memorial-chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          memorial_id: memorialId,
-          guest_name: guestName,
-          body: message.trim(),
-        }),
+        body: formData,
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to send message");
+        alert(data.error || "Failed to send message.");
         return;
       }
 
       setMessage("");
+      setSelectedImage(null);
+
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
+
       await loadMessages();
     } catch {
-      alert("Something went wrong");
+      alert("Something went wrong.");
     } finally {
       setSending(false);
     }
@@ -136,8 +150,8 @@ export default function ChatBox({
                 </p>
 
                 <p className="mt-2 text-sm leading-relaxed text-gray-400">
-                  Share a message, a memory, or a comforting word with family
-                  and friends.
+                  Share a message, a memory, or a photo with family and
+                  friends.
                 </p>
               </div>
             </div>
@@ -168,9 +182,19 @@ export default function ChatBox({
                         {msg.guest_name}
                       </p>
 
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {msg.body}
-                      </p>
+                      {msg.body && (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                          {msg.body}
+                        </p>
+                      )}
+
+                      {msg.image_url && (
+                        <img
+                          src={msg.image_url}
+                          alt="Chat photo"
+                          className="mt-3 max-h-[340px] w-full rounded-2xl object-cover"
+                        />
+                      )}
 
                       <p
                         className={`mt-2 text-right text-[10px] ${
@@ -189,14 +213,50 @@ export default function ChatBox({
           )}
         </div>
 
+        {/* Selected image preview */}
+        {selectedImage && (
+          <div className="border-t border-[#d4af37]/10 bg-[#0b1320] px-4 py-3">
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d4af37]/20 bg-[#111a2e] px-4 py-3 text-sm text-gray-200">
+              <span className="min-w-0 truncate">
+                📷 {selectedImage.name}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedImage(null);
+
+                  if (imageInputRef.current) {
+                    imageInputRef.current.value = "";
+                  }
+                }}
+                className="rounded-full border border-red-400/40 px-3 py-1 text-xs text-red-200"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Bottom WhatsApp-style message bar */}
         <div className="border-t border-[#d4af37]/10 bg-[#111a2e] p-3">
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              setSelectedImage(file);
+            }}
+          />
+
           <div className="flex items-end gap-2 rounded-full border border-[#d4af37]/20 bg-[#0b1320] p-2">
             <button
               type="button"
-              disabled
-              title="Media uploads coming next"
-              className="flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-full border border-[#d4af37]/20 text-xl text-[#d4af37]/40"
+              onClick={() => imageInputRef.current?.click()}
+              title="Attach photo"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/30 text-xl text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
             >
               +
             </button>
@@ -236,7 +296,7 @@ export default function ChatBox({
           </div>
 
           <p className="mt-2 text-center text-[11px] text-gray-500">
-            Text chat is active. Photos, videos, and voice notes can be added
+            Text and photo chat are active. Video and voice notes can be added
             after mobile testing.
           </p>
         </div>
