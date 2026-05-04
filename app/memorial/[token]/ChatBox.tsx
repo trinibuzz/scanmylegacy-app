@@ -17,6 +17,26 @@ export default function ChatBox({
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
 
+  const safeMediaPath = (pathValue: any) => {
+    if (!pathValue) return "";
+
+    let cleanPath = String(pathValue).trim();
+    cleanPath = cleanPath.replace(/\\/g, "/");
+
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+
+    cleanPath = cleanPath.replace(/^public\//, "");
+    cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+
+    return encodeURI(cleanPath);
+  };
+
   const loadMessages = async () => {
     try {
       const res = await fetch(`/api/memorial-chat?memorial_id=${memorialId}`);
@@ -59,7 +79,7 @@ export default function ChatBox({
 
   const sendMessage = async () => {
     if (!message.trim() && !selectedMedia) {
-      alert("Please enter a message or attach a photo/video.");
+      alert("Please enter a message or attach a file.");
       return;
     }
 
@@ -127,13 +147,16 @@ export default function ChatBox({
       return `🎥 ${selectedMedia.name}`;
     }
 
+    if (selectedMedia.type.startsWith("audio/")) {
+      return `🎙️ ${selectedMedia.name}`;
+    }
+
     return selectedMedia.name;
   };
 
   return (
     <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
       <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
-        {/* Header */}
         <div className="border-b border-[#d4af37]/10 bg-[#0b1320] px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#111a2e] text-xl shadow-lg">
@@ -152,7 +175,6 @@ export default function ChatBox({
           </div>
         </div>
 
-        {/* Chat body */}
         <div className="h-[430px] overflow-y-auto bg-[#081827] bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.08),transparent_30%)] p-4 sm:p-5">
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center text-center">
@@ -164,8 +186,8 @@ export default function ChatBox({
                 </p>
 
                 <p className="mt-2 text-sm leading-relaxed text-gray-400">
-                  Share a message, a memory, a photo, or a video with family
-                  and friends.
+                  Share a message, a photo, a video, or a voice note with
+                  family and friends.
                 </p>
               </div>
             </div>
@@ -204,7 +226,7 @@ export default function ChatBox({
 
                       {msg.image_url && (
                         <img
-                          src={msg.image_url}
+                          src={safeMediaPath(msg.image_url)}
                           alt="Chat photo"
                           className="mt-3 max-h-[340px] w-full rounded-2xl object-cover"
                         />
@@ -212,9 +234,30 @@ export default function ChatBox({
 
                       {msg.video_url && (
                         <video controls className="mt-3 w-full rounded-2xl">
-                          <source src={msg.video_url} />
+                          <source src={safeMediaPath(msg.video_url)} />
                           Your browser does not support the video tag.
                         </video>
+                      )}
+
+                      {msg.audio_url && (
+                        <div
+                          className={`mt-3 rounded-2xl p-3 ${
+                            isMe ? "bg-black/10" : "bg-black/25"
+                          }`}
+                        >
+                          <div
+                            className={`mb-2 text-xs font-semibold ${
+                              isMe ? "text-black/70" : "text-[#d4af37]"
+                            }`}
+                          >
+                            🎙️ Voice Note
+                          </div>
+
+                          <audio controls className="w-full">
+                            <source src={safeMediaPath(msg.audio_url)} />
+                            Your browser does not support the audio tag.
+                          </audio>
+                        </div>
                       )}
 
                       <p
@@ -234,7 +277,6 @@ export default function ChatBox({
           )}
         </div>
 
-        {/* Selected media preview */}
         {selectedMedia && (
           <div className="border-t border-[#d4af37]/10 bg-[#0b1320] px-4 py-3">
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d4af37]/20 bg-[#111a2e] px-4 py-3 text-sm text-gray-200">
@@ -257,12 +299,11 @@ export default function ChatBox({
           </div>
         )}
 
-        {/* Bottom WhatsApp-style message bar */}
         <div className="border-t border-[#d4af37]/10 bg-[#111a2e] p-3">
           <input
             ref={mediaInputRef}
             type="file"
-            accept="image/*,video/*"
+            accept="image/*,video/*,audio/*"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
@@ -274,7 +315,7 @@ export default function ChatBox({
             <button
               type="button"
               onClick={() => mediaInputRef.current?.click()}
-              title="Attach photo or video"
+              title="Attach photo, video, or audio"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/30 text-xl text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
             >
               +
@@ -296,9 +337,9 @@ export default function ChatBox({
 
             <button
               type="button"
-              disabled
-              title="Voice notes coming next"
-              className="flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-full border border-[#d4af37]/20 text-lg text-[#d4af37]/40"
+              onClick={() => mediaInputRef.current?.click()}
+              title="Attach voice note"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/30 text-lg text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
             >
               🎙️
             </button>
@@ -315,8 +356,8 @@ export default function ChatBox({
           </div>
 
           <p className="mt-2 text-center text-[11px] text-gray-500">
-            Text, photo, and video chat are active. Voice notes can be added
-            after mobile testing.
+            Text, photo, video, and audio chat are active. Keep uploads under
+            50MB.
           </p>
         </div>
       </div>

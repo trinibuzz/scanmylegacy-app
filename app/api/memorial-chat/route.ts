@@ -5,6 +5,37 @@ import path from "path";
 
 export const runtime = "nodejs";
 
+function getPublicHtmlRoot() {
+  const cwd = process.cwd();
+
+  if (cwd.includes("public_html")) {
+    const beforePublicHtml = cwd.split("public_html")[0];
+    return path.join(beforePublicHtml, "public_html");
+  }
+
+  return path.join(cwd, "public");
+}
+
+async function ensureChatUploadFolder() {
+  const publicRoot = getPublicHtmlRoot();
+  const chatRoot = path.join(publicRoot, "uploads", "chat");
+
+  await mkdir(chatRoot, { recursive: true });
+
+  return chatRoot;
+}
+
+function makeSafeFileName(originalName: string, fallback: string) {
+  const cleanOriginalName = originalName.split("/").pop() || fallback;
+
+  const safeName = cleanOriginalName
+    .toLowerCase()
+    .replace(/[^a-z0-9.]/g, "-")
+    .replace(/-+/g, "-");
+
+  return `${Date.now()}-${safeName}`;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -47,6 +78,7 @@ export async function POST(req: Request) {
     let bodyText = "";
     let imageUrl = "";
     let videoUrl = "";
+    let audioUrl = "";
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
@@ -58,46 +90,45 @@ export async function POST(req: Request) {
       const mediaFile = formData.get("media") as File | null;
 
       if (mediaFile && mediaFile.size > 0) {
-        const isImage = mediaFile.type.startsWith("image/");
-        const isVideo = mediaFile.type.startsWith("video/");
+        const maxFileSize = 50 * 1024 * 1024;
 
-        if (!isImage && !isVideo) {
+        if (mediaFile.size > maxFileSize) {
           return NextResponse.json(
-            { error: "Please upload an image or video file only." },
+            {
+              error:
+                "File is too large. Please upload a file under 50MB.",
+            },
             { status: 400 }
           );
         }
 
-        const uploadsRoot = path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          "chat"
-        );
+        const isImage = mediaFile.type.startsWith("image/");
+        const isVideo = mediaFile.type.startsWith("video/");
+        const isAudio = mediaFile.type.startsWith("audio/");
 
-        await mkdir(uploadsRoot, { recursive: true });
+        if (!isImage && !isVideo && !isAudio) {
+          return NextResponse.json(
+            {
+              error:
+                "Please upload an image, video, or audio file only.",
+            },
+            { status: 400 }
+          );
+        }
+
+        const chatRoot = await ensureChatUploadFolder();
 
         const bytes = await mediaFile.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const originalName = mediaFile.name.split("/").pop() || "chat-media";
-        const safeName = originalName
-          .toLowerCase()
-          .replace(/[^a-z0-9.]/g, "-");
-
-        const fileName = `${Date.now()}-${safeName}`;
-
-        await writeFile(path.join(uploadsRoot, fileName), buffer);
+        const fileName = makeSafeFileName(mediaFile.name, "chat-media");
+        await writeFile(path.join(chatRoot, fileName), buffer);
 
         const fileUrl = `/uploads/chat/${fileName}`;
 
-        if (isImage) {
-          imageUrl = fileUrl;
-        }
-
-        if (isVideo) {
-          videoUrl = fileUrl;
-        }
+        if (isImage) imageUrl = fileUrl;
+        if (isVideo) videoUrl = fileUrl;
+        if (isAudio) audioUrl = fileUrl;
       }
     } else {
       const body = await req.json();
@@ -116,10 +147,10 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!bodyText && !imageUrl && !videoUrl) {
+    if (!bodyText && !imageUrl && !videoUrl && !audioUrl) {
       return NextResponse.json(
         {
-          error: "Please enter a message or attach a photo/video.",
+          error: "Please enter a message or attach a file.",
         },
         { status: 400 }
       );
@@ -127,14 +158,15 @@ export async function POST(req: Request) {
 
     const [result]: any = await db.execute(
       `INSERT INTO memorial_chat_messages
-      (memorial_id, guest_name, body, image_url, video_url)
-      VALUES (?, ?, ?, ?, ?)`,
+      (memorial_id, guest_name, body, image_url, video_url, audio_url)
+      VALUES (?, ?, ?, ?, ?, ?)`,
       [
         memorial_id,
         guest_name,
         bodyText,
         imageUrl || null,
         videoUrl || null,
+        audioUrl || null,
       ]
     );
 
