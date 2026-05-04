@@ -46,6 +46,7 @@ export async function POST(req: Request) {
     let guest_name = "";
     let bodyText = "";
     let imageUrl = "";
+    let videoUrl = "";
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
@@ -54,12 +55,15 @@ export async function POST(req: Request) {
       guest_name = formData.get("guest_name") as string;
       bodyText = ((formData.get("body") as string) || "").trim();
 
-      const imageFile = formData.get("image") as File | null;
+      const mediaFile = formData.get("media") as File | null;
 
-      if (imageFile && imageFile.size > 0) {
-        if (!imageFile.type.startsWith("image/")) {
+      if (mediaFile && mediaFile.size > 0) {
+        const isImage = mediaFile.type.startsWith("image/");
+        const isVideo = mediaFile.type.startsWith("video/");
+
+        if (!isImage && !isVideo) {
           return NextResponse.json(
-            { error: "Please upload an image file only." },
+            { error: "Please upload an image or video file only." },
             { status: 400 }
           );
         }
@@ -73,10 +77,10 @@ export async function POST(req: Request) {
 
         await mkdir(uploadsRoot, { recursive: true });
 
-        const bytes = await imageFile.arrayBuffer();
+        const bytes = await mediaFile.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const originalName = imageFile.name.split("/").pop() || "chat-photo";
+        const originalName = mediaFile.name.split("/").pop() || "chat-media";
         const safeName = originalName
           .toLowerCase()
           .replace(/[^a-z0-9.]/g, "-");
@@ -85,7 +89,15 @@ export async function POST(req: Request) {
 
         await writeFile(path.join(uploadsRoot, fileName), buffer);
 
-        imageUrl = `/uploads/chat/${fileName}`;
+        const fileUrl = `/uploads/chat/${fileName}`;
+
+        if (isImage) {
+          imageUrl = fileUrl;
+        }
+
+        if (isVideo) {
+          videoUrl = fileUrl;
+        }
       }
     } else {
       const body = await req.json();
@@ -104,10 +116,10 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!bodyText && !imageUrl) {
+    if (!bodyText && !imageUrl && !videoUrl) {
       return NextResponse.json(
         {
-          error: "Please enter a message or attach a photo.",
+          error: "Please enter a message or attach a photo/video.",
         },
         { status: 400 }
       );
@@ -115,9 +127,15 @@ export async function POST(req: Request) {
 
     const [result]: any = await db.execute(
       `INSERT INTO memorial_chat_messages
-      (memorial_id, guest_name, body, image_url)
-      VALUES (?, ?, ?, ?)`,
-      [memorial_id, guest_name, bodyText, imageUrl || null]
+      (memorial_id, guest_name, body, image_url, video_url)
+      VALUES (?, ?, ?, ?, ?)`,
+      [
+        memorial_id,
+        guest_name,
+        bodyText,
+        imageUrl || null,
+        videoUrl || null,
+      ]
     );
 
     return NextResponse.json({

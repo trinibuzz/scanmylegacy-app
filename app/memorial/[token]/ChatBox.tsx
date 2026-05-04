@@ -11,11 +11,11 @@ export default function ChatBox({
 }) {
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement | null>(null);
-  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const mediaInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadMessages = async () => {
     try {
@@ -26,7 +26,7 @@ export default function ChatBox({
         setMessages(data.messages || []);
       }
     } catch {
-      // Keep chat from crashing the whole memorial page
+      // Keep chat from crashing the memorial page.
     }
   };
 
@@ -58,8 +58,8 @@ export default function ChatBox({
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!message.trim() && !selectedImage) {
-      alert("Please enter a message or attach a photo.");
+    if (!message.trim() && !selectedMedia) {
+      alert("Please enter a message or attach a photo/video.");
       return;
     }
 
@@ -76,8 +76,8 @@ export default function ChatBox({
       formData.append("guest_name", guestName);
       formData.append("body", message.trim());
 
-      if (selectedImage) {
-        formData.append("image", selectedImage);
+      if (selectedMedia) {
+        formData.append("media", selectedMedia);
       }
 
       const res = await fetch("/api/memorial-chat", {
@@ -93,10 +93,10 @@ export default function ChatBox({
       }
 
       setMessage("");
-      setSelectedImage(null);
+      setSelectedMedia(null);
 
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
+      if (mediaInputRef.current) {
+        mediaInputRef.current.value = "";
       }
 
       await loadMessages();
@@ -114,6 +114,20 @@ export default function ChatBox({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const selectedMediaLabel = () => {
+    if (!selectedMedia) return "";
+
+    if (selectedMedia.type.startsWith("image/")) {
+      return `📷 ${selectedMedia.name}`;
+    }
+
+    if (selectedMedia.type.startsWith("video/")) {
+      return `🎥 ${selectedMedia.name}`;
+    }
+
+    return selectedMedia.name;
   };
 
   return (
@@ -150,8 +164,8 @@ export default function ChatBox({
                 </p>
 
                 <p className="mt-2 text-sm leading-relaxed text-gray-400">
-                  Share a message, a memory, or a photo with family and
-                  friends.
+                  Share a message, a memory, a photo, or a video with family
+                  and friends.
                 </p>
               </div>
             </div>
@@ -196,6 +210,13 @@ export default function ChatBox({
                         />
                       )}
 
+                      {msg.video_url && (
+                        <video controls className="mt-3 w-full rounded-2xl">
+                          <source src={msg.video_url} />
+                          Your browser does not support the video tag.
+                        </video>
+                      )}
+
                       <p
                         className={`mt-2 text-right text-[10px] ${
                           isMe ? "text-black/55" : "text-gray-500"
@@ -213,21 +234,19 @@ export default function ChatBox({
           )}
         </div>
 
-        {/* Selected image preview */}
-        {selectedImage && (
+        {/* Selected media preview */}
+        {selectedMedia && (
           <div className="border-t border-[#d4af37]/10 bg-[#0b1320] px-4 py-3">
             <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#d4af37]/20 bg-[#111a2e] px-4 py-3 text-sm text-gray-200">
-              <span className="min-w-0 truncate">
-                📷 {selectedImage.name}
-              </span>
+              <span className="min-w-0 truncate">{selectedMediaLabel()}</span>
 
               <button
                 type="button"
                 onClick={() => {
-                  setSelectedImage(null);
+                  setSelectedMedia(null);
 
-                  if (imageInputRef.current) {
-                    imageInputRef.current.value = "";
+                  if (mediaInputRef.current) {
+                    mediaInputRef.current.value = "";
                   }
                 }}
                 className="rounded-full border border-red-400/40 px-3 py-1 text-xs text-red-200"
@@ -241,21 +260,21 @@ export default function ChatBox({
         {/* Bottom WhatsApp-style message bar */}
         <div className="border-t border-[#d4af37]/10 bg-[#111a2e] p-3">
           <input
-            ref={imageInputRef}
+            ref={mediaInputRef}
             type="file"
-            accept="image/*"
+            accept="image/*,video/*"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
-              setSelectedImage(file);
+              setSelectedMedia(file);
             }}
           />
 
           <div className="flex items-end gap-2 rounded-full border border-[#d4af37]/20 bg-[#0b1320] p-2">
             <button
               type="button"
-              onClick={() => imageInputRef.current?.click()}
-              title="Attach photo"
+              onClick={() => mediaInputRef.current?.click()}
+              title="Attach photo or video"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#d4af37]/30 text-xl text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
             >
               +
@@ -296,7 +315,7 @@ export default function ChatBox({
           </div>
 
           <p className="mt-2 text-center text-[11px] text-gray-500">
-            Text and photo chat are active. Video and voice notes can be added
+            Text, photo, and video chat are active. Voice notes can be added
             after mobile testing.
           </p>
         </div>
