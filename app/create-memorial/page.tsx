@@ -124,7 +124,7 @@ function CreateMemorialForm() {
       }
 
       if (Number(packagePrice) > 0) {
-        const paymentOptionsUrl = `/payment-options?memorial_id=${encodeURIComponent(
+        const paymentOptionsUrl = `/payment-option?memorial_id=${encodeURIComponent(
           data.memorial.id
         )}&package_name=${encodeURIComponent(
           data.memorial.package_name
