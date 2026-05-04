@@ -4,15 +4,29 @@ import { useEffect, useState } from "react";
 
 export default function FamilyTreeView({ token }: { token: string }) {
   const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [treeOpen, setTreeOpen] = useState(true);
   const [horizontalOpen, setHorizontalOpen] = useState(true);
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
   const [openSpouses, setOpenSpouses] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    fetch(`/api/public-family-tree?token=${token}`)
-      .then((res) => res.json())
-      .then((data) => setMembers(data.members || []));
+    const loadFamilyTree = async () => {
+      try {
+        setLoading(true);
+
+        const res = await fetch(`/api/public-family-tree?token=${token}`);
+        const data = await res.json();
+
+        setMembers(data.members || []);
+      } catch {
+        setMembers([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFamilyTree();
   }, [token]);
 
   const toggleBranch = (id: number) => {
@@ -142,11 +156,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
     );
   };
 
-  const renderDescendants = (
-    person: any,
-    firstLabel: string,
-    secondLabel: string
-  ) => {
+  const renderDescendants = (person: any) => {
     const children = getChildrenFor(person);
 
     if (children.length === 0 || !isBranchOpen(person.id)) {
@@ -191,12 +201,44 @@ export default function FamilyTreeView({ token }: { token: string }) {
     return (
       <div key={sibling.id} className="min-w-[220px] text-center">
         {renderCouple(sibling, spouse, children.length > 0)}
-        {renderDescendants(sibling, "Nephews / Nieces", "Cousins")}
+        {renderDescendants(sibling)}
       </div>
     );
   };
 
-  if (members.length === 0 || !deceased) return null;
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-16">
+        <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-8 text-center shadow-2xl">
+          <p className="text-[#d4af37]">Loading family tree...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (members.length === 0 || !deceased) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-16">
+        <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-8 text-center shadow-2xl">
+          <div className="mb-4 text-5xl">🌳</div>
+
+          <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            Family Tree
+          </p>
+
+          <h2 className="font-serif text-3xl text-white md:text-4xl">
+            Family Tree Coming Soon
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-gray-300">
+            This memorial has family tree access enabled, but no family members
+            have been added yet. The memorial owner can build the family tree
+            from the dashboard.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-16">
@@ -254,11 +296,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
                       getChildrenFor(deceased).length > 0
                     )}
 
-                    {renderDescendants(
-                      deceased,
-                      "Children",
-                      "Grandchildren"
-                    )}
+                    {renderDescendants(deceased)}
                   </div>
 
                   {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
