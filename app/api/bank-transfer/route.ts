@@ -29,16 +29,30 @@ export async function POST(req: Request) {
       );
     }
 
+    const paymentDueAt = new Date();
+    paymentDueAt.setHours(paymentDueAt.getHours() + 48);
+
     await db.execute(
       `UPDATE memorials
-       SET payment_status = ?, payment_reference = ?
+       SET 
+         payment_method = ?,
+         payment_status = ?,
+         payment_reference = ?,
+         payment_due_at = ?
        WHERE id = ?`,
-      ["pending_bank_transfer", transfer_reference, memorial_id]
+      [
+        "bank_transfer",
+        "pending_bank_transfer",
+        transfer_reference,
+        paymentDueAt,
+        memorial_id,
+      ]
     );
 
     return NextResponse.json({
       success: true,
       message: "Bank transfer reference saved.",
+      payment_due_at: paymentDueAt,
     });
   } catch (error: any) {
     return NextResponse.json(
