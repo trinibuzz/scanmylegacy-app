@@ -40,6 +40,27 @@ export default function GuestAccess({ memorial, token }: any) {
     orchid: "💮",
   };
 
+  const safeMediaPath = (pathValue: any) => {
+    if (!pathValue) return "";
+
+    let cleanPath = String(pathValue).trim();
+
+    cleanPath = cleanPath.replace(/\\/g, "/");
+
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+
+    cleanPath = cleanPath.replace(/^public\//, "");
+    cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+
+    return encodeURI(cleanPath);
+  };
+
   const navItems = [
     { label: "Slideshow", href: "#slideshow" },
     { label: "Life Story", href: "#life-story" },
@@ -64,7 +85,11 @@ export default function GuestAccess({ memorial, token }: any) {
   const MemorialHeader = ({ simple = false }: { simple?: boolean }) => (
     <header className="fixed left-0 right-0 top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#0b1320] shadow-2xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href={simple ? "/" : "#top"} onClick={closeMenu} className="flex items-center gap-3">
+        <a
+          href={simple ? "/" : "#top"}
+          onClick={closeMenu}
+          className="flex items-center gap-3"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
             🕯️
           </div>
@@ -178,9 +203,9 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const galleryPhotos =
     memorial.gallery_photos && memorial.gallery_photos.length > 0
-      ? memorial.gallery_photos
+      ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
       : memorial.cover_photo
-      ? [memorial.cover_photo]
+      ? [safeMediaPath(memorial.cover_photo)]
       : [
           "/images/memorial/photo1.jpg",
           "/images/memorial/photo2.jpg",
@@ -382,38 +407,38 @@ export default function GuestAccess({ memorial, token }: any) {
             id="enter-memorial-box"
             className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8"
           >
-          <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-            You are invited to view
-          </p>
+            <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              You are invited to view
+            </p>
 
-          <h1 className="mb-2 text-center font-serif text-3xl">
-            {memorial.full_name}
-          </h1>
+            <h1 className="mb-2 text-center font-serif text-3xl">
+              {memorial.full_name}
+            </h1>
 
-          <p className="mb-6 text-center text-gray-400">
-            Memorial Tribute — Enter your name to continue
-          </p>
+            <p className="mb-6 text-center text-gray-400">
+              Memorial Tribute — Enter your name to continue
+            </p>
 
-          <input
-            className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-            placeholder="Your Name"
-            value={guestName}
-            onChange={(e) => setGuestName(e.target.value)}
-          />
+            <input
+              className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+              placeholder="Your Name"
+              value={guestName}
+              onChange={(e) => setGuestName(e.target.value)}
+            />
 
-          <input
-            className="mb-4 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-            placeholder="Email Address (optional)"
-            value={guestEmail}
-            onChange={(e) => setGuestEmail(e.target.value)}
-          />
+            <input
+              className="mb-4 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+              placeholder="Email Address (optional)"
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+            />
 
-          <button
-            onClick={enterMemorial}
-            className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
-          >
-            Enter Memorial
-          </button>
+            <button
+              onClick={enterMemorial}
+              className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+            >
+              Enter Memorial
+            </button>
           </div>
         </section>
       </main>
@@ -464,8 +489,7 @@ export default function GuestAccess({ memorial, token }: any) {
           </div>
         </div>
       )}
-
-      {showFlowerModal && (
+            {showFlowerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
             <div className="mb-4 text-center text-5xl">
@@ -522,12 +546,18 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       )}
 
-      <section id="top" className="relative flex min-h-[70vh] items-center justify-center overflow-hidden pt-20 text-center">
+      <section
+        id="top"
+        className="relative flex min-h-[70vh] items-center justify-center overflow-hidden pt-20 text-center"
+      >
         {memorial.cover_photo && (
           <img
-            src={memorial.cover_photo}
+            src={safeMediaPath(memorial.cover_photo)}
             alt={memorial.full_name}
             className="absolute inset-0 h-full w-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         )}
 
@@ -574,7 +604,10 @@ export default function GuestAccess({ memorial, token }: any) {
       </section>
 
       {galleryPhotos.length > 0 && (
-        <section id="slideshow" className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+        <section
+          id="slideshow"
+          className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14"
+        >
           <div className="mb-8 text-center">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
               Treasured Moments
@@ -597,7 +630,11 @@ export default function GuestAccess({ memorial, token }: any) {
                 src={galleryPhotos[activePhoto]}
                 alt="Memorial slideshow"
                 className="h-full w-full object-contain memorial-cinematic"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
+
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
               {galleryPhotos.length > 1 && (
@@ -637,12 +674,17 @@ export default function GuestAccess({ memorial, token }: any) {
               )}
             </div>
 
- <audio id="memorial-music" loop>
-  <source
-    src={memorial.memorial_music || "/music/memorial.mp3"}
-    type="audio/mpeg"
-  />
-</audio>
+            <audio id="memorial-music" loop>
+              <source
+                src={
+                  memorial.memorial_music
+                    ? safeMediaPath(memorial.memorial_music)
+                    : "/music/memorial.mp3"
+                }
+                type="audio/mpeg"
+              />
+            </audio>
+
             <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-4">
               <button
                 type="button"
@@ -675,9 +717,12 @@ export default function GuestAccess({ memorial, token }: any) {
                     }`}
                   >
                     <img
-                      src={photo}
+                      src={safeMediaPath(photo)}
                       alt={`Slideshow thumbnail ${index + 1}`}
                       className="h-16 w-full object-cover sm:h-20 md:h-24"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
                     />
                   </button>
                 ))}
@@ -687,15 +732,16 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
-      <section id="life-story" className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3">
+      <section
+        id="life-story"
+        className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3"
+      >
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             Life Story
           </h2>
 
-          <p className="leading-relaxed text-gray-300">
-            {memorial.biography}
-          </p>
+          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
         </div>
 
         <div className="space-y-4">
@@ -723,7 +769,10 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       </section>
 
-      <section id="tributes" className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2">
+      <section
+        id="tributes"
+        className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2"
+      >
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
           <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
             Candle Room
@@ -794,15 +843,15 @@ export default function GuestAccess({ memorial, token }: any) {
         </div>
       </section>
 
-      <section id="family-tree" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <section
+        id="family-tree"
+        className="mx-auto max-w-6xl px-4 py-10 sm:px-6"
+      >
         <FamilyTreeView token={token} />
       </section>
 
       <section id="chat" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <ChatBox
-          memorialId={memorial.id}
-          guestName={messageName || guestName}
-        />
+        <ChatBox memorialId={memorial.id} guestName={messageName || guestName} />
       </section>
 
       <section id="guestbook" className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
@@ -884,21 +933,24 @@ export default function GuestAccess({ memorial, token }: any) {
 
                 {entry.image_url && (
                   <img
-                    src={entry.image_url}
+                    src={safeMediaPath(entry.image_url)}
                     alt="Guestbook image"
                     className="mt-4 max-h-[420px] w-full rounded-xl object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
                 )}
 
                 {entry.video_url && (
                   <video controls className="mt-4 w-full rounded-xl">
-                    <source src={entry.video_url} />
+                    <source src={safeMediaPath(entry.video_url)} />
                   </video>
                 )}
 
                 {entry.audio_url && (
                   <audio controls className="mt-4 w-full">
-                    <source src={entry.audio_url} />
+                    <source src={safeMediaPath(entry.audio_url)} />
                   </audio>
                 )}
               </div>
