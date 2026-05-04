@@ -7,6 +7,57 @@ import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
+function getPublicHtmlRoot() {
+  const cwd = process.cwd();
+
+  /*
+    Hostinger production path usually looks like:
+    /home/USER/domains/scanmylegacy.com/public_html/.builds/source/repository
+
+    Public files must be written to:
+    /home/USER/domains/scanmylegacy.com/public_html/uploads
+  */
+  if (cwd.includes("public_html")) {
+    const beforePublicHtml = cwd.split("public_html")[0];
+    return path.join(beforePublicHtml, "public_html");
+  }
+
+  /*
+    Local development fallback:
+    C:\Users\Keith Guevara\scanmylegacy-app\public
+  */
+  return path.join(cwd, "public");
+}
+
+async function ensureUploadFolders() {
+  const publicRoot = getPublicHtmlRoot();
+
+  const uploadsRoot = path.join(publicRoot, "uploads");
+  const musicRoot = path.join(uploadsRoot, "music");
+  const galleryRoot = path.join(uploadsRoot, "gallery");
+
+  await mkdir(uploadsRoot, { recursive: true });
+  await mkdir(musicRoot, { recursive: true });
+  await mkdir(galleryRoot, { recursive: true });
+
+  return {
+    uploadsRoot,
+    musicRoot,
+    galleryRoot,
+  };
+}
+
+function makeSafeFileName(originalName: string, fallback: string) {
+  const cleanOriginalName = originalName.split("/").pop() || fallback;
+
+  const safeName = cleanOriginalName
+    .toLowerCase()
+    .replace(/[^a-z0-9.]/g, "-")
+    .replace(/-+/g, "-");
+
+  return `${Date.now()}-${safeName}`;
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -25,7 +76,6 @@ export async function POST(req: Request) {
     const package_slug = formData.get("package_slug") as string;
     const package_name = formData.get("package_name") as string;
     const package_price = formData.get("package_price") as string;
-    const referral_code = formData.get("referral_code") as string;
 
     const enable_family_tree =
       formData.get("enable_family_tree") === "1" ? 1 : 0;
@@ -149,13 +199,7 @@ export async function POST(req: Request) {
       userId = newUser.insertId;
     }
 
-    const uploadsRoot = path.join(process.cwd(), "public", "uploads");
-    const musicRoot = path.join(uploadsRoot, "music");
-    const galleryRoot = path.join(uploadsRoot, "gallery");
-
-    await mkdir(uploadsRoot, { recursive: true });
-    await mkdir(musicRoot, { recursive: true });
-    await mkdir(galleryRoot, { recursive: true });
+    const { uploadsRoot, musicRoot, galleryRoot } = await ensureUploadFolders();
 
     let coverPhotoPath = "";
     let memorialMusicPath = "";
@@ -164,10 +208,8 @@ export async function POST(req: Request) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const originalName = coverPhoto.name.split("/").pop() || "cover-photo";
-      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
+      const fileName = makeSafeFileName(coverPhoto.name, "cover-photo.jpg");
 
-      const fileName = `${Date.now()}-${safeName}`;
       await writeFile(path.join(uploadsRoot, fileName), buffer);
 
       coverPhotoPath = `/uploads/${fileName}`;
@@ -177,11 +219,11 @@ export async function POST(req: Request) {
       const bytes = await memorialMusic.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const originalName =
-        memorialMusic.name.split("/").pop() || "memorial-music";
-      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
+      const fileName = makeSafeFileName(
+        memorialMusic.name,
+        "memorial-music.mp3"
+      );
 
-      const fileName = `${Date.now()}-${safeName}`;
       await writeFile(path.join(musicRoot, fileName), buffer);
 
       memorialMusicPath = `/uploads/music/${fileName}`;
@@ -243,10 +285,8 @@ export async function POST(req: Request) {
         const bytes = await photo.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
-        const originalName = photo.name.split("/").pop() || "gallery-photo";
-        const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
+        const fileName = makeSafeFileName(photo.name, "gallery-photo.jpg");
 
-        const fileName = `${Date.now()}-${safeName}`;
         await writeFile(path.join(galleryRoot, fileName), buffer);
 
         const photoPath = `/uploads/gallery/${fileName}`;
