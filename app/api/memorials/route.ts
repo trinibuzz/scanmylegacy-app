@@ -9,31 +9,6 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get("session");
-
-    let userId: any = null;
-    let existingUser: any = null;
-
-    if (sessionCookie) {
-      const [sessionRows]: any = await db.execute(
-        "SELECT * FROM sessions WHERE id = ? LIMIT 1",
-        [sessionCookie.value]
-      );
-
-      if (sessionRows.length > 0) {
-        const [userRows]: any = await db.execute(
-          "SELECT * FROM users WHERE id = ? LIMIT 1",
-          [sessionRows[0].user_id]
-        );
-
-        if (userRows.length > 0) {
-          existingUser = userRows[0];
-          userId = existingUser.id;
-        }
-      }
-    }
-
     const formData = await req.formData();
 
     const creator_name = formData.get("creator_name") as string;
@@ -52,14 +27,22 @@ export async function POST(req: Request) {
     const package_price = formData.get("package_price") as string;
     const referral_code = formData.get("referral_code") as string;
 
+    const enable_family_tree =
+      formData.get("enable_family_tree") === "1" ? 1 : 0;
+
+    const enable_reminders =
+      formData.get("enable_reminders") === "1" ? 1 : 0;
+
     const coverPhoto = formData.get("cover_photo") as File | null;
     const memorialMusic = formData.get("memorial_music") as File | null;
     const galleryPhotos = formData.getAll("gallery_photos") as File[];
 
+    const cleanedEmail = creator_email?.trim().toLowerCase();
+
     const isFreeTrialRequest =
       Number(package_price) === 0 || package_slug === "starter-tribute";
 
-    if (!creator_name || !creator_email || !full_name) {
+    if (!creator_name || !cleanedEmail || !full_name) {
       return NextResponse.json(
         {
           error:
@@ -69,29 +52,59 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!userId && (!password || password.length < 6)) {
-      return NextResponse.json(
-        { error: "Please create a password with at least 6 characters." },
-        { status: 400 }
-      );
+    let userId: any = null;
+    let existingUser: any = null;
+
+    /*
+      IMPORTANT:
+      Use the form email as the source of truth.
+      Do not automatically attach a new memorial to the currently logged-in user
+      if the form email belongs to someone else.
+    */
+    const [existingUsers]: any = await db.execute(
+      "SELECT * FROM users WHERE email = ? LIMIT 1",
+      [cleanedEmail]
+    );
+
+    if (existingUsers.length > 0) {
+      existingUser = existingUsers[0];
+      userId = existingUser.id;
     }
 
-    if (!userId && creator_email) {
-      const [existingUsers]: any = await db.execute(
-        "SELECT * FROM users WHERE email = ? LIMIT 1",
-        [creator_email.trim()]
-      );
+    /*
+      Only use the current session if the logged-in user's email matches
+      the creator email on the form.
+    */
+    if (!userId) {
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get("session");
 
-      if (existingUsers.length > 0) {
-        existingUser = existingUsers[0];
-        userId = existingUser.id;
+      if (sessionCookie) {
+        const [sessionRows]: any = await db.execute(
+          "SELECT * FROM sessions WHERE id = ? LIMIT 1",
+          [sessionCookie.value]
+        );
+
+        if (sessionRows.length > 0) {
+          const [sessionUserRows]: any = await db.execute(
+            "SELECT * FROM users WHERE id = ? LIMIT 1",
+            [sessionRows[0].user_id]
+          );
+
+          if (
+            sessionUserRows.length > 0 &&
+            String(sessionUserRows[0].email).toLowerCase() === cleanedEmail
+          ) {
+            existingUser = sessionUserRows[0];
+            userId = existingUser.id;
+          }
+        }
       }
     }
 
     /*
       Free trial protection:
       - If this email/user already exists, do not allow another Starter Tribute.
-      - This blocks expired users from bypassing the packages page.
       - Paid packages are still allowed.
     */
     if (isFreeTrialRequest && existingUser) {
@@ -104,11 +117,20 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!userId && creator_email) {
+    if (!userId) {
+      if (!password || password.length < 6) {
+        return NextResponse.json(
+          { error: "Please create a password with at least 6 characters." },
+          { status: 400 }
+        );
+      }
+
       const hashedPassword = await bcrypt.hash(password, 10);
 
       const trialEndsAt = new Date();
       trialEndsAt.setDate(trialEndsAt.getDate() + 14);
+
+      const userPlan = isFreeTrialRequest ? "free" : package_slug || "free";
 
       const [newUser]: any = await db.execute(
         `INSERT INTO users 
@@ -116,10 +138,10 @@ export async function POST(req: Request) {
         VALUES (?, ?, ?, ?, ?, ?)`,
         [
           creator_name || full_name || "Memorial Owner",
-          creator_email.trim(),
+          cleanedEmail,
           hashedPassword,
-          "free",
-          trialEndsAt,
+          userPlan,
+          isFreeTrialRequest ? trialEndsAt : null,
           1,
         ]
       );
@@ -187,13 +209,15 @@ export async function POST(req: Request) {
         package_slug,
         package_name,
         package_price,
-        payment_status
+        payment_status,
+        enable_family_tree,
+        enable_reminders
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
         creator_name || "",
-        creator_email || "",
+        cleanedEmail || "",
         creator_phone || "",
         creator_relationship || "",
         full_name,
@@ -207,6 +231,8 @@ export async function POST(req: Request) {
         package_name,
         package_price,
         paymentStatus,
+        enable_family_tree,
+        enable_reminders,
       ]
     );
 
@@ -240,13 +266,15 @@ export async function POST(req: Request) {
         user_id: userId,
         full_name,
         creator_name,
-        creator_email,
+        creator_email: cleanedEmail,
         invite_token: inviteToken,
         link: `/memorial/${inviteToken}`,
         package_slug,
         package_name,
         package_price,
         payment_status: paymentStatus,
+        enable_family_tree,
+        enable_reminders,
       },
     });
   } catch (error: any) {
