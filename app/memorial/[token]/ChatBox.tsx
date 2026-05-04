@@ -12,6 +12,7 @@ export default function ChatBox({
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const loadMessages = async () => {
@@ -34,21 +35,21 @@ export default function ChatBox({
   }, [memorialId]);
 
   useEffect(() => {
-  const chatContainer = bottomRef.current?.parentElement;
+    const chatContainer = bottomRef.current?.parentElement;
 
-  if (!chatContainer) return;
+    if (!chatContainer) return;
 
-  const isNearBottom =
-    chatContainer.scrollHeight - chatContainer.scrollTop <=
-    chatContainer.clientHeight + 100;
+    const isNearBottom =
+      chatContainer.scrollHeight - chatContainer.scrollTop <=
+      chatContainer.clientHeight + 120;
 
-  if (isNearBottom) {
-    chatContainer.scrollTo({
-      top: chatContainer.scrollHeight,
-      behavior: "smooth",
-    });
-  }
-}, [messages]);
+    if (isNearBottom) {
+      chatContainer.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!message.trim()) {
@@ -72,7 +73,7 @@ export default function ChatBox({
         body: JSON.stringify({
           memorial_id: memorialId,
           guest_name: guestName,
-          body: message,
+          body: message.trim(),
         }),
       });
 
@@ -92,23 +93,53 @@ export default function ChatBox({
     }
   };
 
-  return (
-    <section className="mx-auto max-w-5xl px-6 pb-10">
-      <div className="overflow-hidden rounded-2xl border border-[#1f2a44] bg-[#111a2e] shadow-2xl">
-        <div className="border-b border-[#1f2a44] bg-[#0b1320] px-6 py-4">
-          <h2 className="font-serif text-2xl text-[#d4af37]">
-            Family Chat
-          </h2>
+  const formatTime = (dateValue: string) => {
+    if (!dateValue) return "";
 
-          <p className="text-sm text-gray-400">
-            A private room for family and friends to share memories.
-          </p>
+    return new Date(dateValue).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
+      <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
+        {/* Header */}
+        <div className="border-b border-[#d4af37]/10 bg-[#0b1320] px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#111a2e] text-xl shadow-lg">
+              💬
+            </div>
+
+            <div>
+              <h2 className="font-serif text-2xl text-[#d4af37]">
+                Family Chat
+              </h2>
+
+              <p className="text-sm text-gray-400">
+                A private room for family and friends to share memories.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="h-[360px] overflow-y-auto bg-[#0b1320] p-5">
+        {/* Chat body */}
+        <div className="h-[430px] overflow-y-auto bg-[#081827] bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.08),transparent_30%)] p-4 sm:p-5">
           {messages.length === 0 ? (
-            <div className="flex h-full items-center justify-center text-center text-gray-400">
-              No messages yet. Start the conversation.
+            <div className="flex h-full items-center justify-center text-center">
+              <div className="max-w-sm rounded-3xl border border-[#d4af37]/15 bg-[#111a2e]/80 p-6 shadow-xl">
+                <div className="mb-3 text-4xl">🕊️</div>
+
+                <p className="font-serif text-2xl text-[#d4af37]">
+                  Start the conversation
+                </p>
+
+                <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                  Share a message, a memory, or a comforting word with family
+                  and friends.
+                </p>
+              </div>
             </div>
           ) : (
             <div className="space-y-3">
@@ -123,14 +154,14 @@ export default function ChatBox({
                     }`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                      className={`max-w-[86%] rounded-3xl px-4 py-3 shadow-lg sm:max-w-[76%] ${
                         isMe
-                          ? "bg-[#d4af37] text-black"
-                          : "bg-[#111a2e] text-white border border-[#1f2a44]"
+                          ? "rounded-br-md bg-[#d4af37] text-black"
+                          : "rounded-bl-md border border-[#1f2a44] bg-[#111a2e] text-white"
                       }`}
                     >
                       <p
-                        className={`mb-1 text-xs font-semibold ${
+                        className={`mb-1 text-xs font-bold ${
                           isMe ? "text-black/70" : "text-[#d4af37]"
                         }`}
                       >
@@ -142,11 +173,11 @@ export default function ChatBox({
                       </p>
 
                       <p
-                        className={`mt-2 text-[10px] ${
-                          isMe ? "text-black/60" : "text-gray-500"
+                        className={`mt-2 text-right text-[10px] ${
+                          isMe ? "text-black/55" : "text-gray-500"
                         }`}
                       >
-                        {new Date(msg.created_at).toLocaleString()}
+                        {formatTime(msg.created_at)}
                       </p>
                     </div>
                   </div>
@@ -158,38 +189,56 @@ export default function ChatBox({
           )}
         </div>
 
-        <div className="border-t border-[#1f2a44] bg-[#111a2e] p-4">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write a message..."
-            className="mb-3 h-20 w-full resize-none rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-white outline-none placeholder:text-gray-500"
-          />
+        {/* Bottom WhatsApp-style message bar */}
+        <div className="border-t border-[#d4af37]/10 bg-[#111a2e] p-3">
+          <div className="flex items-end gap-2 rounded-full border border-[#d4af37]/20 bg-[#0b1320] p-2">
+            <button
+              type="button"
+              disabled
+              title="Media uploads coming next"
+              className="flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-full border border-[#d4af37]/20 text-xl text-[#d4af37]/40"
+            >
+              +
+            </button>
 
-          <div className="mb-3 grid gap-3 md:grid-cols-3">
-            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
-              📷 Add Photo
-              <input type="file" accept="image/*" className="hidden" />
-            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
+              placeholder="Message..."
+              rows={1}
+              className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-3 text-sm text-white outline-none placeholder:text-gray-500"
+            />
 
-            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
-              🎥 Add Video
-              <input type="file" accept="video/*" className="hidden" />
-            </label>
+            <button
+              type="button"
+              disabled
+              title="Voice notes coming next"
+              className="flex h-11 w-11 shrink-0 cursor-not-allowed items-center justify-center rounded-full border border-[#d4af37]/20 text-lg text-[#d4af37]/40"
+            >
+              🎙️
+            </button>
 
-            <label className="cursor-pointer rounded-xl border border-[#2a3550] bg-[#0b1320] p-3 text-center text-sm text-gray-300 hover:border-[#d4af37]">
-              🎙️ Add Audio
-              <input type="file" accept="audio/*" className="hidden" />
-            </label>
+            <button
+              type="button"
+              onClick={sendMessage}
+              disabled={sending}
+              className="flex h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-[#d4af37] px-4 font-semibold text-black transition hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label="Send message"
+            >
+              {sending ? "..." : "➤"}
+            </button>
           </div>
 
-          <button
-            onClick={sendMessage}
-            disabled={sending}
-            className="w-full rounded-xl bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-60"
-          >
-            {sending ? "Sending..." : "Send Message"}
-          </button>
+          <p className="mt-2 text-center text-[11px] text-gray-500">
+            Text chat is active. Photos, videos, and voice notes can be added
+            after mobile testing.
+          </p>
         </div>
       </div>
     </section>
