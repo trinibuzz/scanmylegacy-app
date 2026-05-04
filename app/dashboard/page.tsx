@@ -42,13 +42,51 @@ export default async function Dashboard() {
     "https://deepskyblue-donkey-850675.hostingersite.com";
 
   const now = new Date();
+
+  /*
+    Bank transfer rule:
+    - pending_bank_transfer is temporarily active until payment_due_at.
+    - after payment_due_at passes, mark it expired_bank_transfer.
+    - data is not deleted.
+  */
+  for (const memorial of memorials) {
+    const paymentDueAt = memorial.payment_due_at
+      ? new Date(memorial.payment_due_at)
+      : null;
+
+    const bankTransferExpired =
+      memorial.payment_status === "pending_bank_transfer" &&
+      paymentDueAt &&
+      now.getTime() > paymentDueAt.getTime();
+
+    if (bankTransferExpired) {
+      await db.execute(
+        `UPDATE memorials
+         SET payment_status = ?
+         WHERE id = ? AND payment_status = ?`,
+        ["expired_bank_transfer", memorial.id, "pending_bank_transfer"]
+      );
+
+      memorial.payment_status = "expired_bank_transfer";
+    }
+  }
+
   const isFreePlan = !user.plan || user.plan === "free";
+
+  const hasPaidOrPendingPaidMemorial = memorials.some((m: any) => {
+    const price = Number(m.package_price || 0);
+
+    return (
+      price > 0 &&
+      (m.payment_status === "paid" ||
+        m.payment_status === "pending_bank_transfer")
+    );
+  });
 
   /*
     Trial rules:
     - Prefer users.trial_ends_at when it exists.
     - If it does not exist, fall back to created_at + 14 days.
-    This prevents free users from showing "0 days left" while still active forever.
   */
   let trialEndsAt: Date | null = null;
 
@@ -64,9 +102,7 @@ export default async function Dashboard() {
   const trialExpired =
     isFreePlan && trialEndsAt ? now.getTime() > trialEndsAt.getTime() : false;
 
-  const msLeft = trialEndsAt
-    ? trialEndsAt.getTime() - now.getTime()
-    : 0;
+  const msLeft = trialEndsAt ? trialEndsAt.getTime() - now.getTime() : 0;
 
   const daysLeft =
     isFreePlan && trialEndsAt && !trialExpired
@@ -85,7 +121,67 @@ export default async function Dashboard() {
     ? "1 day left"
     : `${daysLeft} days left`;
 
-  const packageStatusText = !isFreePlan
+  const currentPaidMemorial = memorials.find(
+    (m: any) => Number(m.package_price || 0) > 0
+  );
+
+  const effectivePlanSlug = currentPaidMemorial?.package_slug || user.plan;
+
+  const planLabel =
+    effectivePlanSlug === "standard-legacy"
+      ? "Standard Legacy"
+      : effectivePlanSlug === "premium-legacy"
+      ? "Premium Legacy"
+      : effectivePlanSlug === "eternal-legacy"
+      ? "Eternal Legacy"
+      : "Starter Tribute";
+
+  const getPaymentLabel = (status: string) => {
+    if (status === "paid") return "Paid";
+    if (status === "free") return "Free Trial";
+    if (status === "pending_bank_transfer") return "Bank Transfer Pending";
+    if (status === "expired_bank_transfer") return "Payment Review Expired";
+    if (status === "pending") return "Pending Payment";
+    return "Pending Payment";
+  };
+
+  const getPaymentBadgeClass = (status: string) => {
+    if (status === "paid") return "bg-green-500/20 text-green-300";
+    if (status === "free") return "bg-[#d4af37]/15 text-[#d4af37]";
+    if (status === "pending_bank_transfer")
+      return "bg-yellow-500/20 text-yellow-200";
+    if (status === "expired_bank_transfer")
+      return "bg-red-500/20 text-red-300";
+    return "bg-[#d4af37]/15 text-[#d4af37]";
+  };
+
+  const getBankTransferMessage = (m: any) => {
+    if (m.payment_status !== "pending_bank_transfer") return "";
+
+    if (!m.payment_due_at) {
+      return "Bank transfer reference submitted. Payment is pending admin review.";
+    }
+
+    const dueAt = new Date(m.payment_due_at);
+    const hoursLeft = Math.max(
+      0,
+      Math.ceil((dueAt.getTime() - now.getTime()) / (1000 * 60 * 60))
+    );
+
+    return `Bank transfer reference submitted. Temporary access is active while payment is reviewed. About ${hoursLeft} hour${
+      hoursLeft === 1 ? "" : "s"
+    } left before automatic deactivation if payment is not verified.`;
+  };
+
+  const packageStatusText = currentPaidMemorial
+    ? currentPaidMemorial.payment_status === "paid"
+      ? "Your memorial package is active."
+      : currentPaidMemorial.payment_status === "pending_bank_transfer"
+      ? "Bank transfer submitted. Temporary access is active while payment is reviewed."
+      : currentPaidMemorial.payment_status === "expired_bank_transfer"
+      ? "Bank transfer review expired. Payment must be verified to reactivate."
+      : "Your paid package is pending payment."
+    : !isFreePlan
     ? "Your memorial package is active."
     : !trialEndsAt
     ? "Free trial date needs to be checked."
@@ -95,18 +191,10 @@ export default async function Dashboard() {
     ? "Your free trial expires today."
     : `${trialStatusLabel} in your free trial`;
 
-  const accountIsActive = Number(user.is_active) !== 0 && !trialExpired;
+  const accountIsActive =
+    Number(user.is_active) !== 0 && (!trialExpired || hasPaidOrPendingPaidMemorial);
 
-  const planLabel =
-    user.plan === "standard-legacy"
-      ? "Standard Legacy"
-      : user.plan === "premium-legacy"
-      ? "Premium Legacy"
-      : user.plan === "eternal-legacy"
-      ? "Eternal Legacy"
-      : "Starter Tribute";
-
-  if (trialExpired || Number(user.is_active) === 0) {
+  if ((trialExpired || Number(user.is_active) === 0) && !hasPaidOrPendingPaidMemorial) {
     redirect("/packages?expired=1");
   }
 
@@ -142,7 +230,7 @@ export default async function Dashboard() {
                   {packageStatusText}
                 </p>
 
-                {isFreePlan && (
+                {isFreePlan && !currentPaidMemorial && (
                   <a
                     href="/packages"
                     className="mt-5 inline-block rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
@@ -171,17 +259,27 @@ export default async function Dashboard() {
           </div>
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
-            <p className="text-sm text-gray-400">Trial Status</p>
+            <p className="text-sm text-gray-400">
+              {currentPaidMemorial ? "Payment Status" : "Trial Status"}
+            </p>
+
             <h3
               className={`mt-2 text-xl font-semibold ${
-                trialExpired
+                currentPaidMemorial?.payment_status === "expired_bank_transfer"
+                  ? "text-red-300"
+                  : currentPaidMemorial?.payment_status ===
+                    "pending_bank_transfer"
+                  ? "text-yellow-300"
+                  : trialExpired
                   ? "text-red-300"
                   : isFreePlan && daysLeft <= 0
                   ? "text-yellow-300"
                   : "text-white"
               }`}
             >
-              {trialStatusLabel}
+              {currentPaidMemorial
+                ? getPaymentLabel(currentPaidMemorial.payment_status)
+                : trialStatusLabel}
             </h3>
           </div>
 
@@ -240,18 +338,18 @@ export default async function Dashboard() {
             <div className="grid gap-6">
               {memorials.map((m: any) => {
                 const link = `${siteUrl}/memorial/${m.invite_token}`;
-
-                const paymentLabel =
-                  m.payment_status === "paid"
-                    ? "Paid"
-                    : m.payment_status === "free"
-                    ? "Free Trial"
-                    : "Pending Payment";
+                const isExpiredBankTransfer =
+                  m.payment_status === "expired_bank_transfer";
+                const bankTransferMessage = getBankTransferMessage(m);
 
                 return (
                   <div
                     key={m.id}
-                    className="overflow-hidden rounded-3xl border border-[#1f2a44] bg-[#111a2e] shadow-xl"
+                    className={`overflow-hidden rounded-3xl border bg-[#111a2e] shadow-xl ${
+                      isExpiredBankTransfer
+                        ? "border-red-400/30 opacity-75"
+                        : "border-[#1f2a44]"
+                    }`}
                   >
                     <div className="grid gap-0 md:grid-cols-[280px_1fr]">
                       <div className="relative min-h-[220px] bg-[#081827]">
@@ -293,15 +391,28 @@ export default async function Dashboard() {
                           </div>
 
                           <span
-                            className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                              m.payment_status === "paid"
-                                ? "bg-green-500/20 text-green-300"
-                                : "bg-[#d4af37]/15 text-[#d4af37]"
-                            }`}
+                            className={`rounded-full px-4 py-2 text-xs font-semibold ${getPaymentBadgeClass(
+                              m.payment_status
+                            )}`}
                           >
-                            {paymentLabel}
+                            {getPaymentLabel(m.payment_status)}
                           </span>
                         </div>
+
+                        {bankTransferMessage && (
+                          <div className="mb-5 rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-4 text-sm leading-relaxed text-yellow-100">
+                            {bankTransferMessage}
+                          </div>
+                        )}
+
+                        {isExpiredBankTransfer && (
+                          <div className="mb-5 rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm leading-relaxed text-red-100">
+                            This memorial was temporarily active while bank
+                            transfer payment was being reviewed. Payment was
+                            not verified within 48 hours, so access is now
+                            temporarily deactivated until payment is confirmed.
+                          </div>
+                        )}
 
                         <p className="line-clamp-3 text-gray-300">
                           {m.biography || "No biography added yet."}
@@ -319,40 +430,52 @@ export default async function Dashboard() {
 
                         {m.invite_token && (
                           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                            <a
-                              href={`/memorial/${m.invite_token}`}
-                              className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
-                            >
-                              View Memorial
-                            </a>
+                            {isExpiredBankTransfer ? (
+                              <button
+                                disabled
+                                className="cursor-not-allowed rounded-lg bg-gray-700 px-5 py-3 text-sm font-semibold text-gray-300"
+                              >
+                                Awaiting Payment Verification
+                              </button>
+                            ) : (
+                              <>
+                                <a
+                                  href={`/memorial/${m.invite_token}`}
+                                  className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
+                                >
+                                  View Memorial
+                                </a>
 
-                            <a
-                              href={`/dashboard/memorial/${m.id}`}
-                              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
-                            >
-                              Manage Memorial
-                            </a>
+                                <a
+                                  href={`/dashboard/memorial/${m.id}`}
+                                  className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
+                                >
+                                  Manage Memorial
+                                </a>
 
-                            <a
-                              href={`https://wa.me/?text=${encodeURIComponent(
-                                `View this memorial: ${link}`
-                              )}`}
-                              target="_blank"
-                              className="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white"
-                            >
-                              Share WhatsApp
-                            </a>
+                                <a
+                                  href={`https://wa.me/?text=${encodeURIComponent(
+                                    `View this memorial: ${link}`
+                                  )}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white"
+                                >
+                                  Share WhatsApp
+                                </a>
 
-                            <a
-                              href={`mailto:?subject=${encodeURIComponent(
-                                `Memorial of ${m.full_name}`
-                              )}&body=${encodeURIComponent(
-                                `View this memorial: ${link}`
-                              )}`}
-                              className="rounded-lg border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37]"
-                            >
-                              Share Email
-                            </a>
+                                <a
+                                  href={`mailto:?subject=${encodeURIComponent(
+                                    `Memorial of ${m.full_name}`
+                                  )}&body=${encodeURIComponent(
+                                    `View this memorial: ${link}`
+                                  )}`}
+                                  className="rounded-lg border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37]"
+                                >
+                                  Share Email
+                                </a>
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
