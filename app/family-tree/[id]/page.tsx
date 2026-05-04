@@ -7,6 +7,8 @@ export default function FamilyTreeManager({ params }: any) {
 
   const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [message, setMessage] = useState("");
 
   const [name, setName] = useState("");
   const [relationship, setRelationship] = useState("");
@@ -16,19 +18,41 @@ export default function FamilyTreeManager({ params }: any) {
   const [deathDate, setDeathDate] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
 
+  const relationships = [
+    "Mother",
+    "Father",
+    "Deceased",
+    "Spouse",
+    "Brother",
+    "Sister",
+    "Brother-in-law",
+    "Sister-in-law",
+    "Son",
+    "Daughter",
+    "Nephew",
+    "Niece",
+    "Grandson",
+    "Granddaughter",
+    "Cousin",
+  ];
+
   const loadMembers = async () => {
     try {
+      setPageLoading(true);
+
       const res = await fetch(`/api/family-tree?memorial_id=${memorialId}`);
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to load family tree");
+        setMessage(data.error || "Failed to load family tree.");
         return;
       }
 
       setMembers(data.members || []);
     } catch {
-      alert("Failed to load family tree");
+      setMessage("Failed to load family tree.");
+    } finally {
+      setPageLoading(false);
     }
   };
 
@@ -136,28 +160,36 @@ export default function FamilyTreeManager({ params }: any) {
     setBirthDate("");
     setDeathDate("");
     setPhoto(null);
+
+    const fileInput = document.getElementById("family-photo") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
+  };
+
+  const showMessage = (text: string) => {
+    setMessage(text);
+    setTimeout(() => setMessage(""), 4500);
   };
 
   const addMember = async () => {
     if (loading) return;
 
     if (!name.trim()) {
-      alert("Please enter a name");
+      showMessage("Please enter the family member’s full name.");
       return;
     }
 
     if (!relationship) {
-      alert("Please choose a relationship");
+      showMessage("Please choose a relationship.");
       return;
     }
 
     if (needsParentBranch && !parentId) {
-      alert("Please choose a parent branch");
+      showMessage("Please choose the parent or branch this person belongs to.");
       return;
     }
 
     if (needsSpouseLink && !spouseId) {
-      alert("Please choose who this spouse belongs to");
+      showMessage("Please choose who this spouse belongs to.");
       return;
     }
 
@@ -171,7 +203,10 @@ export default function FamilyTreeManager({ params }: any) {
       formData.append("relationship", relationship);
       formData.append("parent_id", parentId);
       formData.append("spouse_id", spouseId);
-      formData.append("generation", String(getGenerationFromRelationship(relationship)));
+      formData.append(
+        "generation",
+        String(getGenerationFromRelationship(relationship))
+      );
       formData.append("birth_date", birthDate);
       formData.append("death_date", deathDate);
 
@@ -187,16 +222,15 @@ export default function FamilyTreeManager({ params }: any) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to add family member");
+        showMessage(data.error || "Failed to add family member.");
         return;
       }
 
-      alert("Family member added successfully");
-
+      showMessage("Family member added successfully.");
       resetForm();
       await loadMembers();
     } catch {
-      alert("Failed to add family member");
+      showMessage("Failed to add family member.");
     } finally {
       setLoading(false);
     }
@@ -215,13 +249,14 @@ export default function FamilyTreeManager({ params }: any) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Delete failed");
+        showMessage(data.error || "Delete failed.");
         return;
       }
 
+      showMessage("Family member deleted.");
       await loadMembers();
     } catch {
-      alert("Delete failed");
+      showMessage("Delete failed.");
     }
   };
 
@@ -229,48 +264,6 @@ export default function FamilyTreeManager({ params }: any) {
     const found = members.find((m) => Number(m.id) === Number(id));
     return found ? found.name : "";
   };
-
-  const renderMemberCard = (m: any) => (
-    <div
-      key={m.id}
-      className="rounded-xl border border-[#1f2a44] bg-[#111a2e] p-4"
-    >
-      {m.photo_url ? (
-        <img
-          src={m.photo_url}
-          alt={m.name}
-          className="mb-4 h-36 w-full rounded-lg object-cover"
-        />
-      ) : (
-        <div className="mb-4 flex h-36 items-center justify-center rounded-lg bg-[#0b1320] text-4xl">
-          👤
-        </div>
-      )}
-
-      <h4 className="font-semibold">{m.name}</h4>
-
-      <p className="text-sm text-[#d4af37]">{m.relationship}</p>
-
-      {m.parent_id && (
-        <p className="mt-2 text-xs text-gray-400">
-          Parent / Branch: {getLinkedName(m.parent_id)}
-        </p>
-      )}
-
-      {m.spouse_id && (
-        <p className="mt-1 text-xs text-gray-400">
-          Spouse Of: {getLinkedName(m.spouse_id)}
-        </p>
-      )}
-
-      <button
-        onClick={() => deleteMember(m.id)}
-        className="mt-4 rounded bg-red-600 px-4 py-2 text-sm"
-      >
-        Delete
-      </button>
-    </div>
-  );
 
   const parents = members.filter(
     (m) => m.relationship === "Mother" || m.relationship === "Father"
@@ -301,161 +294,346 @@ export default function FamilyTreeManager({ params }: any) {
       m.relationship === "Cousin"
   );
 
-  return (
-    <main className="min-h-screen bg-[#0b1320] p-8 text-white">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="font-serif text-4xl text-[#d4af37]">
-            Family Tree Manager
-          </h1>
+  const inputClass =
+    "w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37]/30 [color-scheme:dark]";
 
-          <a
-            href={`/admin/memorial/${memorialId}`}
-            className="rounded border border-[#d4af37] px-4 py-2 text-[#d4af37]"
-          >
-            Back to Admin
-          </a>
+  const labelClass =
+    "mb-2 block text-sm font-semibold uppercase tracking-[0.16em] text-[#d4af37]";
+
+  const renderMemberCard = (m: any) => (
+    <div
+      key={m.id}
+      className="group overflow-hidden rounded-2xl border border-[#d4af37]/20 bg-[#111a2e] shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37]/60"
+    >
+      <div className="relative h-44 bg-[#081827]">
+        {m.photo_url ? (
+          <img
+            src={m.photo_url}
+            alt={m.name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-6xl">
+            👤
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+
+        <div className="absolute bottom-4 left-4 right-4">
+          <h4 className="font-serif text-xl font-semibold text-white">
+            {m.name}
+          </h4>
+
+          <p className="mt-1 w-fit rounded-full border border-[#d4af37]/40 bg-black/40 px-3 py-1 text-xs text-[#d4af37] backdrop-blur">
+            {m.relationship}
+          </p>
         </div>
-
-        <section className="mb-10 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-6 font-serif text-2xl text-[#d4af37]">
-            Add Family Member
-          </h2>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <input
-              className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              placeholder="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-
-            <select
-              className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              value={relationship}
-              onChange={(e) => {
-                setRelationship(e.target.value);
-                setParentId("");
-                setSpouseId("");
-              }}
-            >
-              <option value="">Choose Relationship</option>
-              <option value="Mother">Mother</option>
-              <option value="Father">Father</option>
-              <option value="Deceased">Deceased</option>
-              <option value="Spouse">Spouse of Deceased</option>
-              <option value="Brother">Brother</option>
-              <option value="Sister">Sister</option>
-              <option value="Brother-in-law">Brother-in-law</option>
-              <option value="Sister-in-law">Sister-in-law</option>
-              <option value="Son">Son</option>
-              <option value="Daughter">Daughter</option>
-              <option value="Nephew">Nephew</option>
-              <option value="Niece">Niece</option>
-              <option value="Grandson">Grandson</option>
-              <option value="Granddaughter">Granddaughter</option>
-              <option value="Cousin">Cousin</option>
-            </select>
-
-            {needsParentBranch && (
-              <select
-                className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-                value={parentId}
-                onChange={(e) => setParentId(e.target.value)}
-              >
-                <option value="">Choose Parent / Branch</option>
-
-                {parentOptions.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.relationship})
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {needsSpouseLink && (
-              <select
-                className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-                value={spouseId}
-                onChange={(e) => setSpouseId(e.target.value)}
-              >
-                <option value="">Choose Spouse Link</option>
-
-                {spouseOptions.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} ({m.relationship})
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <input
-              type="date"
-              className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-            />
-
-            <input
-              type="date"
-              className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              value={deathDate}
-              onChange={(e) => setDeathDate(e.target.value)}
-            />
-
-            <input
-              type="file"
-              accept="image/*"
-              className="rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              onChange={(e) => setPhoto(e.target.files?.[0] || null)}
-            />
-          </div>
-
-          <button
-            onClick={addMember}
-            disabled={loading}
-            className="mt-6 w-full rounded bg-[#d4af37] py-3 font-semibold text-black disabled:opacity-50"
-          >
-            {loading ? "Adding..." : "Add Family Member"}
-          </button>
-        </section>
-
-        <section className="space-y-10">
-          <div>
-            <h3 className="mb-4 text-xl text-[#d4af37]">Parents</h3>
-            <div className="grid gap-4 md:grid-cols-4">
-              {parents.map(renderMemberCard)}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-xl text-[#d4af37]">
-              Deceased • Spouse • Siblings • In-laws
-            </h3>
-            <div className="grid gap-4 md:grid-cols-4">
-              {mainLine.map(renderMemberCard)}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-xl text-[#d4af37]">
-              Children • Nephews • Nieces
-            </h3>
-            <div className="grid gap-4 md:grid-cols-4">
-              {childrenLine.map(renderMemberCard)}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="mb-4 text-xl text-[#d4af37]">
-              Grandchildren • Cousins
-            </h3>
-            <div className="grid gap-4 md:grid-cols-4">
-              {grandchildrenLine.map(renderMemberCard)}
-            </div>
-          </div>
-        </section>
       </div>
+
+      <div className="space-y-2 p-5">
+        {m.birth_date && (
+          <p className="text-xs text-gray-400">
+            Born: {new Date(m.birth_date).toLocaleDateString()}
+          </p>
+        )}
+
+        {m.death_date && (
+          <p className="text-xs text-gray-400">
+            Passed: {new Date(m.death_date).toLocaleDateString()}
+          </p>
+        )}
+
+        {m.parent_id && (
+          <p className="text-xs text-gray-400">
+            Parent / Branch:{" "}
+            <span className="text-gray-200">{getLinkedName(m.parent_id)}</span>
+          </p>
+        )}
+
+        {m.spouse_id && (
+          <p className="text-xs text-gray-400">
+            Spouse Of:{" "}
+            <span className="text-gray-200">{getLinkedName(m.spouse_id)}</span>
+          </p>
+        )}
+
+        <button
+          onClick={() => deleteMember(m.id)}
+          className="mt-4 w-full rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/20"
+        >
+          Delete Member
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderSection = (title: string, subtitle: string, list: any[]) => (
+    <section className="rounded-3xl border border-[#1f2a44] bg-[#0f1b2f] p-5 shadow-xl sm:p-6">
+      <div className="mb-5">
+        <p className="text-xs uppercase tracking-[0.22em] text-[#d4af37]">
+          {subtitle}
+        </p>
+
+        <h3 className="mt-2 font-serif text-2xl text-white">{title}</h3>
+      </div>
+
+      {list.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-6 text-center text-sm text-gray-400">
+          No family members added in this section yet.
+        </div>
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {list.map(renderMemberCard)}
+        </div>
+      )}
+    </section>
+  );
+
+  return (
+    <main className="min-h-screen bg-[#0b1320] text-white">
+      <section className="relative overflow-hidden border-b border-[#d4af37]/20 bg-[#26447F]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.22),transparent_35%),linear-gradient(135deg,#26447F,#0b1320_70%)]" />
+
+        <div className="relative mx-auto max-w-7xl px-6 py-12 sm:py-16">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#d4af37]">
+                Family Tree Manager
+              </p>
+
+              <h1 className="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl">
+                Build the roots and branches of this legacy.
+              </h1>
+
+              <p className="mt-4 max-w-2xl leading-relaxed text-white/80">
+                Add parents, siblings, spouses, children, grandchildren, and
+                extended family so future generations can understand where they
+                came from.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <a
+                href="/dashboard"
+                className="rounded-full border border-[#d4af37]/50 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+              >
+                Back to Dashboard
+              </a>
+
+              <a
+                href={`/dashboard/memorial/${memorialId}`}
+                className="rounded-full bg-[#d4af37] px-5 py-3 text-sm font-semibold text-[#0b1320] transition hover:bg-[#f0c94a]"
+              >
+                Manage Memorial
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        {message && (
+          <div className="mb-8 rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-5 text-center text-[#d4af37] shadow-xl">
+            {message}
+          </div>
+        )}
+
+        <div className="grid gap-8 lg:grid-cols-[420px_1fr]">
+          <aside className="h-fit rounded-3xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl lg:sticky lg:top-6">
+            <div className="mb-6">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Add Member
+              </p>
+
+              <h2 className="font-serif text-3xl text-white">
+                Family Details
+              </h2>
+
+              <p className="mt-3 text-sm leading-relaxed text-gray-400">
+                Start with the deceased, then add parents, spouse, siblings,
+                children, and future generations.
+              </p>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className={labelClass}>Full Name</label>
+                <input
+                  className={inputClass}
+                  placeholder="Enter full name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Relationship</label>
+                <select
+                  className={inputClass}
+                  value={relationship}
+                  onChange={(e) => {
+                    setRelationship(e.target.value);
+                    setParentId("");
+                    setSpouseId("");
+                  }}
+                >
+                  <option value="">Choose relationship</option>
+                  {relationships.map((rel) => (
+                    <option key={rel} value={rel}>
+                      {rel === "Spouse" ? "Spouse of Deceased" : rel}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {needsParentBranch && (
+                <div>
+                  <label className={labelClass}>Parent / Branch</label>
+                  <select
+                    className={inputClass}
+                    value={parentId}
+                    onChange={(e) => setParentId(e.target.value)}
+                  >
+                    <option value="">Choose parent or branch</option>
+
+                    {parentOptions.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.relationship})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {needsSpouseLink && (
+                <div>
+                  <label className={labelClass}>Spouse Link</label>
+                  <select
+                    className={inputClass}
+                    value={spouseId}
+                    onChange={(e) => setSpouseId(e.target.value)}
+                  >
+                    <option value="">Choose spouse link</option>
+
+                    {spouseOptions.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} ({m.relationship})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <div>
+                  <label className={labelClass}>Birth Date</label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Passing Date</label>
+                  <input
+                    type="date"
+                    className={inputClass}
+                    value={deathDate}
+                    onChange={(e) => setDeathDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Photo Optional</label>
+                <input
+                  id="family-photo"
+                  type="file"
+                  accept="image/*"
+                  className="w-full cursor-pointer rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-[#d4af37] file:px-4 file:py-2 file:font-semibold file:text-[#0b1320]"
+                  onChange={(e) => setPhoto(e.target.files?.[0] || null)}
+                />
+
+                {photo && (
+                  <p className="mt-2 text-xs text-[#d4af37]">
+                    Selected: {photo.name}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={addMember}
+                disabled={loading}
+                className="w-full rounded-full bg-[#d4af37] py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? "Adding Member..." : "Add Family Member"}
+              </button>
+            </div>
+          </aside>
+
+          <div className="space-y-8">
+            <div className="grid gap-5 sm:grid-cols-3">
+              <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+                <p className="text-sm text-gray-400">Family Members</p>
+                <h3 className="mt-2 text-3xl font-bold text-[#d4af37]">
+                  {members.length}
+                </h3>
+              </div>
+
+              <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+                <p className="text-sm text-gray-400">Main Person</p>
+                <h3 className="mt-2 text-xl font-semibold text-white">
+                  {members.some((m) => m.relationship === "Deceased")
+                    ? "Added"
+                    : "Missing"}
+                </h3>
+              </div>
+
+              <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+                <p className="text-sm text-gray-400">Tree Status</p>
+                <h3 className="mt-2 text-xl font-semibold text-green-300">
+                  Enabled
+                </h3>
+              </div>
+            </div>
+
+            {pageLoading ? (
+              <div className="rounded-3xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center text-gray-300">
+                Loading family members...
+              </div>
+            ) : (
+              <>
+                {renderSection(
+                  "Parents",
+                  "Generation Above",
+                  parents
+                )}
+
+                {renderSection(
+                  "Deceased, Spouse, Siblings & In-Laws",
+                  "Main Generation",
+                  mainLine
+                )}
+
+                {renderSection(
+                  "Children, Nephews & Nieces",
+                  "Next Generation",
+                  childrenLine
+                )}
+
+                {renderSection(
+                  "Grandchildren & Cousins",
+                  "Future Branches",
+                  grandchildrenLine
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
