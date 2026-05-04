@@ -452,6 +452,14 @@ export default async function Dashboard() {
                                 >
                                   Manage Memorial
                                 </a>
+                                {Number(m.enable_family_tree) === 1 && (
+  <a
+    href={`/family-tree/${m.id}`}
+    className="rounded-lg bg-[#111a2e] border border-[#d4af37]/50 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+  >
+    Manage Family Tree
+  </a>
+)}
 
                                 <a
                                   href={`https://wa.me/?text=${encodeURIComponent(
