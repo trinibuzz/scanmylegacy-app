@@ -14,6 +14,10 @@ export default function ChatBox({
   const [selectedMedia, setSelectedMedia] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
 
+  const [reportingMessage, setReportingMessage] = useState<any>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [submittingReport, setSubmittingReport] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -127,6 +131,46 @@ export default function ChatBox({
     }
   };
 
+  const submitReport = async () => {
+    if (!reportingMessage) return;
+
+    const confirmed = confirm("Submit this report to ScanMyLegacy admin?");
+    if (!confirmed) return;
+
+    try {
+      setSubmittingReport(true);
+
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memorial_id: memorialId,
+          content_type: "chat",
+          content_id: reportingMessage.id,
+          reporter_name: guestName || "Anonymous",
+          reason: reportReason.trim(),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to submit report.");
+        return;
+      }
+
+      alert(data.message || "Report submitted.");
+      setReportingMessage(null);
+      setReportReason("");
+    } catch {
+      alert("Something went wrong while submitting the report.");
+    } finally {
+      setSubmittingReport(false);
+    }
+  };
+
   const formatTime = (dateValue: string) => {
     if (!dateValue) return "";
 
@@ -156,6 +200,60 @@ export default function ChatBox({
 
   return (
     <section className="mx-auto max-w-5xl px-4 pb-10 sm:px-6">
+      {reportingMessage && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-2xl">
+            <h3 className="mb-2 font-serif text-2xl text-[#d4af37]">
+              Report Chat Message
+            </h3>
+
+            <p className="mb-4 text-sm text-gray-400">
+              Tell us why this message should be reviewed.
+            </p>
+
+            <div className="mb-4 rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4">
+              <p className="mb-1 text-xs text-[#d4af37]">
+                {reportingMessage.guest_name}
+              </p>
+
+              <p className="line-clamp-4 text-sm text-gray-300">
+                {reportingMessage.body || "Media message"}
+              </p>
+            </div>
+
+            <textarea
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="Reason for report..."
+              rows={5}
+              className="mb-4 w-full resize-none rounded-xl border border-[#2a3550] bg-[#0b1320] p-4 text-sm text-white outline-none placeholder:text-gray-500 focus:border-[#d4af37]"
+            />
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={submitReport}
+                disabled={submittingReport}
+                className="flex-1 rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submittingReport ? "Submitting..." : "Submit Report"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setReportingMessage(null);
+                  setReportReason("");
+                }}
+                className="flex-1 rounded-xl border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
         <div className="border-b border-[#d4af37]/10 bg-[#0b1320] px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
@@ -210,13 +308,25 @@ export default function ChatBox({
                           : "rounded-bl-md border border-[#1f2a44] bg-[#111a2e] text-white"
                       }`}
                     >
-                      <p
-                        className={`mb-1 text-xs font-bold ${
-                          isMe ? "text-black/70" : "text-[#d4af37]"
-                        }`}
-                      >
-                        {msg.guest_name}
-                      </p>
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <p
+                          className={`text-xs font-bold ${
+                            isMe ? "text-black/70" : "text-[#d4af37]"
+                          }`}
+                        >
+                          {msg.guest_name}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() => setReportingMessage(msg)}
+                          className={`text-[10px] underline-offset-2 hover:underline ${
+                            isMe ? "text-black/50" : "text-gray-500"
+                          }`}
+                        >
+                          Report
+                        </button>
+                      </div>
 
                       {msg.body && (
                         <p className="whitespace-pre-wrap text-sm leading-relaxed">
