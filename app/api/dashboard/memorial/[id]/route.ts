@@ -22,6 +22,62 @@ async function getSessionUserId() {
   return sessionRows[0].user_id;
 }
 
+function getPublicHtmlRoot() {
+  const cwd = process.cwd();
+
+  /*
+    Hostinger can run the Next.js app from:
+    /home/USER/domains/scanmylegacy.com/nodejs
+
+    Public browser files must live in:
+    /home/USER/domains/scanmylegacy.com/public_html
+  */
+
+  if (cwd.includes("public_html")) {
+    const beforePublicHtml = cwd.split("public_html")[0];
+    return path.join(beforePublicHtml, "public_html");
+  }
+
+  if (cwd.includes("nodejs")) {
+    const beforeNodejs = cwd.split("nodejs")[0];
+    return path.join(beforeNodejs, "public_html");
+  }
+
+  return path.join(cwd, "public");
+}
+
+async function ensureUploadFolders() {
+  const publicRoot = getPublicHtmlRoot();
+
+  const uploadsRoot = path.join(publicRoot, "uploads");
+  const musicRoot = path.join(uploadsRoot, "music");
+  const galleryRoot = path.join(uploadsRoot, "gallery");
+  const chatRoot = path.join(uploadsRoot, "chat");
+
+  await mkdir(uploadsRoot, { recursive: true });
+  await mkdir(musicRoot, { recursive: true });
+  await mkdir(galleryRoot, { recursive: true });
+  await mkdir(chatRoot, { recursive: true });
+
+  return {
+    uploadsRoot,
+    musicRoot,
+    galleryRoot,
+    chatRoot,
+  };
+}
+
+function makeSafeFileName(originalName: string, fallback: string) {
+  const cleanOriginalName = originalName.split("/").pop() || fallback;
+
+  const safeName = cleanOriginalName
+    .toLowerCase()
+    .replace(/[^a-z0-9.]/g, "-")
+    .replace(/-+/g, "-");
+
+  return `${Date.now()}-${safeName}`;
+}
+
 async function expireBankTransferIfNeeded(memorial: any) {
   if (memorial.payment_status !== "pending_bank_transfer") {
     return memorial;
@@ -142,13 +198,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       );
     }
 
-    const uploadsRoot = path.join(process.cwd(), "public", "uploads");
-    const musicRoot = path.join(uploadsRoot, "music");
-    const galleryRoot = path.join(uploadsRoot, "gallery");
-
-    await mkdir(uploadsRoot, { recursive: true });
-    await mkdir(musicRoot, { recursive: true });
-    await mkdir(galleryRoot, { recursive: true });
+    const { uploadsRoot, musicRoot, galleryRoot } = await ensureUploadFolders();
 
     let coverPhotoPath = memorial.cover_photo || "";
     let memorialMusicPath = memorial.memorial_music || "";
@@ -156,23 +206,25 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     if (coverPhoto && coverPhoto.size > 0) {
       const bytes = await coverPhoto.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const originalName = coverPhoto.name.split("/").pop() || "cover-photo";
-      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
-      const fileName = `${Date.now()}-${safeName}`;
+
+      const fileName = makeSafeFileName(coverPhoto.name, "cover-photo.jpg");
 
       await writeFile(path.join(uploadsRoot, fileName), buffer);
+
       coverPhotoPath = `/uploads/${fileName}`;
     }
 
     if (memorialMusic && memorialMusic.size > 0) {
       const bytes = await memorialMusic.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      const originalName =
-        memorialMusic.name.split("/").pop() || "memorial-music";
-      const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
-      const fileName = `${Date.now()}-${safeName}`;
+
+      const fileName = makeSafeFileName(
+        memorialMusic.name,
+        "memorial-music.mp3"
+      );
 
       await writeFile(path.join(musicRoot, fileName), buffer);
+
       memorialMusicPath = `/uploads/music/${fileName}`;
     }
 
@@ -201,9 +253,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       if (photo && photo.size > 0) {
         const bytes = await photo.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const originalName = photo.name.split("/").pop() || "gallery-photo";
-        const safeName = originalName.toLowerCase().replace(/[^a-z0-9.]/g, "-");
-        const fileName = `${Date.now()}-${safeName}`;
+
+        const fileName = makeSafeFileName(photo.name, "gallery-photo.jpg");
 
         await writeFile(path.join(galleryRoot, fileName), buffer);
 
