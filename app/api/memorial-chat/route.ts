@@ -1,5 +1,6 @@
 import { db } from "../../../lib/db";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -34,6 +35,57 @@ function makeSafeFileName(originalName: string, fallback: string) {
     .replace(/-+/g, "-");
 
   return `${Date.now()}-${safeName}`;
+}
+
+async function getSessionUserId() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("session");
+
+  if (!sessionCookie) return null;
+
+  const [sessionRows]: any = await db.execute(
+    "SELECT * FROM sessions WHERE id = ? LIMIT 1",
+    [sessionCookie.value]
+  );
+
+  if (sessionRows.length === 0) return null;
+
+  return sessionRows[0].user_id;
+}
+
+async function isAdminSessionActive() {
+  const cookieStore = await cookies();
+  const adminSession = cookieStore.get("admin_session");
+
+  return adminSession?.value === "active";
+}
+
+async function canDeleteChatMessage(messageId: string, memorialId: string) {
+  const isAdmin = await isAdminSessionActive();
+
+  if (isAdmin) {
+    return true;
+  }
+
+  const userId = await getSessionUserId();
+
+  if (!userId) {
+    return false;
+  }
+
+  const [rows]: any = await db.execute(
+    `SELECT m.id
+     FROM memorials m
+     INNER JOIN memorial_chat_messages c
+       ON c.memorial_id = m.id
+     WHERE c.id = ?
+       AND c.memorial_id = ?
+       AND m.user_id = ?
+     LIMIT 1`,
+    [messageId, memorialId, userId]
+  );
+
+  return rows.length > 0;
 }
 
 export async function GET(req: Request) {
@@ -95,8 +147,7 @@ export async function POST(req: Request) {
         if (mediaFile.size > maxFileSize) {
           return NextResponse.json(
             {
-              error:
-                "File is too large. Please upload a file under 50MB.",
+              error: "File is too large. Please upload a file under 50MB.",
             },
             { status: 400 }
           );
@@ -109,8 +160,7 @@ export async function POST(req: Request) {
         if (!isImage && !isVideo && !isAudio) {
           return NextResponse.json(
             {
-              error:
-                "Please upload an image, video, or audio file only.",
+              error: "Please upload an image, video, or audio file only.",
             },
             { status: 400 }
           );
@@ -173,6 +223,54 @@ export async function POST(req: Request) {
     return NextResponse.json({
       success: true,
       message_id: result.insertId,
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      {
+        error: error.message,
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const body = await req.json();
+
+    const message_id = body.message_id;
+    const memorial_id = body.memorial_id;
+
+    if (!message_id || !memorial_id) {
+      return NextResponse.json(
+        {
+          error: "Message ID and memorial ID are required.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const allowed = await canDeleteChatMessage(message_id, memorial_id);
+
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error: "You are not authorized to delete this chat message.",
+        },
+        { status: 403 }
+      );
+    }
+
+    await db.execute(
+      `UPDATE memorial_chat_messages
+       SET is_deleted = 1
+       WHERE id = ? AND memorial_id = ?`,
+      [message_id, memorial_id]
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Chat message deleted.",
     });
   } catch (error: any) {
     return NextResponse.json(
