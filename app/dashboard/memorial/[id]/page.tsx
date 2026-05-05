@@ -12,6 +12,8 @@ export default function ManageMemorialPage() {
 
   const [memorial, setMemorial] = useState<any>(null);
   const [gallery, setGallery] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [loadingChat, setLoadingChat] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -21,6 +23,46 @@ export default function ManageMemorialPage() {
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [memorialMusic, setMemorialMusic] = useState<File | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
+
+  const safeMediaPath = (pathValue: any) => {
+    if (!pathValue) return "";
+
+    let cleanPath = String(pathValue).trim();
+    cleanPath = cleanPath.replace(/\\/g, "/");
+
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+
+    cleanPath = cleanPath.replace(/^public\//, "");
+    cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+
+    return encodeURI(cleanPath);
+  };
+
+  const loadChatMessages = async (memorialIdToLoad: string) => {
+    try {
+      setLoadingChat(true);
+
+      const res = await fetch(
+        `/api/memorial-chat?memorial_id=${memorialIdToLoad}`
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setChatMessages(data.messages || []);
+      }
+    } catch {
+      setChatMessages([]);
+    } finally {
+      setLoadingChat(false);
+    }
+  };
 
   const loadMemorial = async () => {
     try {
@@ -46,6 +88,8 @@ export default function ManageMemorialPage() {
         data.memorial.death_date ? data.memorial.death_date.slice(0, 10) : ""
       );
       setBiography(data.memorial.biography || "");
+
+      await loadChatMessages(String(data.memorial.id));
     } finally {
       setLoading(false);
     }
@@ -165,6 +209,89 @@ export default function ManageMemorialPage() {
     await loadMemorial();
   };
 
+  const deleteChatMessage = async (messageId: number) => {
+    if (!canManage) {
+      alert(
+        "This memorial is temporarily deactivated because payment was not verified within 48 hours."
+      );
+      return;
+    }
+
+    const confirmed = confirm(
+      "Delete this chat message? This will remove it from the public memorial chat."
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch("/api/memorial-chat", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message_id: messageId,
+        memorial_id: memorial.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to delete chat message.");
+      return;
+    }
+
+    await loadChatMessages(String(memorial.id));
+  };
+
+  const formatDateTime = (dateValue: string) => {
+    if (!dateValue) return "";
+
+    return new Date(dateValue).toLocaleString([], {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const renderChatMedia = (msg: any) => {
+    if (msg.image_url) {
+      return (
+        <img
+          src={safeMediaPath(msg.image_url)}
+          alt="Chat image"
+          className="mt-3 max-h-[260px] w-full rounded-xl object-cover"
+        />
+      );
+    }
+
+    if (msg.video_url) {
+      return (
+        <video controls className="mt-3 w-full rounded-xl">
+          <source src={safeMediaPath(msg.video_url)} />
+        </video>
+      );
+    }
+
+    if (msg.audio_url) {
+      return (
+        <div className="mt-3 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-3">
+          <p className="mb-2 text-xs font-semibold text-[#d4af37]">
+            🎙️ Voice Note / Audio
+          </p>
+
+          <audio controls className="w-full">
+            <source src={safeMediaPath(msg.audio_url)} />
+          </audio>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
@@ -194,8 +321,8 @@ export default function ManageMemorialPage() {
           <h1 className="font-serif text-4xl font-bold">Manage Memorial</h1>
 
           <p className="mt-3 max-w-2xl text-gray-400">
-            Update your loved one’s story, cover photo, memorial music, and
-            slideshow gallery.
+            Update your loved one’s story, media, gallery, and manage visitor
+            chat messages.
           </p>
         </div>
 
@@ -253,6 +380,15 @@ export default function ManageMemorialPage() {
             >
               Awaiting Payment Verification
             </button>
+          )}
+
+          {Number(memorial.enable_family_tree) === 1 && (
+            <a
+              href={`/family-tree/${memorial.id}`}
+              className="rounded-lg border border-[#d4af37]/50 bg-[#111a2e] px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+            >
+              Manage Family Tree
+            </a>
           )}
         </div>
 
@@ -386,6 +522,74 @@ export default function ManageMemorialPage() {
                 ? "Saving Updates..."
                 : "Save Memorial Updates"}
             </button>
+
+            <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#d4af37]">
+                    Chat Message Manager
+                  </h2>
+
+                  <p className="mt-2 text-sm text-gray-400">
+                    Review and remove messages from the public family chat.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => loadChatMessages(String(memorial.id))}
+                  className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-sm font-semibold text-[#d4af37]"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {loadingChat ? (
+                <p className="text-gray-400">Loading chat messages...</p>
+              ) : chatMessages.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-5 text-center text-sm text-gray-400">
+                  No chat messages yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {chatMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className="rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {msg.guest_name}
+                          </p>
+
+                          <p className="text-xs text-gray-500">
+                            {formatDateTime(msg.created_at)}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => deleteChatMessage(msg.id)}
+                          disabled={!canManage}
+                          className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Delete
+                        </button>
+                      </div>
+
+                      {msg.body && (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {msg.body}
+                        </p>
+                      )}
+
+                      {renderChatMedia(msg)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
 
           <aside className="space-y-6">
@@ -393,7 +597,7 @@ export default function ManageMemorialPage() {
               <div className="relative min-h-[260px] bg-[#081827]">
                 {memorial.cover_photo ? (
                   <img
-                    src={memorial.cover_photo}
+                    src={safeMediaPath(memorial.cover_photo)}
                     alt={memorial.full_name}
                     className="h-full min-h-[260px] w-full object-cover"
                   />
@@ -442,11 +646,7 @@ export default function ManageMemorialPage() {
                       className="overflow-hidden rounded-xl border border-[#1f2a44] bg-[#0b1320]"
                     >
                       <img
-                        src={
-                          photo.file_url?.startsWith("/")
-                            ? photo.file_url
-                            : `/${photo.file_url}`
-                        }
+                        src={safeMediaPath(photo.file_url)}
                         alt="Gallery photo"
                         className="h-32 w-full object-cover"
                       />
