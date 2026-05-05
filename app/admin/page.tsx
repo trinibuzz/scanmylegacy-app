@@ -26,7 +26,7 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-4">
           <Link
             href="/admin/trials"
             className="rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 transition hover:border-[#d4af37] hover:shadow-xl"
@@ -43,21 +43,21 @@ export default async function AdminDashboardPage() {
             </p>
           </Link>
 
-<Link
-  href="/admin/memorials"
-  className="rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 transition hover:border-[#d4af37] hover:shadow-xl"
->
-  <div className="mb-4 text-4xl">🕯️</div>
+          <Link
+            href="/admin/memorial"
+            className="rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 transition hover:border-[#d4af37] hover:shadow-xl"
+          >
+            <div className="mb-4 text-4xl">🕯️</div>
 
-  <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-    Memorial Manager
-  </h2>
+            <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
+              Memorial Manager
+            </h2>
 
-  <p className="text-sm leading-relaxed text-gray-400">
-    View all memorials, open profiles, check payment status, and activate or
-    deactivate access.
-  </p>
-</Link>
+            <p className="text-sm leading-relaxed text-gray-400">
+              View all memorials, open profiles, check payment status, and
+              activate or deactivate access.
+            </p>
+          </Link>
 
           <Link
             href="/admin/payments"
@@ -76,15 +76,15 @@ export default async function AdminDashboardPage() {
           </Link>
 
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 opacity-70">
-            <div className="mb-4 text-4xl">🕯️</div>
+            <div className="mb-4 text-4xl">🛡️</div>
 
             <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-              Memorials
+              Reports
             </h2>
 
             <p className="text-sm leading-relaxed text-gray-400">
-              Coming next: review all memorials, view links, and manage content
-              reports.
+              Coming next: review reported content, flagged chats, and platform
+              activity.
             </p>
           </div>
         </div>
