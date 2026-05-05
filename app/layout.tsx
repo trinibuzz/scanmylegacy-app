@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LiveChat from "./components/LiveChat";
+import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: "ScanMyLegacy",
@@ -17,6 +18,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <Footer />
         <LiveChat />
       </body>
     </html>
