@@ -9,9 +9,22 @@ export const runtime = "nodejs";
 function getPublicHtmlRoot() {
   const cwd = process.cwd();
 
+  /*
+    Hostinger can run the Next.js app from:
+    /home/USER/domains/scanmylegacy.com/nodejs
+
+    Public browser files must live in:
+    /home/USER/domains/scanmylegacy.com/public_html
+  */
+
   if (cwd.includes("public_html")) {
     const beforePublicHtml = cwd.split("public_html")[0];
     return path.join(beforePublicHtml, "public_html");
+  }
+
+  if (cwd.includes("nodejs")) {
+    const beforeNodejs = cwd.split("nodejs")[0];
+    return path.join(beforeNodejs, "public_html");
   }
 
   return path.join(cwd, "public");
@@ -19,8 +32,11 @@ function getPublicHtmlRoot() {
 
 async function ensureChatUploadFolder() {
   const publicRoot = getPublicHtmlRoot();
-  const chatRoot = path.join(publicRoot, "uploads", "chat");
 
+  const uploadsRoot = path.join(publicRoot, "uploads");
+  const chatRoot = path.join(uploadsRoot, "chat");
+
+  await mkdir(uploadsRoot, { recursive: true });
   await mkdir(chatRoot, { recursive: true });
 
   return chatRoot;
@@ -172,6 +188,7 @@ export async function POST(req: Request) {
         const buffer = Buffer.from(bytes);
 
         const fileName = makeSafeFileName(mediaFile.name, "chat-media");
+
         await writeFile(path.join(chatRoot, fileName), buffer);
 
         const fileUrl = `/uploads/chat/${fileName}`;
