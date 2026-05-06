@@ -24,6 +24,7 @@ export async function GET() {
         users.plan,
         users.trial_ends_at,
         users.is_active,
+        users.created_at,
         memorials.id AS memorial_id,
         memorials.full_name AS memorial_name,
         memorials.package_slug,
@@ -52,7 +53,10 @@ export async function POST(req: Request) {
     const { user_id, memorial_id, action } = await req.json();
 
     if (!user_id || !action) {
-      return NextResponse.json({ error: "Missing user or action." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing user or action." },
+        { status: 400 }
+      );
     }
 
     if (action === "extend_7" || action === "extend_14") {
@@ -64,6 +68,24 @@ export async function POST(req: Request) {
         "UPDATE users SET plan = 'free', trial_ends_at = ?, is_active = 1 WHERE id = ?",
         [trialEndsAt, user_id]
       );
+
+      return NextResponse.json({
+        success: true,
+        message: `Trial extended by ${days} days.`,
+      });
+    }
+
+    if (action === "delete_trial") {
+      await db.execute(
+        "UPDATE users SET plan = 'free', trial_ends_at = NULL, is_active = 0 WHERE id = ?",
+        [user_id]
+      );
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Trial access removed. The user and memorial records were not deleted.",
+      });
     }
 
     if (action === "standard") {
@@ -83,6 +105,11 @@ export async function POST(req: Request) {
           [memorial_id]
         );
       }
+
+      return NextResponse.json({
+        success: true,
+        message: "Account activated as Standard Legacy.",
+      });
     }
 
     if (action === "premium") {
@@ -102,6 +129,11 @@ export async function POST(req: Request) {
           [memorial_id]
         );
       }
+
+      return NextResponse.json({
+        success: true,
+        message: "Account activated as Premium Legacy.",
+      });
     }
 
     if (action === "eternal") {
@@ -121,13 +153,39 @@ export async function POST(req: Request) {
           [memorial_id]
         );
       }
+
+      return NextResponse.json({
+        success: true,
+        message: "Account activated as Eternal Legacy.",
+      });
     }
 
     if (action === "deactivate") {
-      await db.execute("UPDATE users SET is_active = 0 WHERE id = ?", [user_id]);
+      await db.execute("UPDATE users SET is_active = 0 WHERE id = ?", [
+        user_id,
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        message: "Account deactivated.",
+      });
     }
 
-    return NextResponse.json({ success: true });
+    if (action === "activate") {
+      await db.execute("UPDATE users SET is_active = 1 WHERE id = ?", [
+        user_id,
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        message: "Account activated.",
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid action." },
+      { status: 400 }
+    );
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

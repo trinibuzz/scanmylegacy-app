@@ -1,15 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+type TrialRecord = {
+  user_id: number;
+  owner_name: string;
+  email: string;
+  plan: string | null;
+  trial_ends_at: string | null;
+  is_active: number;
+  created_at?: string | null;
+  memorial_id: number | null;
+  memorial_name: string | null;
+  package_slug: string | null;
+  package_name: string | null;
+  package_price: number | null;
+  payment_status: string | null;
+};
 
 export default function AdminTrialsPage() {
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<TrialRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [workingKey, setWorkingKey] = useState<string | null>(null);
 
   const loadTrials = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/trials");
+
+      const res = await fetch("/api/admin/trials", {
+        cache: "no-store",
+      });
+
       const data = await res.json();
 
       if (!res.ok) {
@@ -27,123 +48,398 @@ export default function AdminTrialsPage() {
     loadTrials();
   }, []);
 
-  const updateAccount = async (
-    userId: number,
-    memorialId: number,
-    action: string
-  ) => {
-    const confirmed = confirm("Are you sure you want to update this account?");
-    if (!confirmed) return;
+  const getTrialExpired = (item: TrialRecord) => {
+    return (
+      item.plan === "free" &&
+      item.trial_ends_at &&
+      new Date(item.trial_ends_at) < new Date()
+    );
+  };
 
-    const res = await fetch("/api/admin/trials", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id: userId, memorial_id: memorialId, action }),
-    });
+  const getStatusLabel = (item: TrialRecord) => {
+    const expired = getTrialExpired(item);
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error || "Update failed.");
-      return;
+    if (Number(item.is_active) === 1 && !expired) {
+      return "Active";
     }
 
-    alert("Account updated.");
-    await loadTrials();
+    if (expired) {
+      return "Expired";
+    }
+
+    return "Inactive";
+  };
+
+  const getStatusClass = (item: TrialRecord) => {
+    const label = getStatusLabel(item);
+
+    if (label === "Active") {
+      return "bg-green-500/15 text-green-300 ring-green-500/30";
+    }
+
+    if (label === "Expired") {
+      return "bg-red-500/15 text-red-300 ring-red-500/30";
+    }
+
+    return "bg-gray-500/15 text-gray-300 ring-gray-500/30";
+  };
+
+  const formatDate = (dateValue: string | null) => {
+    if (!dateValue) return "No trial";
+
+    return new Date(dateValue).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatPlan = (plan: string | null) => {
+    if (!plan) return "Free";
+
+    return plan
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const summary = useMemo(() => {
+    const total = records.length;
+
+    const active = records.filter(
+      (item) => Number(item.is_active) === 1 && !getTrialExpired(item)
+    ).length;
+
+    const expired = records.filter((item) => getTrialExpired(item)).length;
+
+    const paid = records.filter(
+      (item) =>
+        item.payment_status === "paid" ||
+        item.plan === "standard-legacy" ||
+        item.plan === "premium-legacy" ||
+        item.plan === "eternal-legacy"
+    ).length;
+
+    return { total, active, expired, paid };
+  }, [records]);
+
+  const updateAccount = async (
+    item: TrialRecord,
+    action: string,
+    label: string
+  ) => {
+    let message = `Are you sure you want to ${label.toLowerCase()} for ${item.owner_name}?`;
+
+    if (action === "delete_trial") {
+      message =
+        "Remove this free trial access?\n\nThis will NOT delete the user or memorial. It will clear the trial date and set the account inactive.";
+    }
+
+    if (action === "deactivate") {
+      message =
+        "Deactivate this account?\n\nThe user and memorial data will remain saved, but access will be turned off.";
+    }
+
+    const confirmed = confirm(message);
+    if (!confirmed) return;
+
+    const key = `${item.user_id}-${item.memorial_id || "none"}-${action}`;
+
+    try {
+      setWorkingKey(key);
+
+      const res = await fetch("/api/admin/trials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: item.user_id,
+          memorial_id: item.memorial_id,
+          action,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Update failed.");
+        return;
+      }
+
+      alert(data.message || "Account updated.");
+      await loadTrials();
+    } finally {
+      setWorkingKey(null);
+    }
+  };
+
+  const ActionButton = ({
+    item,
+    action,
+    label,
+    variant = "dark",
+  }: {
+    item: TrialRecord;
+    action: string;
+    label: string;
+    variant?: "dark" | "gold" | "green" | "red" | "outline";
+  }) => {
+    const key = `${item.user_id}-${item.memorial_id || "none"}-${action}`;
+    const isWorking = workingKey === key;
+
+    const className =
+      variant === "gold"
+        ? "bg-[#d4af37] text-[#061b3a] hover:bg-[#f0c94a]"
+        : variant === "green"
+        ? "bg-green-600 text-white hover:bg-green-500"
+        : variant === "red"
+        ? "bg-red-900/70 text-red-100 hover:bg-red-800"
+        : variant === "outline"
+        ? "border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37] hover:text-[#061b3a]"
+        : "bg-[#061b3a] text-white hover:bg-[#123b78]";
+
+    return (
+      <button
+        onClick={() => updateAccount(item, action, label)}
+        disabled={Boolean(workingKey)}
+        className={`rounded-lg px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      >
+        {isWorking ? "Working..." : label}
+      </button>
+    );
   };
 
   return (
-    <main className="min-h-screen bg-[#0b1320] px-6 py-12 text-white">
+    <main className="min-h-screen bg-[#061b3a] px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-            Admin Control
-          </p>
+        <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-2 text-sm uppercase tracking-[0.28em] text-[#d4af37]">
+              Admin Control
+            </p>
 
-          <h1 className="font-serif text-4xl font-bold">
-            Trial & Package Manager
-          </h1>
+            <h1 className="font-serif text-4xl font-bold">
+              Trial & Package Manager
+            </h1>
 
-          <p className="mt-3 max-w-3xl text-gray-400">
-            Manage 14-day free trials, manually activate accounts after cash
-            payments, extend trials, or deactivate access.
-          </p>
+            <p className="mt-3 max-w-3xl text-gray-300">
+              Manage free trials, package activation, payment access, and
+              account status from one clean control panel.
+            </p>
+          </div>
+
+          <a
+            href="/admin"
+            className="inline-flex rounded-full border border-[#d4af37]/50 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
+          >
+            Back to Admin
+          </a>
+        </div>
+
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Total Accounts", value: summary.total },
+            { label: "Active Accounts", value: summary.active },
+            { label: "Expired Trials", value: summary.expired },
+            { label: "Paid Accounts", value: summary.paid },
+          ].map((card) => (
+            <div
+              key={card.label}
+              className="rounded-2xl border border-[#d4af37]/15 bg-[#082652] p-5 shadow-xl"
+            >
+              <p className="text-sm text-gray-300">{card.label}</p>
+              <p className="mt-2 font-serif text-3xl font-bold text-[#d4af37]">
+                {card.value}
+              </p>
+            </div>
+          ))}
         </div>
 
         {loading ? (
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center text-gray-300">
+          <div className="rounded-2xl border border-[#d4af37]/15 bg-[#082652] p-8 text-center text-gray-300">
             Loading trial accounts...
           </div>
         ) : records.length === 0 ? (
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center text-gray-300">
+          <div className="rounded-2xl border border-[#d4af37]/15 bg-[#082652] p-8 text-center text-gray-300">
             No accounts found.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-[#1f2a44] bg-[#111a2e]">
-            <table className="w-full min-w-[1100px] text-left text-sm">
-              <thead className="bg-[#081827] text-[#d4af37]">
-                <tr>
-                  <th className="p-4">Owner</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Memorial</th>
-                  <th className="p-4">Plan</th>
-                  <th className="p-4">Trial Ends</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Payment</th>
-                  <th className="p-4">Actions</th>
-                </tr>
-              </thead>
+          <div className="overflow-hidden rounded-3xl border border-[#d4af37]/15 bg-[#082652] shadow-2xl">
+            <div className="border-b border-[#d4af37]/15 p-5">
+              <h2 className="font-serif text-2xl text-[#d4af37]">
+                Account List
+              </h2>
+              <p className="mt-1 text-sm text-gray-300">
+                Use trial actions for free trials, package actions for paid
+                activation, and account actions for access control.
+              </p>
+            </div>
 
-              <tbody>
-                {records.map((item) => {
-                  const expired =
-                    item.plan === "free" &&
-                    item.trial_ends_at &&
-                    new Date(item.trial_ends_at) < new Date();
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1250px] text-left text-sm">
+                <thead className="bg-[#061b3a] text-xs uppercase tracking-[0.15em] text-[#d4af37]">
+                  <tr>
+                    <th className="p-4">Owner</th>
+                    <th className="p-4">Email</th>
+                    <th className="p-4">Memorial</th>
+                    <th className="p-4">Plan</th>
+                    <th className="p-4">Trial Ends</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Payment</th>
+                    <th className="p-4">Actions</th>
+                  </tr>
+                </thead>
 
-                  return (
-                    <tr
-                      key={`${item.user_id}-${item.memorial_id}`}
-                      className="border-t border-[#1f2a44]"
-                    >
-                      <td className="p-4">{item.owner_name}</td>
-                      <td className="p-4 text-gray-300">{item.email}</td>
-                      <td className="p-4">{item.memorial_name || "No memorial"}</td>
-                      <td className="p-4">{item.plan || "free"}</td>
-                      <td className="p-4 text-gray-300">
-                        {item.trial_ends_at
-                          ? new Date(item.trial_ends_at).toLocaleDateString()
-                          : "No trial"}
-                      </td>
-                      <td className="p-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs ${
-                            item.is_active && !expired
-                              ? "bg-green-500/20 text-green-300"
-                              : "bg-red-500/20 text-red-300"
-                          }`}
-                        >
-                          {item.is_active && !expired ? "Active" : "Expired"}
-                        </span>
-                      </td>
-                      <td className="p-4">{item.payment_status || "n/a"}</td>
-                      <td className="p-4">
-                        <div className="flex flex-wrap gap-2">
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "extend_7")} className="rounded bg-[#0b1320] px-3 py-2 text-xs text-white hover:bg-[#1f2a44]">Extend 7 Days</button>
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "extend_14")} className="rounded bg-[#0b1320] px-3 py-2 text-xs text-white hover:bg-[#1f2a44]">Extend 14 Days</button>
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "standard")} className="rounded bg-[#d4af37] px-3 py-2 text-xs font-semibold text-black">Standard</button>
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "premium")} className="rounded bg-[#d4af37] px-3 py-2 text-xs font-semibold text-black">Premium</button>
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "eternal")} className="rounded bg-[#d4af37] px-3 py-2 text-xs font-semibold text-black">Eternal</button>
-                          <button onClick={() => updateAccount(item.user_id, item.memorial_id, "deactivate")} className="rounded bg-red-900/60 px-3 py-2 text-xs text-red-100">Deactivate</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                <tbody>
+                  {records.map((item) => {
+                    return (
+                      <tr
+                        key={`${item.user_id}-${item.memorial_id || "none"}`}
+                        className="border-t border-[#d4af37]/10 align-top transition hover:bg-white/[0.03]"
+                      >
+                        <td className="p-4">
+                          <div className="font-semibold text-white">
+                            {item.owner_name || "No name"}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-400">
+                            User ID: {item.user_id}
+                          </div>
+                        </td>
+
+                        <td className="p-4 text-gray-300">{item.email}</td>
+
+                        <td className="p-4">
+                          <div className="font-semibold text-white">
+                            {item.memorial_name || "No memorial"}
+                          </div>
+                          {item.memorial_id && (
+                            <div className="mt-1 text-xs text-gray-400">
+                              Memorial ID: {item.memorial_id}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="p-4">
+                          <span className="rounded-full bg-[#d4af37]/15 px-3 py-1 text-xs font-semibold text-[#d4af37]">
+                            {formatPlan(item.plan || item.package_slug)}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-gray-300">
+                          {formatDate(item.trial_ends_at)}
+                        </td>
+
+                        <td className="p-4">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusClass(
+                              item
+                            )}`}
+                          >
+                            {getStatusLabel(item)}
+                          </span>
+                        </td>
+
+                        <td className="p-4">
+                          <span className="rounded-full bg-black/20 px-3 py-1 text-xs text-gray-300">
+                            {item.payment_status || "n/a"}
+                          </span>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="grid gap-4">
+                            <div>
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+                                Trial
+                              </p>
+
+                              <div className="flex flex-wrap gap-2">
+                                <ActionButton
+                                  item={item}
+                                  action="extend_7"
+                                  label="Extend 7 Days"
+                                />
+
+                                <ActionButton
+                                  item={item}
+                                  action="extend_14"
+                                  label="Extend 14 Days"
+                                />
+
+                                <ActionButton
+                                  item={item}
+                                  action="delete_trial"
+                                  label="Delete Trial"
+                                  variant="red"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+                                Package
+                              </p>
+
+                              <div className="flex flex-wrap gap-2">
+                                <ActionButton
+                                  item={item}
+                                  action="standard"
+                                  label="Standard"
+                                  variant="gold"
+                                />
+
+                                <ActionButton
+                                  item={item}
+                                  action="premium"
+                                  label="Premium"
+                                  variant="gold"
+                                />
+
+                                <ActionButton
+                                  item={item}
+                                  action="eternal"
+                                  label="Eternal"
+                                  variant="gold"
+                                />
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-gray-400">
+                                Account
+                              </p>
+
+                              <div className="flex flex-wrap gap-2">
+                                <ActionButton
+                                  item={item}
+                                  action="activate"
+                                  label="Activate"
+                                  variant="green"
+                                />
+
+                                <ActionButton
+                                  item={item}
+                                  action="deactivate"
+                                  label="Deactivate"
+                                  variant="outline"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-[#d4af37]/15 bg-[#082652] p-5 text-sm leading-relaxed text-gray-300">
+          <p>
+            <span className="font-semibold text-[#d4af37]">Note:</span> Delete
+            Trial only removes trial access. It does not delete the user,
+            memorial, gallery, chat, family tree, or payment records.
+          </p>
+        </div>
       </div>
     </main>
   );
