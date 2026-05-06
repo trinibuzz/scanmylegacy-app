@@ -2,24 +2,24 @@ import SiteHeader from "./components/SiteHeader";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#0b1320] text-white">
+    <main className="min-h-screen bg-[#061b3a] text-white">
       <SiteHeader />
 
       {/* HERO */}
-      <section className="relative min-h-[86vh] overflow-hidden bg-[#26447F]">
+      <section className="relative min-h-[86vh] overflow-hidden bg-[#061b3a]">
         <img
           src="/images/home-hero.jpg"
           alt="Family preserving memories"
           className="absolute inset-0 h-full w-full object-cover opacity-45"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0b1320]/95 via-[#26447F]/88 to-[#0b1320]/60" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(212,175,55,0.22),transparent_34%)]" />
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0b1320] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#061b3a]/95 via-[#123b78]/88 to-[#061b3a]/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_35%,rgba(212,175,55,0.20),transparent_34%),radial-gradient(circle_at_75%_20%,rgba(38,68,127,0.55),transparent_40%)]" />
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#061b3a] to-transparent" />
 
         <div className="relative z-10 mx-auto flex min-h-[86vh] max-w-7xl items-center px-6 py-24 sm:px-8">
           <div className="max-w-4xl">
-            <div className="mb-5 inline-flex rounded-full border border-[#d4af37]/40 bg-black/25 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-[#d4af37] backdrop-blur">
+            <div className="mb-5 inline-flex rounded-full border border-[#d4af37]/40 bg-[#061b3a]/35 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-[#d4af37] backdrop-blur">
               Scan. Remember. Celebrate Life.
             </div>
 
@@ -38,7 +38,7 @@ export default function HomePage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
               <a
                 href="/packages"
-                className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+                className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
               >
                 Book a Spot
               </a>
@@ -52,7 +52,7 @@ export default function HomePage() {
 
               <a
                 href="/packages"
-                className="rounded-full border border-white/20 bg-black/20 px-8 py-4 text-center font-semibold text-white/90 backdrop-blur transition hover:border-[#d4af37] hover:text-[#d4af37]"
+                className="rounded-full border border-white/20 bg-[#061b3a]/35 px-8 py-4 text-center font-semibold text-white/90 backdrop-blur transition hover:border-[#d4af37] hover:text-[#d4af37]"
               >
                 See Packages
               </a>
@@ -67,7 +67,7 @@ export default function HomePage() {
               ].map((item) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-[#d4af37]/25 bg-black/25 p-4 text-center backdrop-blur"
+                  className="rounded-2xl border border-[#d4af37]/25 bg-[#061b3a]/35 p-4 text-center backdrop-blur"
                 >
                   <p className="text-2xl">{item.icon}</p>
                   <p className="mt-2 text-sm font-semibold text-white/85">
@@ -109,7 +109,7 @@ export default function HomePage() {
             Create a lasting tribute in minutes
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+          <p className="mx-auto mt-4 max-w-2xl text-gray-300">
             Simple for families. Beautiful for visitors. Built to preserve the
             legacy of those who matter most.
           </p>
@@ -138,7 +138,7 @@ export default function HomePage() {
           ].map((item) => (
             <div
               key={item.title}
-              className="overflow-hidden rounded-3xl border border-[#d4af37]/15 bg-[#111a2e] shadow-2xl transition hover:-translate-y-1 hover:border-[#d4af37]/40"
+              className="overflow-hidden rounded-3xl border border-[#d4af37]/15 bg-[#082652] shadow-2xl transition hover:-translate-y-1 hover:border-[#d4af37]/40"
             >
               <div className="relative">
                 <img
@@ -147,9 +147,9 @@ export default function HomePage() {
                   className="h-56 w-full object-cover"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111a2e] via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#082652] via-transparent to-transparent" />
 
-                <div className="absolute bottom-4 left-4 rounded-full border border-[#d4af37]/40 bg-black/50 px-4 py-2 text-sm font-bold text-[#d4af37] backdrop-blur">
+                <div className="absolute bottom-4 left-4 rounded-full border border-[#d4af37]/40 bg-[#061b3a]/70 px-4 py-2 text-sm font-bold text-[#d4af37] backdrop-blur">
                   {item.number}
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function HomePage() {
       </section>
 
       {/* FEATURES */}
-      <section className="bg-[#111a2e] px-4 py-16 sm:px-6 sm:py-20">
+      <section className="bg-[#082652] px-4 py-16 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
@@ -178,7 +178,7 @@ export default function HomePage() {
               Everything families need to remember beautifully
             </h2>
 
-            <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+            <p className="mx-auto mt-4 max-w-2xl text-gray-300">
               A complete digital memorial experience designed for love,
               remembrance, family connection, and legacy preservation.
             </p>
@@ -229,7 +229,7 @@ export default function HomePage() {
             ].map((feature) => (
               <div
                 key={feature.title}
-                className="rounded-3xl border border-[#d4af37]/15 bg-[#0b1320]/90 p-6 shadow-lg transition hover:-translate-y-1 hover:border-[#d4af37]/40"
+                className="rounded-3xl border border-[#d4af37]/15 bg-[#061b3a]/90 p-6 shadow-lg transition hover:-translate-y-1 hover:border-[#d4af37]/40"
               >
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#d4af37]/15 text-xl text-[#d4af37]">
                   {feature.icon}
@@ -239,7 +239,7 @@ export default function HomePage() {
                   {feature.title}
                 </h3>
 
-                <p className="text-sm leading-relaxed text-gray-400">
+                <p className="text-sm leading-relaxed text-gray-300">
                   {feature.desc}
                 </p>
               </div>
@@ -257,9 +257,9 @@ export default function HomePage() {
             className="h-[340px] w-full object-cover sm:h-[460px]"
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0b1320]/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#061b3a]/85 via-[#061b3a]/20 to-transparent" />
 
-          <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-[#d4af37]/25 bg-black/35 p-5 backdrop-blur">
+          <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-[#d4af37]/25 bg-[#061b3a]/45 p-5 backdrop-blur">
             <p className="text-sm uppercase tracking-[0.25em] text-[#d4af37]">
               Private • Beautiful • Always Accessible
             </p>
@@ -282,7 +282,7 @@ export default function HomePage() {
             for future generations.
           </p>
 
-          <p className="mb-8 leading-relaxed text-gray-400">
+          <p className="mb-8 leading-relaxed text-gray-300">
             Whether shared by link or accessed by QR code, each memorial becomes
             a lasting space where family can return on birthdays,
             anniversaries, and moments when they simply want to feel close
@@ -292,14 +292,14 @@ export default function HomePage() {
           <div className="flex flex-col gap-4 sm:flex-row">
             <a
               href="/packages"
-              className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+              className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
             >
               View Packages
             </a>
 
             <a
               href="/about"
-              className="rounded-full border border-[#d4af37]/50 px-8 py-4 text-center font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+              className="rounded-full border border-[#d4af37]/50 px-8 py-4 text-center font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
             >
               Learn More
             </a>
@@ -308,7 +308,7 @@ export default function HomePage() {
       </section>
 
       {/* PACKAGE TEASER */}
-      <section className="border-y border-[#d4af37]/15 bg-[#08101f] px-4 py-16 sm:px-6 sm:py-20">
+      <section className="border-y border-[#d4af37]/15 bg-[#082652] px-4 py-16 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-7xl">
           <div className="mb-10 text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
@@ -319,7 +319,7 @@ export default function HomePage() {
               Start simple. Upgrade when you are ready.
             </h2>
 
-            <p className="mx-auto mt-4 max-w-2xl text-gray-400">
+            <p className="mx-auto mt-4 max-w-2xl text-gray-300">
               Choose the memorial package that works best for your family.
             </p>
           </div>
@@ -349,7 +349,7 @@ export default function HomePage() {
             ].map((plan) => (
               <div
                 key={plan.name}
-                className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 text-center shadow-xl"
+                className="rounded-3xl border border-[#d4af37]/20 bg-[#061b3a] p-6 text-center shadow-xl"
               >
                 <h3 className="mb-3 font-serif text-xl text-[#d4af37]">
                   {plan.name}
@@ -359,7 +359,7 @@ export default function HomePage() {
                   {plan.price}
                 </p>
 
-                <p className="text-sm text-gray-400">{plan.detail}</p>
+                <p className="text-sm text-gray-300">{plan.detail}</p>
               </div>
             ))}
           </div>
@@ -367,7 +367,7 @@ export default function HomePage() {
           <div className="mt-10 text-center">
             <a
               href="/packages"
-              className="inline-block rounded-full bg-[#d4af37] px-8 py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+              className="inline-block rounded-full bg-[#d4af37] px-8 py-4 font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
             >
               Compare Packages
             </a>
@@ -376,7 +376,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="px-4 py-16 text-center sm:px-6 sm:py-20">
+      <section className="bg-[#061b3a] px-4 py-16 text-center sm:px-6 sm:py-20">
         <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
           Begin The Legacy
         </p>
@@ -385,7 +385,7 @@ export default function HomePage() {
           Start preserving a legacy today.
         </h2>
 
-        <p className="mx-auto mb-8 max-w-2xl text-gray-400">
+        <p className="mx-auto mb-8 max-w-2xl text-gray-300">
           Create a private memorial page your family can visit, share, and add
           to for years to come.
         </p>
@@ -393,14 +393,14 @@ export default function HomePage() {
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <a
             href="/packages"
-            className="rounded-full bg-[#d4af37] px-8 py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+            className="rounded-full bg-[#d4af37] px-8 py-4 font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
           >
             Book a Spot
           </a>
 
           <a
             href="/login"
-            className="rounded-full border border-[#d4af37]/50 px-8 py-4 font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+            className="rounded-full border border-[#d4af37]/50 px-8 py-4 font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
           >
             Register / View Memorial
           </a>
