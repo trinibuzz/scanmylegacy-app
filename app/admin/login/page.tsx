@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      window.location.href = "/admin/dashboard";
+      window.location.href = "/admin";
     } catch {
       alert("Something went wrong.");
     } finally {
@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
         <button
           onClick={login}
           disabled={loading}
-          className="w-full rounded-lg bg-[#d4af37] py-4 font-semibold text-black transition hover:opacity-90"
+          className="w-full rounded-lg bg-[#d4af37] py-4 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? "Logging in..." : "Login"}
         </button>
