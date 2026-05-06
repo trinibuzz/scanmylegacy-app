@@ -1,9 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [refCode, setRefCode] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const refFromUrl = params.get("ref");
+
+    if (refFromUrl) {
+      localStorage.setItem("scanmylegacy_ref", refFromUrl);
+      setRefCode(refFromUrl);
+      return;
+    }
+
+    const savedRef = localStorage.getItem("scanmylegacy_ref");
+
+    if (savedRef) {
+      setRefCode(savedRef);
+    }
+  }, []);
+
+  const withRef = (href: string) => {
+    if (!refCode) return href;
+
+    if (href.includes("?")) {
+      return `${href}&ref=${encodeURIComponent(refCode)}`;
+    }
+
+    return `${href}?ref=${encodeURIComponent(refCode)}`;
+  };
 
   const navItems = [
     { label: "Home", href: "/" },
@@ -18,7 +46,7 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#26447F] shadow-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href="/" onClick={closeMenu} className="flex items-center gap-3">
+        <a href={withRef("/")} onClick={closeMenu} className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
             🕯️
           </div>
@@ -37,7 +65,7 @@ export default function SiteHeader() {
           {navItems.map((item) => (
             <a
               key={item.href}
-              href={item.href}
+              href={withRef(item.href)}
               className="text-gray-300 transition hover:text-[#d4af37]"
             >
               {item.label}
@@ -45,7 +73,7 @@ export default function SiteHeader() {
           ))}
 
           <a
-            href="/packages"
+            href={withRef("/packages")}
             className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
           >
             Create Memorial
@@ -68,7 +96,7 @@ export default function SiteHeader() {
             {navItems.map((item) => (
               <a
                 key={item.href}
-                href={item.href}
+                href={withRef(item.href)}
                 onClick={closeMenu}
                 className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
               >
@@ -77,7 +105,7 @@ export default function SiteHeader() {
             ))}
 
             <a
-              href="/packages"
+              href={withRef("/packages")}
               onClick={closeMenu}
               className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-center text-sm font-semibold text-black"
             >
