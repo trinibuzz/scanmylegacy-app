@@ -60,6 +60,46 @@ export default function AdminAffiliatesPage() {
     }
   };
 
+  const affiliateAction = async (
+    affiliateId: number,
+    action: "activate" | "deactivate" | "delete"
+  ) => {
+    const labels: any = {
+      activate: "activate this affiliate",
+      deactivate: "deactivate this affiliate",
+      delete: "delete this affiliate permanently",
+    };
+
+    const confirmed = confirm(`Are you sure you want to ${labels[action]}?`);
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch("/api/admin/affiliates", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          affiliate_id: affiliateId,
+          action,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Affiliate action failed.");
+        return;
+      }
+
+      alert(data.message || "Affiliate updated.");
+      loadAffiliates();
+    } catch {
+      alert("Something went wrong.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#061b3a] px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
@@ -74,8 +114,8 @@ export default function AdminAffiliatesPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-gray-300">
-              View every affiliate as a card, track their referral link,
-              visits, sales, and commission totals.
+              View every affiliate as a card, track their referral link, visits,
+              sales, and commission totals.
             </p>
           </div>
 
@@ -203,6 +243,37 @@ export default function AdminAffiliatesPage() {
                           >
                             Copy Referral Link
                           </button>
+
+                          <div className="mt-3 grid grid-cols-2 gap-3">
+                            {affiliate.status === "active" ? (
+                              <button
+                                onClick={() =>
+                                  affiliateAction(affiliate.id, "deactivate")
+                                }
+                                className="rounded-full border border-yellow-400/40 px-4 py-2 text-sm font-semibold text-yellow-300 transition hover:bg-yellow-400 hover:text-[#061b3a]"
+                              >
+                                Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  affiliateAction(affiliate.id, "activate")
+                                }
+                                className="rounded-full border border-green-400/40 px-4 py-2 text-sm font-semibold text-green-300 transition hover:bg-green-400 hover:text-[#061b3a]"
+                              >
+                                Activate
+                              </button>
+                            )}
+
+                            <button
+                              onClick={() =>
+                                affiliateAction(affiliate.id, "delete")
+                              }
+                              className="rounded-full border border-red-400/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500 hover:text-white"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">

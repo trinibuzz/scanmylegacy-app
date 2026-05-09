@@ -125,3 +125,88 @@ export async function GET() {
     );
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const isAdmin = await requireAdmin();
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: "Unauthorized admin access." },
+        { status: 401 }
+      );
+    }
+
+    const { affiliate_id, action } = await req.json();
+
+    if (!affiliate_id || !action) {
+      return NextResponse.json(
+        { error: "Missing affiliate or action." },
+        { status: 400 }
+      );
+    }
+
+    if (action === "deactivate") {
+      await db.execute(
+        "UPDATE affiliates SET status = 'inactive' WHERE id = ?",
+        [affiliate_id]
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: "Affiliate deactivated.",
+      });
+    }
+
+    if (action === "activate") {
+      await db.execute("UPDATE affiliates SET status = 'active' WHERE id = ?", [
+        affiliate_id,
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        message: "Affiliate activated.",
+      });
+    }
+
+    if (action === "delete") {
+      const [referrals]: any = await db.execute(
+        "SELECT COUNT(*) AS total FROM affiliate_referrals WHERE affiliate_id = ?",
+        [affiliate_id]
+      );
+
+      const totalReferrals = Number(referrals[0]?.total || 0);
+
+      if (totalReferrals > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "This affiliate has referral sales records. Deactivate them instead so commission history stays safe.",
+          },
+          { status: 400 }
+        );
+      }
+
+      await db.execute("DELETE FROM affiliate_sessions WHERE affiliate_id = ?", [
+        affiliate_id,
+      ]);
+
+      await db.execute("DELETE FROM affiliates WHERE id = ?", [affiliate_id]);
+
+      return NextResponse.json({
+        success: true,
+        message: "Affiliate deleted.",
+      });
+    }
+
+    return NextResponse.json(
+      { error: "Invalid affiliate action." },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || "Affiliate action failed." },
+      { status: 500 }
+    );
+  }
+}
