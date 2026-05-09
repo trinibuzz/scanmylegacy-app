@@ -2,138 +2,100 @@
 
 import { useState } from "react";
 
-export default function AdminResetPasswordPage() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const supportEmail = "info@trinibuzz.com";
 
-  const resetPassword = async () => {
-    setSuccessMessage("");
+  const subject = encodeURIComponent("ScanMyLegacy Password Reset Request");
 
-    if (!email || !newPassword) {
-      alert("Please enter the customer email and a new password.");
-      return;
-    }
+  const body = encodeURIComponent(
+    `Hello ScanMyLegacy Support,\n\nI need help resetting my password.\n\nAccount email: ${email}\n\nThank you.`
+  );
 
-    if (newPassword.length < 6) {
-      alert("Password must be at least 6 characters.");
-      return;
-    }
+  const mailtoLink = `mailto:${supportEmail}?subject=${subject}&body=${body}`;
 
-    const confirmed = confirm(
-      `Reset password for ${email}?\n\nThe customer will use the new password you enter here.`
-    );
-
-    if (!confirmed) return;
-
+  const copySupportEmail = async () => {
     try {
-      setLoading(true);
-
-      const res = await fetch("/api/admin/reset-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password: newPassword,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        alert(data.error || "Password reset failed.");
-        return;
-      }
-
-      setSuccessMessage(
-        `Password reset successfully for ${data.user?.email || email}.`
-      );
-
-      setEmail("");
-      setNewPassword("");
+      await navigator.clipboard.writeText(supportEmail);
+      alert("Support email copied: info@trinibuzz.com");
     } catch {
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+      alert("Support email: info@trinibuzz.com");
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#061b3a] px-4 py-10 text-white sm:px-6">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="mb-2 text-sm uppercase tracking-[0.28em] text-[#d4af37]">
-              Admin Control
+    <main className="min-h-screen bg-[#061b3a] text-white">
+
+      <section className="flex min-h-[calc(100vh-74px)] items-center justify-center px-6 py-16">
+        <div className="w-full max-w-md rounded-3xl border border-[#d4af37]/30 bg-[#111a2e] p-8 shadow-2xl">
+          <div className="mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#061b3a] text-2xl">
+              🔐
+            </div>
+
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#d4af37]">
+              Password Help
             </p>
 
-            <h1 className="font-serif text-4xl font-bold">
-              Reset Customer Password
+            <h1 className="font-serif text-3xl font-bold">
+              Forgot Password
             </h1>
 
-            <p className="mt-3 max-w-2xl text-gray-300">
-              Use this tool when a customer forgets their password. The new
-              password is saved securely using bcrypt.
+            <p className="mt-3 text-sm leading-relaxed text-gray-300">
+              Enter the email used to create your memorial account, then send a
+              password reset request to ScanMyLegacy support.
             </p>
           </div>
 
-          <a
-            href="/admin"
-            className="rounded-full border border-[#d4af37]/50 px-5 py-3 text-center text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
-          >
-            Back to Admin
-          </a>
-        </div>
-
-        <div className="rounded-3xl border border-[#d4af37]/20 bg-[#082652] p-6 shadow-2xl sm:p-8">
-          {successMessage && (
-            <div className="mb-6 rounded-2xl border border-green-400/30 bg-green-500/10 p-4 text-green-200">
-              {successMessage}
-            </div>
-          )}
-
           <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-            Customer Email
+            Account Email
           </label>
 
           <input
             type="email"
-            className="mb-5 w-full rounded-xl border border-[#d4af37]/20 bg-[#061b3a] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
-            placeholder="customer@email.com"
+            className="mb-5 w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
+            placeholder="Enter your account email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
-          <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-            New Temporary Password
-          </label>
-
-          <input
-            type="text"
-            className="mb-5 w-full rounded-xl border border-[#d4af37]/20 bg-[#061b3a] p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
-            placeholder="Enter new password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-          />
-
-          <button
-            onClick={resetPassword}
-            disabled={loading}
-            className="w-full rounded-full bg-[#d4af37] px-6 py-4 font-semibold text-[#061b3a] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
+          <a
+            href={mailtoLink}
+            className="block w-full rounded-full bg-[#d4af37] px-6 py-4 text-center font-semibold text-[#061b3a] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a]"
           >
-            {loading ? "Resetting Password..." : "Reset Password"}
-          </button>
+            Request Password Reset
+          </a>
 
-          <div className="mt-6 rounded-2xl border border-[#d4af37]/15 bg-[#061b3a] p-4 text-sm leading-relaxed text-gray-300">
-            After resetting, give the customer the temporary password. They can
-            log in immediately. Once email reset links are configured, we can
-            upgrade this into a fully automatic forgot-password flow.
+          <div className="mt-5 rounded-2xl border border-[#d4af37]/15 bg-[#061b3a] p-4 text-center text-sm leading-relaxed text-gray-300">
+            <p className="mb-3">
+              If the button does not open your email app, send your reset
+              request manually to:
+            </p>
+
+            <button
+              type="button"
+              onClick={copySupportEmail}
+              className="rounded-full border border-[#d4af37]/40 px-5 py-2 font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
+            >
+              info@trinibuzz.com
+            </button>
+          </div>
+
+          <p className="mt-5 text-center text-xs leading-relaxed text-gray-400">
+            For security, password resets are handled by ScanMyLegacy support
+            until automatic email reset links are configured.
+          </p>
+
+          <div className="mt-6 text-center">
+            <a
+              href="/login"
+              className="text-sm font-semibold text-[#d4af37] transition hover:text-[#f0c94a]"
+            >
+              ← Back to Login
+            </a>
           </div>
         </div>
-      </div>
+      </section>
     </main>
   );
 }
