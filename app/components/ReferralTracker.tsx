@@ -14,8 +14,34 @@ function shouldSkipUrl(url: URL) {
   return (
     pathname.startsWith("/api") ||
     pathname.startsWith("/_next") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/forgot-password") ||
+    pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/memorial") ||
+    pathname.startsWith("/family-tree") ||
+    pathname.startsWith("/affiliate-login") ||
+    pathname.startsWith("/affiliate-dashboard") ||
     pathname.includes(".") ||
     url.hash.startsWith("#")
+  );
+}
+
+function shouldReceiveReferral(url: URL) {
+  const pathname = url.pathname.toLowerCase();
+
+  return (
+    pathname === "/" ||
+    pathname === "/about" ||
+    pathname === "/packages" ||
+    pathname === "/faqs" ||
+    pathname === "/faq" ||
+    pathname === "/how-it-works" ||
+    pathname === "/create-memorial" ||
+    pathname === "/payment-option" ||
+    pathname === "/bank-transfer" ||
+    pathname === "/payment-success"
   );
 }
 
@@ -54,6 +80,7 @@ export default function ReferralTracker() {
 
       if (!isInternalUrl(url)) return;
       if (shouldSkipUrl(url)) return;
+      if (!shouldReceiveReferral(url)) return;
 
       if (!url.searchParams.get("ref")) {
         url.searchParams.set("ref", savedRef);
