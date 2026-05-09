@@ -201,18 +201,12 @@ export default function GuestAccess({ memorial, token }: any) {
     </header>
   );
 
-  const galleryPhotos =
-    memorial.gallery_photos && memorial.gallery_photos.length > 0
-      ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
-      : memorial.cover_photo
-      ? [safeMediaPath(memorial.cover_photo)]
-      : [
-          "/images/memorial/photo1.jpg",
-          "/images/memorial/photo2.jpg",
-          "/images/memorial/photo3.jpg",
-          "/images/memorial/photo4.jpg",
-        ];
-
+const galleryPhotos =
+  memorial.gallery_photos && memorial.gallery_photos.length > 0
+    ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
+    : memorial.cover_photo
+    ? [safeMediaPath(memorial.cover_photo)]
+    : [];
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
     const data = await res.json();
