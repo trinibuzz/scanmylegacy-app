@@ -65,7 +65,9 @@ export async function POST(req: Request) {
     const creator_name = formData.get("creator_name") as string;
     const creator_email = formData.get("creator_email") as string;
     const creator_phone = formData.get("creator_phone") as string;
-    const creator_relationship = formData.get("creator_relationship") as string;
+    const creator_relationship = formData.get(
+      "creator_relationship"
+    ) as string;
     const password = formData.get("password") as string;
 
     const full_name = formData.get("full_name") as string;
@@ -77,8 +79,27 @@ export async function POST(req: Request) {
     const package_name = formData.get("package_name") as string;
     const package_price = formData.get("package_price") as string;
 
-    const enable_family_tree =
-      formData.get("enable_family_tree") === "1" ? 1 : 0;
+    const packagePriceNumber = Number(package_price || 0);
+
+    const paidPackageSlugs = [
+      "standard-legacy",
+      "premium-legacy",
+      "eternal-legacy",
+    ];
+
+    const isPaidPackage =
+      packagePriceNumber > 0 || paidPackageSlugs.includes(package_slug);
+
+    /*
+      Paid package rule:
+      Standard, Premium, and Eternal must always include Family Tree.
+      This prevents paid memorials from being created with enable_family_tree = 0.
+    */
+    const enable_family_tree = isPaidPackage
+      ? 1
+      : formData.get("enable_family_tree") === "1"
+      ? 1
+      : 0;
 
     const enable_reminders =
       formData.get("enable_reminders") === "1" ? 1 : 0;
@@ -90,7 +111,7 @@ export async function POST(req: Request) {
     const cleanedEmail = creator_email?.trim().toLowerCase();
 
     const isFreeTrialRequest =
-      Number(package_price) === 0 || package_slug === "starter-tribute";
+      packagePriceNumber === 0 || package_slug === "starter-tribute";
 
     if (!creator_name || !cleanedEmail || !full_name) {
       return NextResponse.json(
@@ -197,6 +218,15 @@ export async function POST(req: Request) {
       );
 
       userId = newUser.insertId;
+    } else if (isPaidPackage) {
+      /*
+        If an existing user creates a paid memorial, make sure their account
+        is upgraded/active and no longer treated like an expired trial.
+      */
+      await db.execute(
+        "UPDATE users SET plan = ?, trial_ends_at = NULL, is_active = 1 WHERE id = ?",
+        [package_slug || "standard-legacy", userId]
+      );
     }
 
     const { uploadsRoot, musicRoot, galleryRoot } = await ensureUploadFolders();
@@ -231,7 +261,7 @@ export async function POST(req: Request) {
 
     const inviteToken = Math.random().toString(36).substring(2) + Date.now();
 
-    const paymentStatus = Number(package_price) === 0 ? "free" : "pending";
+    const paymentStatus = packagePriceNumber === 0 ? "free" : "pending";
 
     const [result]: any = await db.execute(
       `INSERT INTO memorials 
