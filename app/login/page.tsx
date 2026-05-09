@@ -49,7 +49,6 @@ export default function Login() {
     <main className="min-h-screen bg-[#0b1320] text-white">
       <SiteHeader />
 
-      {/* HERO / LOGIN */}
       <section className="relative min-h-[calc(100vh-74px)] overflow-hidden bg-[#26447F]">
         <img
           src="/images/home-hero.jpg"
@@ -80,15 +79,26 @@ export default function Login() {
               Email
             </label>
             <input
+              type="email"
               className="mb-4 w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-3 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
 
-            <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-              Password
-            </label>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <label className="block text-sm font-semibold text-[#d4af37]">
+                Password
+              </label>
+
+              <a
+                href="/forgot-password"
+                className="text-xs font-semibold text-[#d4af37] transition hover:text-[#f0c94a] hover:underline"
+              >
+                Forgot Password?
+              </a>
+            </div>
+
             <input
               className="mb-6 w-full rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-3 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
               placeholder="Enter your password"
