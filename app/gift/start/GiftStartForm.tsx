@@ -11,15 +11,63 @@ const packages = [
 
 export default function GiftStartForm() {
   const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setStatus(
-      "Gift form test successful. The form is working safely. Next step is connecting it to the database."
-    );
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
-    event.currentTarget.reset();
+    const payload = {
+      buyer_name: String(formData.get("buyer_name") || ""),
+      buyer_email: String(formData.get("buyer_email") || ""),
+      buyer_phone: String(formData.get("buyer_phone") || ""),
+      recipient_name: String(formData.get("recipient_name") || ""),
+      relationship: String(formData.get("relationship") || ""),
+      recipient_status: String(formData.get("recipient_status") || "unknown"),
+      occasion: String(formData.get("occasion") || ""),
+      gift_message: String(formData.get("gift_message") || ""),
+      delivery_method: String(formData.get("delivery_method") || "whatsapp"),
+      package_name: String(formData.get("package_name") || ""),
+    };
+
+    try {
+      setIsSubmitting(true);
+      setStatus("Creating gift order...");
+
+      const res = await fetch("/api/gift-orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const text = await res.text();
+
+      let data: any = null;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          "The server returned a webpage instead of JSON. Response started with: " +
+            text.slice(0, 120)
+        );
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.details || data?.error || "Something went wrong.");
+      }
+
+      setStatus(`Gift order created successfully. Setup link: ${data.setup_link}`);
+      form.reset();
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Something went wrong.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -39,6 +87,7 @@ export default function GiftStartForm() {
 
       <div className="grid gap-5 md:grid-cols-2">
         <Input label="Recipient Full Name" name="recipient_name" required />
+
         <Input
           label="Relationship"
           name="relationship"
@@ -96,9 +145,10 @@ export default function GiftStartForm() {
 
       <button
         type="submit"
-        className="mt-8 rounded-full bg-[#d4af37] px-8 py-3 font-semibold text-[#071426]"
+        disabled={isSubmitting}
+        className="mt-8 rounded-full bg-[#d4af37] px-8 py-3 font-semibold text-[#071426] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Test Gift Form
+        {isSubmitting ? "Creating Gift Order..." : "Create Gift Order"}
       </button>
 
       {status && (
