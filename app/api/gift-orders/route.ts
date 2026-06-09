@@ -100,15 +100,6 @@ export async function POST(req: Request) {
     console.error("Gift order error:", error);
 
     return NextResponse.json(
-      { error: "Unable to create gift order." },
-      { status: 500 }
-    );
-  }
-}
-  } catch (error) {
-    console.error("Gift order error:", error);
-
-    return NextResponse.json(
       {
         error: "Unable to create gift order.",
         details: error instanceof Error ? error.message : String(error),
@@ -116,3 +107,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+}
