@@ -105,3 +105,14 @@ export async function POST(req: Request) {
     );
   }
 }
+  } catch (error) {
+    console.error("Gift order error:", error);
+
+    return NextResponse.json(
+      {
+        error: "Unable to create gift order.",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
