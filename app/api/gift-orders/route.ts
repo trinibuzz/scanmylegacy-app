@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { pool } from "@/lib/db";
+import mysql from "mysql2/promise";
 
 type GiftOrderBody = {
   buyer_name?: string;
@@ -16,6 +16,15 @@ type GiftOrderBody = {
   package_price_usd?: number;
   package_price_ttd?: number;
 };
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
 export async function POST(req: Request) {
   try {
@@ -45,7 +54,7 @@ export async function POST(req: Request) {
 
     const setupToken = crypto.randomBytes(32).toString("hex");
 
-    const [result]: any = await pool.query(
+    const [result] = await pool.query<mysql.ResultSetHeader>(
       `
       INSERT INTO legacy_gift_orders (
         buyer_name,
