@@ -79,15 +79,27 @@ export default function GiftStartForm() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data: any = null;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          "The API returned a webpage instead of JSON. This usually means /api/gift-orders is not loading correctly. Response started with: " +
+            text.slice(0, 120)
+        );
+      }
 
       if (!res.ok) {
-        throw new Error(data?.error || "Something went wrong.");
+        throw new Error(data?.details || data?.error || "Something went wrong.");
       }
 
       setStatus(
-        "Gift order created successfully. We will prepare the setup link and delivery message."
+        `Gift order created successfully. Setup link: ${data.setup_link}`
       );
+
       form.reset();
     } catch (error) {
       setStatus(

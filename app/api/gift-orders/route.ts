@@ -26,6 +26,16 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
+// Test route.
+// Open https://scanmylegacy.com/api/gift-orders
+// It should show JSON if the API is working.
+export async function GET() {
+  return NextResponse.json({
+    success: true,
+    message: "Gift orders API is working",
+  });
+}
+
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as GiftOrderBody;
