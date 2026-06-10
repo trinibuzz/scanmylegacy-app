@@ -1,15 +1,51 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SiteHeader from "../components/SiteHeader";
+
+type GiftOrder = {
+  id: number;
+  buyer_name: string;
+  buyer_email: string;
+  buyer_phone: string | null;
+  recipient_name: string;
+  relationship: string | null;
+  recipient_status: string | null;
+  occasion: string | null;
+  gift_message: string | null;
+  delivery_method: string | null;
+  package_name: string | null;
+  package_price_usd: string | number | null;
+  package_price_ttd: string | number | null;
+  payment_status: string | null;
+  gift_status: string | null;
+  setup_token: string | null;
+  memorial_id: number | null;
+};
+
+function slugifyPackageName(packageName: string) {
+  return packageName
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[—–]/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 function CreateMemorialForm() {
   const searchParams = useSearchParams();
 
-  const packageSlug = searchParams.get("package") || "";
-  const packagePrice = searchParams.get("price") || "0";
+  const giftToken = searchParams.get("gift_token") || "";
+  const isGiftSetup = Boolean(giftToken);
+
+  const normalPackageSlug = searchParams.get("package") || "";
+  const normalPackagePrice = searchParams.get("price") || "0";
   const refCode = searchParams.get("ref") || "";
+
+  const [giftLoading, setGiftLoading] = useState(false);
+  const [giftOrder, setGiftOrder] = useState<GiftOrder | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -32,8 +68,59 @@ function CreateMemorialForm() {
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
   const [enableReminders, setEnableReminders] = useState(false);
 
-  const packageName = packageSlug
-    ? packageSlug
+  useEffect(() => {
+    const loadGiftOrder = async () => {
+      if (!giftToken) return;
+
+      try {
+        setGiftLoading(true);
+        setErrorMessage("");
+
+        const res = await fetch(
+          `/api/gift-orders/by-token?token=${encodeURIComponent(giftToken)}`
+        );
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setErrorMessage(data.error || "Unable to load gift order.");
+          return;
+        }
+
+        const order = data.order as GiftOrder;
+        setGiftOrder(order);
+
+        setCreatorName(order.buyer_name || "");
+        setCreatorEmail(order.buyer_email || "");
+        setCreatorPhone(order.buyer_phone || "");
+        setCreatorRelationship(order.relationship || "");
+        setFullName(order.recipient_name || "");
+
+        if (order.gift_message) {
+          setBiography(order.gift_message);
+        }
+      } catch {
+        setErrorMessage("Unable to load gift order.");
+      } finally {
+        setGiftLoading(false);
+      }
+    };
+
+    loadGiftOrder();
+  }, [giftToken]);
+
+  const packageSlug = isGiftSetup
+    ? slugifyPackageName(giftOrder?.package_name || "")
+    : normalPackageSlug;
+
+  const packagePrice = isGiftSetup
+    ? String(giftOrder?.package_price_usd || "0")
+    : normalPackagePrice;
+
+  const packageName = isGiftSetup
+    ? giftOrder?.package_name || "Gift Package"
+    : normalPackageSlug
+    ? normalPackageSlug
         .replace(/-/g, " ")
         .replace(/\b\w/g, (letter) => letter.toUpperCase())
     : "No package selected";
@@ -53,6 +140,11 @@ function CreateMemorialForm() {
   const submitMemorial = async () => {
     setErrorMessage("");
 
+    if (isGiftSetup && !giftOrder) {
+      showError("Gift order is not loaded yet. Please refresh and try again.");
+      return;
+    }
+
     if (!creatorName || !creatorEmail || !fullName) {
       showError("Please complete all required fields before continuing.");
       return;
@@ -70,7 +162,9 @@ function CreateMemorialForm() {
 
     if (!packageSlug) {
       showError(
-        "No package was selected. Please return to the Packages page and choose a plan."
+        isGiftSetup
+          ? "This gift order does not have a valid package attached. Please contact ScanMyLegacy support."
+          : "No package was selected. Please return to the Packages page and choose a plan."
       );
       return;
     }
@@ -89,12 +183,17 @@ function CreateMemorialForm() {
     formData.append("biography", biography);
 
     formData.append("package_slug", packageSlug);
-    formData.append("package_name", packageSlug.replace(/-/g, " "));
+    formData.append("package_name", packageName);
     formData.append("package_price", packagePrice);
     formData.append("referral_code", refCode);
 
     formData.append("enable_family_tree", enableFamilyTree ? "1" : "0");
     formData.append("enable_reminders", enableReminders ? "1" : "0");
+
+    if (isGiftSetup) {
+      formData.append("gift_token", giftToken);
+      formData.append("gift_order_id", String(giftOrder?.id || ""));
+    }
 
     if (coverPhoto) {
       formData.append("cover_photo", coverPhoto);
@@ -120,6 +219,22 @@ function CreateMemorialForm() {
 
       if (!res.ok) {
         showError(data.error || "Failed to create memorial. Please try again.");
+        return;
+      }
+
+      if (isGiftSetup) {
+        await fetch("/api/gift-orders/link-memorial", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            gift_token: giftToken,
+            memorial_id: data.memorial.id,
+          }),
+        });
+
+        window.location.href = "/dashboard";
         return;
       }
 
@@ -152,11 +267,20 @@ function CreateMemorialForm() {
   const fileInputStyle =
     "w-full cursor-pointer rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-sm text-gray-300 file:mr-4 file:rounded-full file:border-0 file:bg-[#d4af37] file:px-4 file:py-2 file:font-semibold file:text-[#0b1320] hover:border-[#d4af37]/60";
 
+  if (giftLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
+        <div className="rounded-2xl border border-[#d4af37]/25 bg-[#111a2e] p-8 text-center">
+          Loading Legacy Gift...
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
       <SiteHeader />
 
-      {/* HERO */}
       <section className="relative min-h-[62vh] overflow-hidden bg-[#26447F]">
         <img
           src="/images/create-hero.jpg"
@@ -169,26 +293,28 @@ function CreateMemorialForm() {
         <div className="relative z-10 mx-auto flex min-h-[62vh] max-w-7xl items-center px-6 py-20 sm:px-8">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[#d4af37]">
-              Create Memorial
+              {isGiftSetup ? "Legacy Gift Setup" : "Create Memorial"}
             </p>
 
             <h1 className="font-serif text-4xl font-bold leading-tight text-[#f8f5ee] sm:text-5xl md:text-7xl">
-              Begin the journey of preserving a legacy.
+              {isGiftSetup
+                ? "Your Legacy Gift is ready to begin."
+                : "Begin the journey of preserving a legacy."}
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
-              Create a private digital sanctuary with photos, stories, music,
-              tributes, and memories your family can visit anytime.
+              {isGiftSetup
+                ? "This package has already been selected and paid for. Complete the memorial details below to begin preserving your loved one’s legacy."
+                : "Create a private digital sanctuary with photos, stories, music, tributes, and memories your family can visit anytime."}
             </p>
           </div>
         </div>
       </section>
 
-      {/* FORM */}
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
-            Memorial Setup
+            {isGiftSetup ? "Gift Memorial Setup" : "Memorial Setup"}
           </p>
 
           <h2 className="font-serif text-3xl sm:text-4xl">
@@ -196,8 +322,9 @@ function CreateMemorialForm() {
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-gray-400">
-            Complete the details below. You can always manage and add more
-            memories from your dashboard later.
+            {isGiftSetup
+              ? "No payment or package selection is needed. Your Legacy Gift package is already attached."
+              : "Complete the details below. You can always manage and add more memories from your dashboard later."}
           </p>
         </div>
 
@@ -226,17 +353,22 @@ function CreateMemorialForm() {
         )}
 
         <div className="space-y-8">
-          {/* Selected Package */}
           <div className="rounded-3xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl sm:p-8">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-                  Selected Package
+                  {isGiftSetup ? "Gift Package Already Selected" : "Selected Package"}
                 </p>
 
                 <h3 className="font-serif text-3xl text-white">
                   {packageName}
                 </h3>
+
+                {isGiftSetup && giftOrder && (
+                  <p className="mt-2 text-sm text-gray-400">
+                    Gift Order #{giftOrder.id} for {giftOrder.recipient_name}
+                  </p>
+                )}
               </div>
 
               <div className="rounded-2xl border border-[#d4af37]/30 bg-[#0b1320] px-6 py-4 text-center">
@@ -247,10 +379,17 @@ function CreateMemorialForm() {
               </div>
             </div>
 
-            {!packageSlug && (
+            {!packageSlug && !isGiftSetup && (
               <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
                 No package was selected. Please return to the Packages page and
                 choose a plan before continuing.
+              </p>
+            )}
+
+            {isGiftSetup && (
+              <p className="rounded-xl border border-emerald-400/30 bg-emerald-400/10 p-4 text-sm text-emerald-100">
+                This gift package is already paid/verified. The recipient will
+                not be asked to choose a package or pay again.
               </p>
             )}
 
@@ -262,7 +401,6 @@ function CreateMemorialForm() {
             )}
           </div>
 
-          {/* Your Information */}
           <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
             <div className="mb-6">
               <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
@@ -311,7 +449,6 @@ function CreateMemorialForm() {
             </div>
           </div>
 
-          {/* Account Password */}
           <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
             <div className="mb-6">
               <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
@@ -350,7 +487,6 @@ function CreateMemorialForm() {
             </p>
           </div>
 
-          {/* Memorial Details */}
           <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
             <div className="mb-6">
               <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
@@ -483,7 +619,6 @@ function CreateMemorialForm() {
             </div>
           </div>
 
-          {/* Additional Options */}
           <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl sm:p-8">
             <div className="mb-6">
               <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
@@ -536,19 +671,22 @@ function CreateMemorialForm() {
 
           <button
             onClick={submitMemorial}
-            disabled={loading || !packageSlug}
+            disabled={loading || (!packageSlug && !isGiftSetup)}
             className="w-full rounded-full bg-[#d4af37] py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading
               ? "Creating Memorial..."
+              : isGiftSetup
+              ? "Create Gift Memorial"
               : isPaidPackage
               ? "Continue to Payment"
               : "Create Free Memorial"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
-            You’ll be able to manage this memorial from your dashboard after it
-            is created.
+            {isGiftSetup
+              ? "This gift package has already been paid for. You will not be asked to pay again."
+              : "You’ll be able to manage this memorial from your dashboard after it is created."}
           </p>
         </div>
       </section>
