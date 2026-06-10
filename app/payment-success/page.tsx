@@ -1,29 +1,85 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
+
+  const paymentFor = searchParams.get("payment_for") || "memorial";
   const memorialId = searchParams.get("memorial_id");
+  const giftOrderId = searchParams.get("gift_order_id");
+
+  const isGiftPayment = paymentFor === "gift";
+
+  const [message, setMessage] = useState("Confirming your payment...");
+  const [buttonHref, setButtonHref] = useState("/dashboard");
+  const [buttonText, setButtonText] = useState("Go To Dashboard");
 
   useEffect(() => {
-    const activateMemorial = async () => {
-      if (!memorialId) return;
+    const confirmPayment = async () => {
+      try {
+        if (isGiftPayment) {
+          if (!giftOrderId) {
+            setMessage("Payment was successful, but the gift order ID is missing.");
+            return;
+          }
 
-      await fetch("/api/memorials/activate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          memorial_id: memorialId,
-        }),
-      });
+          const res = await fetch("/api/gift-orders/mark-paid", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              gift_order_id: giftOrderId,
+            }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            setMessage(data.error || "Payment was successful, but the gift order could not be updated.");
+            return;
+          }
+
+          setMessage(
+            "Your Legacy Gift payment was successful. Your gift order is now marked for activation."
+          );
+          setButtonHref("/gift/start");
+          setButtonText("Create Another Gift");
+          return;
+        }
+
+        if (!memorialId) {
+          setMessage("Payment was successful, but the memorial ID is missing.");
+          return;
+        }
+
+        const res = await fetch("/api/memorials/activate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            memorial_id: memorialId,
+          }),
+        });
+
+        if (!res.ok) {
+          setMessage("Payment was successful, but the memorial could not be activated automatically.");
+          return;
+        }
+
+        setMessage("Your memorial has been activated successfully.");
+        setButtonHref("/dashboard");
+        setButtonText("Go To Dashboard");
+      } catch {
+        setMessage("Payment was successful, but there was an issue updating the order.");
+      }
     };
 
-    activateMemorial();
-  }, [memorialId]);
+    confirmPayment();
+  }, [giftOrderId, memorialId, isGiftPayment]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
@@ -34,15 +90,31 @@ function PaymentSuccessContent() {
           Payment Successful
         </h1>
 
-        <p className="mb-6 text-gray-300">
-          Your memorial has been activated successfully.
-        </p>
+        <p className="mb-6 text-gray-300">{message}</p>
+
+        {isGiftPayment && giftOrderId && (
+          <div className="mb-6 rounded-xl border border-[#d4af37]/25 bg-[#0b1320] p-4 text-sm text-gray-300">
+            Gift Order Reference:{" "}
+            <span className="font-semibold text-[#d4af37]">
+              #{giftOrderId}
+            </span>
+          </div>
+        )}
+
+        {!isGiftPayment && memorialId && (
+          <div className="mb-6 rounded-xl border border-[#d4af37]/25 bg-[#0b1320] p-4 text-sm text-gray-300">
+            Memorial Reference:{" "}
+            <span className="font-semibold text-[#d4af37]">
+              #{memorialId}
+            </span>
+          </div>
+        )}
 
         <a
-          href="/dashboard"
+          href={buttonHref}
           className="inline-block rounded bg-[#d4af37] px-6 py-3 font-semibold text-black"
         >
-          Go To Dashboard
+          {buttonText}
         </a>
       </div>
     </main>
