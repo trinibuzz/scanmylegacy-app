@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, ReactNode, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const packages = [
   "Starter Tribute — Free 14 Days",
@@ -10,6 +11,7 @@ const packages = [
 ];
 
 export default function GiftStartForm() {
+  const router = useRouter();
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -61,11 +63,11 @@ export default function GiftStartForm() {
         throw new Error(data?.details || data?.error || "Something went wrong.");
       }
 
-      setStatus(`Gift order created successfully. Setup link: ${data.setup_link}`);
-      form.reset();
+      setStatus("Gift order created. Taking you to checkout...");
+
+      router.push(`/gift/checkout/${data.gift_order_id}`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Something went wrong.");
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -148,7 +150,7 @@ export default function GiftStartForm() {
         disabled={isSubmitting}
         className="mt-8 rounded-full bg-[#d4af37] px-8 py-3 font-semibold text-[#071426] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Creating Gift Order..." : "Create Gift Order"}
+        {isSubmitting ? "Creating Gift Order..." : "Continue to Checkout"}
       </button>
 
       {status && (
