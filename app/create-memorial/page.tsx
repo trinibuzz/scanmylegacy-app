@@ -223,6 +223,16 @@ function CreateMemorialForm() {
       }
 
       if (isGiftSetup) {
+        await fetch("/api/memorials/activate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            memorial_id: data.memorial.id,
+          }),
+        });
+
         await fetch("/api/gift-orders/link-memorial", {
           method: "POST",
           headers: {
@@ -357,7 +367,9 @@ function CreateMemorialForm() {
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-                  {isGiftSetup ? "Gift Package Already Selected" : "Selected Package"}
+                  {isGiftSetup
+                    ? "Gift Package Already Selected"
+                    : "Selected Package"}
                 </p>
 
                 <h3 className="font-serif text-3xl text-white">
