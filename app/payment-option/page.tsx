@@ -7,7 +7,12 @@ import SiteHeader from "../components/SiteHeader";
 function PaymentOptionsContent() {
   const searchParams = useSearchParams();
 
+  const paymentFor = searchParams.get("payment_for") || "memorial";
+  const isGiftPayment = paymentFor === "gift";
+
   const memorialId = searchParams.get("memorial_id") || "";
+  const giftOrderId = searchParams.get("gift_order_id") || "";
+
   const packageName = searchParams.get("package_name") || "Selected Package";
   const packagePrice = searchParams.get("package_price") || "0";
   const customerName = searchParams.get("customer_name") || "";
@@ -15,11 +20,25 @@ function PaymentOptionsContent() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const orderReference = isGiftPayment
+    ? `Gift Order #${giftOrderId}`
+    : `Memorial #${memorialId}`;
+
   const startWiPay = async () => {
     setErrorMessage("");
 
-    if (!memorialId || !packagePrice) {
-      setErrorMessage("Missing payment information. Please return to packages and try again.");
+    if (isGiftPayment && !giftOrderId) {
+      setErrorMessage("Missing gift order information. Please return to the gift form and try again.");
+      return;
+    }
+
+    if (!isGiftPayment && !memorialId) {
+      setErrorMessage("Missing memorial information. Please return to packages and try again.");
+      return;
+    }
+
+    if (!packagePrice) {
+      setErrorMessage("Missing payment amount. Please return and try again.");
       return;
     }
 
@@ -32,7 +51,9 @@ function PaymentOptionsContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          payment_for: paymentFor,
           memorial_id: memorialId,
+          gift_order_id: giftOrderId,
           package_name: packageName,
           package_price: packagePrice,
           customer_name: customerName,
@@ -54,11 +75,21 @@ function PaymentOptionsContent() {
     }
   };
 
-  const bankTransferUrl = `/bank-transfer?memorial_id=${encodeURIComponent(
-    memorialId
-  )}&package_name=${encodeURIComponent(packageName)}&package_price=${encodeURIComponent(
-    packagePrice
-  )}&customer_name=${encodeURIComponent(customerName)}`;
+  const bankTransferUrl = isGiftPayment
+    ? `/bank-transfer?payment_for=gift&gift_order_id=${encodeURIComponent(
+        giftOrderId
+      )}&package_name=${encodeURIComponent(
+        packageName
+      )}&package_price=${encodeURIComponent(
+        packagePrice
+      )}&customer_name=${encodeURIComponent(customerName)}`
+    : `/bank-transfer?payment_for=memorial&memorial_id=${encodeURIComponent(
+        memorialId
+      )}&package_name=${encodeURIComponent(
+        packageName
+      )}&package_price=${encodeURIComponent(
+        packagePrice
+      )}&customer_name=${encodeURIComponent(customerName)}`;
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
@@ -84,8 +115,9 @@ function PaymentOptionsContent() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
-              Your memorial has been created and is waiting for payment
-              confirmation. Choose WiPay or Online Banking / Money Transfer.
+              {isGiftPayment
+                ? "Your legacy gift order has been created and is waiting for payment confirmation. Choose WiPay or Online Banking / Money Transfer."
+                : "Your memorial has been created and is waiting for payment confirmation. Choose WiPay or Online Banking / Money Transfer."}
             </p>
           </div>
         </div>
@@ -97,7 +129,14 @@ function PaymentOptionsContent() {
             Order Summary
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div>
+              <p className="text-sm text-gray-400">Type</p>
+              <p className="mt-1 font-serif text-2xl text-white">
+                {isGiftPayment ? "Legacy Gift" : "Memorial"}
+              </p>
+            </div>
+
             <div>
               <p className="text-sm text-gray-400">Package</p>
               <p className="mt-1 font-serif text-2xl text-white">
@@ -113,9 +152,11 @@ function PaymentOptionsContent() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-400">Memorial ID</p>
+              <p className="text-sm text-gray-400">
+                {isGiftPayment ? "Gift Order ID" : "Memorial ID"}
+              </p>
               <p className="mt-1 font-mono text-lg text-gray-200">
-                #{memorialId}
+                #{isGiftPayment ? giftOrderId : memorialId}
               </p>
             </div>
           </div>
@@ -136,8 +177,9 @@ function PaymentOptionsContent() {
             </h2>
 
             <p className="mb-6 leading-relaxed text-gray-300">
-              Pay securely online using WiPay. Once payment is successful, your
-              memorial will be activated automatically.
+              {isGiftPayment
+                ? "Pay securely online using WiPay. Once payment is successful, your legacy gift will be marked for activation."
+                : "Pay securely online using WiPay. Once payment is successful, your memorial will be activated automatically."}
             </p>
 
             <button
@@ -159,9 +201,16 @@ function PaymentOptionsContent() {
 
             <p className="mb-6 leading-relaxed text-gray-300">
               Send the transfer immediately, then enter your bank transfer
-              reference number. Your memorial will remain pending while payment
-              is reviewed.
+              reference number. Your order will remain pending while payment is
+              reviewed.
             </p>
+
+            <div className="mb-6 rounded-2xl border border-white/10 bg-[#0b1320] p-4 text-sm text-gray-300">
+              <p>
+                <span className="text-[#d4af37]">Reference:</span>{" "}
+                {orderReference}
+              </p>
+            </div>
 
             <a
               href={bankTransferUrl}

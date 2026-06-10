@@ -10,6 +10,13 @@ const packages = [
   "Eternal Legacy — $129 USD / TTD $875",
 ];
 
+function getPackagePrice(packageName: string) {
+  if (packageName.includes("Standard Legacy")) return "59";
+  if (packageName.includes("Premium Legacy")) return "89";
+  if (packageName.includes("Eternal Legacy")) return "129";
+  return "0";
+}
+
 export default function GiftStartForm() {
   const router = useRouter();
   const [status, setStatus] = useState("");
@@ -21,8 +28,12 @@ export default function GiftStartForm() {
     const form = event.currentTarget;
     const formData = new FormData(form);
 
+    const packageName = String(formData.get("package_name") || "");
+    const packagePrice = getPackagePrice(packageName);
+    const buyerName = String(formData.get("buyer_name") || "");
+
     const payload = {
-      buyer_name: String(formData.get("buyer_name") || ""),
+      buyer_name: buyerName,
       buyer_email: String(formData.get("buyer_email") || ""),
       buyer_phone: String(formData.get("buyer_phone") || ""),
       recipient_name: String(formData.get("recipient_name") || ""),
@@ -31,7 +42,7 @@ export default function GiftStartForm() {
       occasion: String(formData.get("occasion") || ""),
       gift_message: String(formData.get("gift_message") || ""),
       delivery_method: String(formData.get("delivery_method") || "whatsapp"),
-      package_name: String(formData.get("package_name") || ""),
+      package_name: packageName,
     };
 
     try {
@@ -63,9 +74,16 @@ export default function GiftStartForm() {
         throw new Error(data?.details || data?.error || "Something went wrong.");
       }
 
-      setStatus("Gift order created. Taking you to checkout...");
+      setStatus("Gift order created. Taking you to payment options...");
 
-      router.push(`/gift/checkout/${data.gift_order_id}`);
+      const paymentUrl =
+        `/payment-options?payment_for=gift` +
+        `&gift_order_id=${encodeURIComponent(String(data.gift_order_id))}` +
+        `&package_name=${encodeURIComponent(packageName)}` +
+        `&package_price=${encodeURIComponent(packagePrice)}` +
+        `&customer_name=${encodeURIComponent(buyerName)}`;
+
+      router.push(paymentUrl);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Something went wrong.");
       setIsSubmitting(false);
@@ -150,7 +168,7 @@ export default function GiftStartForm() {
         disabled={isSubmitting}
         className="mt-8 rounded-full bg-[#d4af37] px-8 py-3 font-semibold text-[#071426] disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isSubmitting ? "Creating Gift Order..." : "Continue to Checkout"}
+        {isSubmitting ? "Creating Gift Order..." : "Continue to Payment"}
       </button>
 
       {status && (
