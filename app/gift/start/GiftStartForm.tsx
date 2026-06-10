@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, ReactNode, useState } from "react";
-import { useRouter } from "next/navigation";
 
 const packages = [
   "Starter Tribute — Free 14 Days",
@@ -18,7 +17,6 @@ function getPackagePrice(packageName: string) {
 }
 
 export default function GiftStartForm() {
-  const router = useRouter();
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -77,13 +75,13 @@ export default function GiftStartForm() {
       setStatus("Gift order created. Taking you to payment options...");
 
       const paymentUrl =
-        `/payment-options?payment_for=gift` +
+        `/payment-option?payment_for=gift` +
         `&gift_order_id=${encodeURIComponent(String(data.gift_order_id))}` +
         `&package_name=${encodeURIComponent(packageName)}` +
         `&package_price=${encodeURIComponent(packagePrice)}` +
         `&customer_name=${encodeURIComponent(buyerName)}`;
 
-      router.push(paymentUrl);
+      window.location.href = paymentUrl;
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Something went wrong.");
       setIsSubmitting(false);
