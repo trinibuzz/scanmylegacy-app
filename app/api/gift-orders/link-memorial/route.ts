@@ -24,6 +24,25 @@ async function getConnection() {
   });
 }
 
+async function activateMemorial(memorialId: string | number) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://scanmylegacy.com";
+
+  try {
+    await fetch(`${siteUrl}/api/memorials/activate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        memorial_id: memorialId,
+      }),
+      cache: "no-store",
+    });
+  } catch (error) {
+    console.error("Gift memorial activation failed:", error);
+  }
+}
+
 export async function POST(req: Request) {
   let connection: mysql.Connection | null = null;
 
@@ -59,11 +78,16 @@ export async function POST(req: Request) {
       );
     }
 
+    await activateMemorial(body.memorial_id);
+
     return NextResponse.json({
       success: true,
-      message: "Gift order connected to memorial.",
+      message: "Gift order connected to memorial and activation requested.",
+      memorial_id: body.memorial_id,
     });
   } catch (error) {
+    console.error("Gift link memorial error:", error);
+
     return NextResponse.json(
       {
         error:
