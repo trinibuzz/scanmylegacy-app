@@ -9,7 +9,7 @@ export default function HomePage() {
       <section className="relative min-h-[86vh] overflow-hidden bg-[#061b3a]">
         <img
           src="/images/home-hero.jpg"
-          alt="Family preserving memories"
+          alt="Family preserving memories and legacy"
           className="absolute inset-0 h-full w-full object-cover opacity-45"
         />
 
@@ -20,34 +20,35 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto flex min-h-[86vh] max-w-7xl items-center px-6 py-24 sm:px-8">
           <div className="max-w-4xl">
             <div className="mb-5 inline-flex rounded-full border border-[#d4af37]/40 bg-[#061b3a]/35 px-5 py-2 text-xs font-semibold uppercase tracking-[0.32em] text-[#d4af37] backdrop-blur">
-              Scan. Remember. Celebrate Life.
+              Leave Your Story. Share Your Wishes. Preserve Your Legacy.
             </div>
 
             <h1 className="mb-6 font-serif text-4xl font-bold leading-tight text-[#f8f5ee] sm:text-5xl md:text-7xl">
-              Preserve memories.
-              <span className="block text-[#d4af37]">Celebrate lives.</span>
-              Keep their legacy alive forever.
+              Preserve your story.
+              <span className="block text-[#d4af37]">Guide your family.</span>
+              Leave a legacy for generations.
             </h1>
 
             <p className="mb-8 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
-              Create a private digital memorial where family and friends can
-              share photos, videos, voice notes, stories, tributes, candles,
-              flowers, and memories that live on for generations.
+              ScanMyLegacy helps you create a secure digital legacy page where
+              your life story, family memories, final wishes, personal messages,
+              photos, videos, and important instructions can be preserved for
+              the people you love — now and for generations to come.
             </p>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
               <a
-                href="/packages"
+                href="/packages?type=living"
                 className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
               >
-                Book a Spot
+                Create My Legacy Page
               </a>
 
               <a
-                href="/login"
+                href="/packages?type=memorial"
                 className="rounded-full border border-[#d4af37]/70 bg-white/5 px-8 py-4 text-center font-semibold text-[#f8f5ee] backdrop-blur transition hover:bg-[#d4af37]/15"
               >
-                Register / View Memorial
+                Create a Memorial Page
               </a>
 
               <a
@@ -60,9 +61,9 @@ export default function HomePage() {
 
             <div className="mt-10 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
               {[
-                { label: "Photos", icon: "📷" },
-                { label: "Voice Notes", icon: "🎙️" },
-                { label: "Tributes", icon: "🕯️" },
+                { label: "Life Story", icon: "📖" },
+                { label: "Final Wishes", icon: "📝" },
+                { label: "Family Messages", icon: "💌" },
                 { label: "Family Tree", icon: "🌳" },
               ].map((item) => (
                 <div
@@ -83,19 +84,104 @@ export default function HomePage() {
       {/* EMOTIONAL INTRO */}
       <section className="mx-auto max-w-5xl px-6 py-16 text-center sm:py-20">
         <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
-          A Place For Remembrance
+          A Place For Legacy
         </p>
 
         <h2 className="mb-6 font-serif text-3xl leading-tight sm:text-4xl md:text-5xl">
-          When someone you love becomes a memory, that memory deserves a
-          beautiful home.
+          Your story, your wishes, and your love deserve to live on for the
+          people who matter most.
         </h2>
 
         <p className="mx-auto max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
-          ScanMyLegacy gives families a dignified digital space to keep stories,
-          photos, songs, messages, and family memories together — so loved ones
-          can visit, remember, and feel connected anytime.
+          ScanMyLegacy gives families a dignified digital space to preserve life
+          stories, photos, videos, voice notes, final wishes, instructions,
+          family history, and heartfelt messages — whether you are building your
+          own legacy today or honoring someone who has passed.
         </p>
+      </section>
+
+      {/* CHOOSE YOUR PATH */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+        <div className="mb-12 text-center">
+          <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
+            Choose Your Path
+          </p>
+
+          <h2 className="font-serif text-3xl sm:text-4xl">
+            What would you like to create?
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-gray-300">
+            Build your own legacy while you are still here, or create a lasting
+            memorial page for a loved one who has passed away.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#082652] p-7 shadow-2xl transition hover:-translate-y-1 hover:border-[#d4af37]/45">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#d4af37]/15 text-2xl">
+              ✍️
+            </div>
+
+            <h3 className="mb-4 font-serif text-3xl text-[#d4af37]">
+              Living Legacy Page
+            </h3>
+
+            <p className="mb-6 leading-relaxed text-gray-300">
+              Create your own legacy page while you are still here. Share your
+              story, leave messages for family, write down your wishes, thank
+              the people who stood by you, and preserve memories for your
+              children, grandchildren, and generations to come.
+            </p>
+
+            <ul className="mb-8 space-y-3 text-sm leading-relaxed text-gray-300">
+              <li>• Share your life story and personal journey</li>
+              <li>• Leave messages for family and loved ones</li>
+              <li>• Record final wishes and important instructions</li>
+              <li>• Thank the people who made a difference in your life</li>
+              <li>• Preserve photos, videos, memories, and family history</li>
+            </ul>
+
+            <a
+              href="/packages?type=living"
+              className="inline-block rounded-full bg-[#d4af37] px-7 py-3 font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+            >
+              Start My Legacy Page
+            </a>
+          </div>
+
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-[#082652] p-7 shadow-2xl transition hover:-translate-y-1 hover:border-[#d4af37]/45">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#d4af37]/15 text-2xl">
+              🕊️
+            </div>
+
+            <h3 className="mb-4 font-serif text-3xl text-[#d4af37]">
+              Memorial Page
+            </h3>
+
+            <p className="mb-6 leading-relaxed text-gray-300">
+              Honor a loved one who has passed away with a beautiful digital
+              memorial page filled with photos, videos, tributes, candles,
+              music, family tree, guestbook messages, and memories family and
+              friends can visit anytime.
+            </p>
+
+            <ul className="mb-8 space-y-3 text-sm leading-relaxed text-gray-300">
+              <li>• Create a lasting digital tribute</li>
+              <li>• Add photos, videos, music, and memories</li>
+              <li>• Allow family and friends to leave messages</li>
+              <li>• Light candles and plant flowers virtually</li>
+              <li>• Share the page by QR code or private link</li>
+            </ul>
+
+            <a
+              href="/packages?type=memorial"
+              className="inline-block rounded-full border border-[#d4af37]/70 bg-white/5 px-7 py-3 font-semibold text-[#f8f5ee] backdrop-blur transition hover:bg-[#d4af37] hover:text-[#061b3a]"
+            >
+              Create a Memorial Page
+            </a>
+          </div>
+        </div>
       </section>
 
       {/* HOW IT WORKS */}
@@ -106,12 +192,12 @@ export default function HomePage() {
           </p>
 
           <h2 className="font-serif text-3xl sm:text-4xl">
-            Create a lasting tribute in minutes
+            Create a lasting legacy in minutes
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-gray-300">
-            Simple for families. Beautiful for visitors. Built to preserve the
-            legacy of those who matter most.
+            Simple for families. Beautiful for visitors. Built to preserve
+            stories, wishes, memories, and love for generations.
           </p>
         </div>
 
@@ -119,20 +205,20 @@ export default function HomePage() {
           {[
             {
               number: "01",
-              title: "Choose a Package",
-              text: "Select the memorial plan that fits your family’s needs, from a free starter tribute to long-term legacy options.",
+              title: "Choose Your Page Type",
+              text: "Start a living legacy page for yourself or create a memorial page for a loved one who has passed away.",
               img: "/images/how-hero.jpg",
             },
             {
               number: "02",
-              title: "Build the Memorial",
-              text: "Add the life story, cover photo, gallery images, memorial song, videos, voice notes, and family tree.",
+              title: "Build The Legacy",
+              text: "Add life story, photos, videos, voice notes, final wishes, family messages, important instructions, and family tree.",
               img: "/images/create-hero.jpg",
             },
             {
               number: "03",
               title: "Share With Loved Ones",
-              text: "Invite family and friends through a private link or QR code so they can leave tributes, candles, flowers, and memories.",
+              text: "Invite family and friends through a private link or QR code so they can visit, contribute, remember, and stay connected.",
               img: "/images/welcome-hero.jpg",
             },
           ].map((item) => (
@@ -171,16 +257,16 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
             <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
-              Memorial Features
+              Legacy Features
             </p>
 
             <h2 className="font-serif text-3xl sm:text-4xl">
-              Everything families need to remember beautifully
+              Everything families need to preserve a life beautifully
             </h2>
 
             <p className="mx-auto mt-4 max-w-2xl text-gray-300">
-              A complete digital memorial experience designed for love,
-              remembrance, family connection, and legacy preservation.
+              A complete digital legacy experience designed for memories, final
+              wishes, family connection, personal messages, and remembrance.
             </p>
           </div>
 
@@ -188,42 +274,42 @@ export default function HomePage() {
             {[
               {
                 title: "Life Story",
-                desc: "Share the journey, achievements, personality, and treasured moments of your loved one.",
+                desc: "Share your journey, achievements, personality, lessons, memories, and the moments that shaped your life.",
                 icon: "📖",
               },
               {
+                title: "Final Wishes",
+                desc: "Leave personal wishes, service preferences, instructions, and guidance for your family.",
+                icon: "📝",
+              },
+              {
+                title: "Family Messages",
+                desc: "Create heartfelt messages for children, grandchildren, spouse, siblings, friends, and loved ones.",
+                icon: "💌",
+              },
+              {
                 title: "Photo Slideshow",
-                desc: "Create a beautiful tribute gallery with photos that play like a memorial film.",
+                desc: "Create a beautiful gallery with photos that tell your story and preserve special memories.",
                 icon: "📷",
               },
               {
-                title: "Memorial Music",
-                desc: "Add a meaningful song or instrumental sound to create a peaceful viewing experience.",
-                icon: "🎵",
-              },
-              {
-                title: "Family Chat",
-                desc: "Let family and friends share text, photos, videos, and voice notes in one private space.",
-                icon: "💬",
+                title: "Voice Notes",
+                desc: "Record voice messages, blessings, thank-yous, memories, and words your family can keep forever.",
+                icon: "🎙️",
               },
               {
                 title: "Guestbook",
-                desc: "Visitors can leave heartfelt messages of love, comfort, and remembrance.",
+                desc: "Visitors can leave heartfelt messages of love, comfort, gratitude, and remembrance.",
                 icon: "🕊️",
               },
               {
                 title: "Digital Candles",
-                desc: "Loved ones can light a candle and leave a short tribute in memory.",
+                desc: "Loved ones can light a candle and leave a short tribute in honor or memory.",
                 icon: "🕯️",
               },
               {
-                title: "Memorial Garden",
-                desc: "Family and friends can plant digital flowers as a symbol of love and remembrance.",
-                icon: "🌹",
-              },
-              {
                 title: "Family Tree",
-                desc: "Preserve family connections and relationships for future generations.",
+                desc: "Preserve family connections and relationships so future generations know where they came from.",
                 icon: "🌳",
               },
             ].map((feature) => (
@@ -253,7 +339,7 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-3xl border border-[#d4af37]/20 shadow-2xl">
           <img
             src="/images/about-hero.jpg"
-            alt="Family remembering a loved one"
+            alt="Family preserving legacy"
             className="h-[340px] w-full object-cover sm:h-[460px]"
           />
 
@@ -261,7 +347,7 @@ export default function HomePage() {
 
           <div className="absolute bottom-6 left-6 right-6 rounded-2xl border border-[#d4af37]/25 bg-[#061b3a]/45 p-5 backdrop-blur">
             <p className="text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-              Private • Beautiful • Always Accessible
+              Private • Meaningful • Always Accessible
             </p>
           </div>
         </div>
@@ -272,21 +358,21 @@ export default function HomePage() {
           </p>
 
           <h2 className="mb-6 font-serif text-3xl leading-tight sm:text-4xl">
-            Because love should never be forgotten.
+            Because every life has a story worth preserving.
           </h2>
 
           <p className="mb-5 leading-relaxed text-gray-300">
             ScanMyLegacy gives Caribbean families and loved ones everywhere a
-            private, beautiful place to keep memories alive. Invite family,
-            share stories, post tributes, upload media, and preserve the legacy
-            for future generations.
+            private, beautiful place to preserve stories, memories, wishes,
+            instructions, family history, and personal messages for future
+            generations.
           </p>
 
           <p className="mb-8 leading-relaxed text-gray-300">
-            Whether shared by link or accessed by QR code, each memorial becomes
-            a lasting space where family can return on birthdays,
-            anniversaries, and moments when they simply want to feel close
-            again.
+            Whether shared by link or accessed by QR code, each legacy page
+            becomes a lasting space where family can return on birthdays,
+            anniversaries, special moments, or anytime they want to feel close
+            and connected.
           </p>
 
           <div className="flex flex-col gap-4 sm:flex-row">
@@ -320,7 +406,7 @@ export default function HomePage() {
             </h2>
 
             <p className="mx-auto mt-4 max-w-2xl text-gray-300">
-              Choose the memorial package that works best for your family.
+              Choose the legacy package that works best for you and your family.
             </p>
           </div>
 
@@ -329,12 +415,12 @@ export default function HomePage() {
               {
                 name: "Starter Tribute",
                 price: "Free",
-                detail: "14-day starter memorial",
+                detail: "14-day starter legacy page",
               },
               {
                 name: "Standard Legacy",
                 price: "$59",
-                detail: "A beautiful 3-year tribute",
+                detail: "A beautiful 3-year legacy page",
               },
               {
                 name: "Premium Legacy",
@@ -344,7 +430,7 @@ export default function HomePage() {
               {
                 name: "Eternal Legacy",
                 price: "$129",
-                detail: "Lifetime memorial option",
+                detail: "Lifetime legacy option",
               },
             ].map((plan) => (
               <div
@@ -375,6 +461,22 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* IMPORTANT NOTICE */}
+      <section className="mx-auto max-w-5xl px-6 py-14">
+        <div className="rounded-3xl border border-[#d4af37]/25 bg-[#082652] p-6 text-center shadow-xl">
+          <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            Important Notice
+          </p>
+
+          <p className="mx-auto max-w-3xl text-sm leading-relaxed text-gray-300">
+            ScanMyLegacy is a personal legacy and memory preservation platform.
+            It does not replace a legal will, estate plan, financial advice, or
+            legal advice. For legal matters, families should consult a qualified
+            professional.
+          </p>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="bg-[#061b3a] px-4 py-16 text-center sm:px-6 sm:py-20">
         <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
@@ -386,23 +488,23 @@ export default function HomePage() {
         </h2>
 
         <p className="mx-auto mb-8 max-w-2xl text-gray-300">
-          Create a private memorial page your family can visit, share, and add
-          to for years to come.
+          Create a private legacy page your family can visit, share, and add to
+          for years to come.
         </p>
 
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <a
-            href="/packages"
+            href="/packages?type=living"
             className="rounded-full bg-[#d4af37] px-8 py-4 font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
           >
-            Book a Spot
+            Create My Legacy Page
           </a>
 
           <a
             href="/login"
             className="rounded-full border border-[#d4af37]/50 px-8 py-4 font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
           >
-            Register / View Memorial
+            Register / View Legacy
           </a>
         </div>
       </section>

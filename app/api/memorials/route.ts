@@ -62,6 +62,15 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
+    const rawPageType = String(
+      formData.get("page_type") || formData.get("legacy_type") || "memorial"
+    );
+
+    const page_type =
+      rawPageType === "living" || rawPageType === "memorial"
+        ? rawPageType
+        : "memorial";
+
     const creator_name = formData.get("creator_name") as string;
     const creator_email = formData.get("creator_email") as string;
     const creator_phone = formData.get("creator_phone") as string;
@@ -117,7 +126,9 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Creator name, creator email, and memorial full name are required.",
+            page_type === "living"
+              ? "Creator name, creator email, and full name are required."
+              : "Creator name, creator email, and memorial full name are required.",
         },
         { status: 400 }
       );
@@ -182,7 +193,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "This free trial has already been used. Please choose a paid package to continue preserving this memorial.",
+            "This free trial has already been used. Please choose a paid package to continue preserving this legacy.",
         },
         { status: 403 }
       );
@@ -208,7 +219,7 @@ export async function POST(req: Request) {
         (name, email, password, plan, trial_ends_at, is_active) 
         VALUES (?, ?, ?, ?, ?, ?)`,
         [
-          creator_name || full_name || "Memorial Owner",
+          creator_name || full_name || "Legacy Owner",
           cleanedEmail,
           hashedPassword,
           userPlan,
@@ -267,6 +278,7 @@ export async function POST(req: Request) {
       `INSERT INTO memorials 
       (
         user_id,
+        page_type,
         creator_name,
         creator_email,
         creator_phone,
@@ -285,9 +297,10 @@ export async function POST(req: Request) {
         enable_family_tree,
         enable_reminders
       ) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         userId,
+        page_type,
         creator_name || "",
         cleanedEmail || "",
         creator_phone || "",
@@ -334,6 +347,7 @@ export async function POST(req: Request) {
       memorial: {
         id: memorialId,
         user_id: userId,
+        page_type,
         full_name,
         creator_name,
         creator_email: cleanedEmail,

@@ -10,6 +10,33 @@ function PackagesContent() {
   const refCode = searchParams.get("ref") || "";
   const expiredTrial = searchParams.get("expired") === "1";
 
+  const rawPageType = searchParams.get("type") || "";
+  const pageType =
+    rawPageType === "living" || rawPageType === "memorial"
+      ? rawPageType
+      : "";
+
+  const isLiving = pageType === "living";
+  const isMemorial = pageType === "memorial";
+
+  const pageTypeLabel = isLiving
+    ? "Living Legacy Page"
+    : isMemorial
+      ? "Memorial Page"
+      : "Legacy Page";
+
+  const heroTitle = isLiving
+    ? "Choose the plan for your living legacy page."
+    : isMemorial
+      ? "Choose the plan that honors your loved one."
+      : "Choose the legacy plan that fits your family.";
+
+  const heroText = isLiving
+    ? "Create a secure place to preserve your life story, final wishes, family messages, photos, videos, and important instructions for the people you love."
+    : isMemorial
+      ? "Start with a free tribute or choose a lasting memorial package designed to preserve photos, stories, tributes, and family memories for years to come."
+      : "Choose a package for a living legacy page or a memorial page. Preserve stories, wishes, photos, videos, and family memories for generations.";
+
   const packages = [
     {
       name: "Starter Tribute",
@@ -34,7 +61,7 @@ function PackagesContent() {
       amount: 59,
       features: [
         "Secure Hosting",
-        "Sharable Memorial Page",
+        "Sharable Legacy Page",
         "Photo Upload",
         "Guest Access",
       ],
@@ -70,13 +97,20 @@ function PackagesContent() {
   ];
 
   const buildPackageLink = (pkg: { slug: string; amount: number }) => {
-    const base = `/create-memorial?package=${pkg.slug}&price=${pkg.amount}`;
+    const params = new URLSearchParams();
 
-    if (!refCode) {
-      return base;
+    params.set("package", pkg.slug);
+    params.set("price", String(pkg.amount));
+
+    if (pageType) {
+      params.set("type", pageType);
     }
 
-    return `${base}&ref=${encodeURIComponent(refCode)}`;
+    if (refCode) {
+      params.set("ref", refCode);
+    }
+
+    return `/create-memorial?${params.toString()}`;
   };
 
   return (
@@ -100,19 +134,54 @@ function PackagesContent() {
             </p>
 
             <h1 className="font-serif text-4xl font-bold leading-tight text-[#f8f5ee] sm:text-5xl md:text-7xl">
-              Choose the legacy plan that honors your loved one.
+              {heroTitle}
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
-              Start with a free tribute or choose a lasting memorial package
-              designed to preserve photos, stories, tributes, and family
-              memories for years to come.
+              {heroText}
             </p>
+
+            <div className="mt-8 inline-flex rounded-full border border-[#d4af37]/40 bg-[#0b1320]/45 px-5 py-3 text-sm font-semibold text-[#d4af37] backdrop-blur">
+              Selected: {pageTypeLabel}
+            </div>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-16">
+        {!pageType && (
+          <div className="mx-auto mb-10 max-w-4xl rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 text-center shadow-2xl">
+            <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              Choose Your Page Type
+            </p>
+
+            <h2 className="mb-4 font-serif text-3xl text-white">
+              What would you like to create?
+            </h2>
+
+            <p className="mx-auto mb-6 max-w-2xl text-gray-300">
+              You can build a living legacy page for yourself or create a
+              memorial page for a loved one who has passed away.
+            </p>
+
+            <div className="flex flex-col justify-center gap-4 sm:flex-row">
+              <a
+                href="/packages?type=living"
+                className="rounded-full bg-[#d4af37] px-7 py-3 font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+              >
+                Living Legacy Page
+              </a>
+
+              <a
+                href="/packages?type=memorial"
+                className="rounded-full border border-[#d4af37]/60 px-7 py-3 font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+              >
+                Memorial Page
+              </a>
+            </div>
+          </div>
+        )}
+
         {expiredTrial && (
           <div className="mx-auto mb-10 max-w-3xl rounded-2xl border border-[#d4af37]/50 bg-[#111a2e] p-8 text-center shadow-2xl">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
@@ -137,6 +206,20 @@ function PackagesContent() {
             <p className="font-mono text-[#d4af37]">{refCode}</p>
           </div>
         )}
+
+        <div className="mb-10 text-center">
+          <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            {pageTypeLabel}
+          </p>
+
+          <h2 className="font-serif text-3xl text-white sm:text-4xl">
+            Select Your Package
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-2xl text-gray-300">
+            Your package will continue as a {pageTypeLabel.toLowerCase()}.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {packages.map((pkg) => {

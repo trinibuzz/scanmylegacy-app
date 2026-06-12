@@ -44,6 +44,41 @@ function CreateMemorialForm() {
   const normalPackagePrice = searchParams.get("price") || "0";
   const refCode = searchParams.get("ref") || "";
 
+  const rawPageType = searchParams.get("type") || "";
+  const pageType =
+    rawPageType === "living" || rawPageType === "memorial"
+      ? rawPageType
+      : isGiftSetup
+      ? "memorial"
+      : "memorial";
+
+  const isLivingLegacy = pageType === "living";
+  const isMemorialPage = pageType === "memorial";
+
+  const pageTypeLabel = isLivingLegacy
+    ? "Living Legacy Page"
+    : "Memorial Page";
+
+  const pageActionLabel = isLivingLegacy
+    ? "Create Your Living Legacy Page"
+    : "Create a Memorial Page";
+
+  const personNameLabel = isLivingLegacy
+    ? "Your Full Name *"
+    : "Loved One’s Full Name *";
+
+  const biographyLabel = isLivingLegacy
+    ? "Tell Your Story / Life Journey"
+    : "Tell Their Story / Biography";
+
+  const dateOfPassingLabel = isLivingLegacy
+    ? "Date of Passing Optional"
+    : "Date of Passing";
+
+  const creatorRelationshipLabel = isLivingLegacy
+    ? "Who are you creating this for? Example: Myself"
+    : "Relationship to Loved One";
+
   const [giftLoading, setGiftLoading] = useState(false);
   const [giftOrder, setGiftOrder] = useState<GiftOrder | null>(null);
 
@@ -53,7 +88,9 @@ function CreateMemorialForm() {
   const [creatorName, setCreatorName] = useState("");
   const [creatorEmail, setCreatorEmail] = useState("");
   const [creatorPhone, setCreatorPhone] = useState("");
-  const [creatorRelationship, setCreatorRelationship] = useState("");
+  const [creatorRelationship, setCreatorRelationship] = useState(
+    isLivingLegacy ? "Myself" : ""
+  );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -67,6 +104,12 @@ function CreateMemorialForm() {
 
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
   const [enableReminders, setEnableReminders] = useState(false);
+
+  useEffect(() => {
+    if (isLivingLegacy && !creatorRelationship) {
+      setCreatorRelationship("Myself");
+    }
+  }, [isLivingLegacy, creatorRelationship]);
 
   useEffect(() => {
     const loadGiftOrder = async () => {
@@ -171,6 +214,9 @@ function CreateMemorialForm() {
 
     const formData = new FormData();
 
+    formData.append("page_type", pageType);
+    formData.append("legacy_type", pageType);
+
     formData.append("creator_name", creatorName);
     formData.append("creator_email", creatorEmail);
     formData.append("creator_phone", creatorPhone);
@@ -218,7 +264,10 @@ function CreateMemorialForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        showError(data.error || "Failed to create memorial. Please try again.");
+        showError(
+          data.error ||
+            `Failed to create ${pageTypeLabel.toLowerCase()}. Please try again.`
+        );
         return;
       }
 
@@ -294,7 +343,7 @@ function CreateMemorialForm() {
       <section className="relative min-h-[62vh] overflow-hidden bg-[#26447F]">
         <img
           src="/images/create-hero.jpg"
-          alt="Create a ScanMyLegacy memorial"
+          alt="Create a ScanMyLegacy page"
           className="absolute inset-0 h-full w-full object-cover opacity-30"
         />
 
@@ -303,18 +352,22 @@ function CreateMemorialForm() {
         <div className="relative z-10 mx-auto flex min-h-[62vh] max-w-7xl items-center px-6 py-20 sm:px-8">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-[#d4af37]">
-              {isGiftSetup ? "Legacy Gift Setup" : "Create Memorial"}
+              {isGiftSetup ? "Legacy Gift Setup" : pageTypeLabel}
             </p>
 
             <h1 className="font-serif text-4xl font-bold leading-tight text-[#f8f5ee] sm:text-5xl md:text-7xl">
               {isGiftSetup
                 ? "Your Legacy Gift is ready to begin."
+                : isLivingLegacy
+                ? "Begin preserving your story and wishes."
                 : "Begin the journey of preserving a legacy."}
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg md:text-xl">
               {isGiftSetup
-                ? "This package has already been selected and paid for. Complete the memorial details below to begin preserving your loved one’s legacy."
+                ? "This package has already been selected and paid for. Complete the details below to begin preserving your loved one’s legacy."
+                : isLivingLegacy
+                ? "Create a private digital legacy page where your story, photos, videos, family messages, final wishes, and important instructions can be preserved for the people you love."
                 : "Create a private digital sanctuary with photos, stories, music, tributes, and memories your family can visit anytime."}
             </p>
           </div>
@@ -324,16 +377,20 @@ function CreateMemorialForm() {
       <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
         <div className="mb-10 text-center">
           <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
-            {isGiftSetup ? "Gift Memorial Setup" : "Memorial Setup"}
+            {isGiftSetup ? "Gift Memorial Setup" : pageActionLabel}
           </p>
 
           <h2 className="font-serif text-3xl sm:text-4xl">
-            Tell us about you and your loved one
+            {isLivingLegacy
+              ? "Tell us about you and your legacy"
+              : "Tell us about you and your loved one"}
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl text-gray-400">
             {isGiftSetup
               ? "No payment or package selection is needed. Your Legacy Gift package is already attached."
+              : isLivingLegacy
+              ? "Complete the details below. You can always add more stories, wishes, photos, and family messages from your dashboard later."
               : "Complete the details below. You can always manage and add more memories from your dashboard later."}
           </p>
         </div>
@@ -375,6 +432,13 @@ function CreateMemorialForm() {
                 <h3 className="font-serif text-3xl text-white">
                   {packageName}
                 </h3>
+
+                <p className="mt-2 text-sm text-gray-400">
+                  Page Type:{" "}
+                  <span className="font-semibold text-[#d4af37]">
+                    {pageTypeLabel}
+                  </span>
+                </p>
 
                 {isGiftSetup && giftOrder && (
                   <p className="mt-2 text-sm text-gray-400">
@@ -424,8 +488,8 @@ function CreateMemorialForm() {
               </h2>
 
               <p className="mt-2 text-sm text-gray-400">
-                This creates your owner account so you can manage the memorial
-                later.
+                This creates your owner account so you can manage this{" "}
+                {pageTypeLabel.toLowerCase()} later.
               </p>
             </div>
 
@@ -453,7 +517,7 @@ function CreateMemorialForm() {
               />
 
               <input
-                placeholder="Relationship to Loved One"
+                placeholder={creatorRelationshipLabel}
                 value={creatorRelationship}
                 onChange={(e) => setCreatorRelationship(e.target.value)}
                 className={inputStyle}
@@ -472,7 +536,8 @@ function CreateMemorialForm() {
               </h2>
 
               <p className="mt-2 text-sm text-gray-400">
-                This password lets you log in later to manage this memorial.
+                This password lets you log in later to manage this{" "}
+                {pageTypeLabel.toLowerCase()}.
               </p>
             </div>
 
@@ -506,16 +571,18 @@ function CreateMemorialForm() {
               </p>
 
               <h2 className="font-serif text-2xl sm:text-3xl">
-                Memorial Details
+                {isLivingLegacy ? "Legacy Details" : "Memorial Details"}
               </h2>
 
               <p className="mt-2 text-sm text-gray-400">
-                Add the first details for your loved one’s memorial page.
+                {isLivingLegacy
+                  ? "Add the first details for your living legacy page."
+                  : "Add the first details for your loved one’s memorial page."}
               </p>
             </div>
 
             <input
-              placeholder="Loved One’s Full Name *"
+              placeholder={personNameLabel}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className={inputStyle}
@@ -536,7 +603,7 @@ function CreateMemorialForm() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                  Date of Passing
+                  {dateOfPassingLabel}
                 </label>
                 <input
                   type="date"
@@ -548,7 +615,7 @@ function CreateMemorialForm() {
             </div>
 
             <textarea
-              placeholder="Tell Their Story (Biography)"
+              placeholder={biographyLabel}
               value={biography}
               onChange={(e) => setBiography(e.target.value)}
               rows={6}
@@ -568,7 +635,8 @@ function CreateMemorialForm() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                This image appears at the top of the memorial page.
+                This image appears at the top of the{" "}
+                {pageTypeLabel.toLowerCase()}.
               </p>
 
               {coverPhoto && (
@@ -580,7 +648,7 @@ function CreateMemorialForm() {
 
             <div className="mt-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
               <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                Memorial Gallery Photos Optional
+                Gallery Photos Optional
               </label>
 
               <input
@@ -594,8 +662,8 @@ function CreateMemorialForm() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Upload multiple family photos for the memorial slideshow.
-                Recommended: JPG, PNG, or WEBP.
+                Upload multiple family photos for the slideshow. Recommended:
+                JPG, PNG, or WEBP.
               </p>
 
               {galleryPhotos.length > 0 && (
@@ -608,7 +676,9 @@ function CreateMemorialForm() {
 
             <div className="mt-4 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
               <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                Memorial Song Optional
+                {isLivingLegacy
+                  ? "Legacy Song / Voice Note Optional"
+                  : "Memorial Song Optional"}
               </label>
 
               <input
@@ -619,8 +689,9 @@ function CreateMemorialForm() {
               />
 
               <p className="mt-2 text-xs text-gray-500">
-                Upload a special song, instrumental, or voice note for the
-                slideshow. Recommended file types: MP3, WAV, or M4A.
+                {isLivingLegacy
+                  ? "Upload a special song, blessing, voice note, or message for your legacy page. Recommended file types: MP3, WAV, or M4A."
+                  : "Upload a special song, instrumental, or voice note for the slideshow. Recommended file types: MP3, WAV, or M4A."}
               </p>
 
               {memorialMusic && (
@@ -673,7 +744,7 @@ function CreateMemorialForm() {
                     Enable Anniversary Reminders
                   </span>
                   <span className="mt-1 block text-sm leading-relaxed text-gray-400">
-                    Prepare this memorial for future remembrance reminders when
+                    Prepare this page for future remembrance reminders when
                     email reminders are enabled.
                   </span>
                 </span>
@@ -687,18 +758,22 @@ function CreateMemorialForm() {
             className="w-full rounded-full bg-[#d4af37] py-4 font-semibold text-[#0b1320] shadow-xl transition hover:scale-[1.01] hover:bg-[#f0c94a] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading
-              ? "Creating Memorial..."
+              ? isLivingLegacy
+                ? "Creating Legacy Page..."
+                : "Creating Memorial..."
               : isGiftSetup
               ? "Create Gift Memorial"
               : isPaidPackage
               ? "Continue to Payment"
+              : isLivingLegacy
+              ? "Create Free Legacy Page"
               : "Create Free Memorial"}
           </button>
 
           <p className="text-center text-sm text-gray-500">
             {isGiftSetup
               ? "This gift package has already been paid for. You will not be asked to pay again."
-              : "You’ll be able to manage this memorial from your dashboard after it is created."}
+              : `You’ll be able to manage this ${pageTypeLabel.toLowerCase()} from your dashboard after it is created.`}
           </p>
         </div>
       </section>
