@@ -35,13 +35,21 @@ export default function GuestAccess({ memorial, token }: any) {
   const isLivingLegacy = pageType === "living";
 
   const pageTypeLabel = isLivingLegacy ? "Living Legacy" : "Memorial Tribute";
-  const pageTitlePrefix = isLivingLegacy ? "Living Legacy of" : "In Loving Memory";
-  const enterButtonLabel = isLivingLegacy ? "Enter Legacy Page" : "Enter Memorial";
-  const shareButtonLabel = isLivingLegacy ? "Share Legacy Page" : "Share Memorial";
+  const pageTitlePrefix = isLivingLegacy
+    ? "Living Legacy of"
+    : "In Loving Memory";
+  const enterButtonLabel = isLivingLegacy
+    ? "Enter Legacy Page"
+    : "Enter Memorial";
+  const shareButtonLabel = isLivingLegacy
+    ? "Share Legacy Page"
+    : "Share Memorial";
   const pageLinkCopiedLabel = isLivingLegacy
     ? "Legacy page link copied to clipboard"
     : "Memorial link copied to clipboard";
-  const slideshowTitle = isLivingLegacy ? "Legacy Slideshow" : "Memorial Slideshow";
+  const slideshowTitle = isLivingLegacy
+    ? "Legacy Slideshow"
+    : "Memorial Slideshow";
   const slideshowDescription = isLivingLegacy
     ? "A beautiful collection of photos, moments, and memories that tell the story of this life and legacy."
     : "A beautiful collection of memories that gently plays through each photo like a tribute film.";
@@ -54,6 +62,37 @@ export default function GuestAccess({ memorial, token }: any) {
   const noGuestbookText = isLivingLegacy
     ? "No family messages yet."
     : "No guestbook messages yet.";
+
+  const candleActionLabel = isLivingLegacy
+    ? "Leave a Blessing"
+    : "Light a Candle";
+  const candleRoomTitle = isLivingLegacy ? "Blessings" : "Candle Room";
+  const candleCountText = isLivingLegacy ? "blessings left" : "candles lit";
+  const candleEmptyText = isLivingLegacy
+    ? "No blessings left yet."
+    : "No candles lit yet.";
+  const candleModalTitle = isLivingLegacy
+    ? "Leave a Blessing"
+    : "Light a Candle";
+  const candleSubmitLabel = isLivingLegacy
+    ? "Leave Blessing"
+    : "Light Candle";
+  const candleAlertText = isLivingLegacy
+    ? "Blessing left ❤️"
+    : "Candle lit 🕯️";
+
+  const flowerActionLabel = isLivingLegacy ? "Send Flowers" : "Plant a Flower";
+  const flowerCountText = isLivingLegacy
+    ? "flowers sent"
+    : "flowers planted";
+  const flowerEmptyText = isLivingLegacy
+    ? "No flowers sent yet."
+    : "No flowers planted yet.";
+  const flowerSubmitLabel = isLivingLegacy ? "Send Flowers" : "Plant Flower";
+  const flowerByLabel = isLivingLegacy ? "Sent by" : "Planted by";
+  const flowerAlertText = isLivingLegacy
+    ? "Flowers sent 🌸"
+    : "Flower planted 🌸";
 
   const flowerOptions: any = {
     rose: "🌹",
@@ -357,8 +396,8 @@ export default function GuestAccess({ memorial, token }: any) {
     setShowFlowerModal(false);
     setTributeMessage("");
 
-    if (type === "candle") alert("Candle lit 🕯️");
-    if (type === "flower") alert("Flower planted 🌸");
+    if (type === "candle") alert(candleAlertText);
+    if (type === "flower") alert(flowerAlertText);
   };
 
   const toggleMusic = () => {
@@ -475,10 +514,12 @@ export default function GuestAccess({ memorial, token }: any) {
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
-            <div className="mb-4 text-center text-5xl">🕯️</div>
+            <div className="mb-4 text-center text-5xl">
+              {isLivingLegacy ? "❤️" : "🕯️"}
+            </div>
 
             <h2 className="mb-4 text-center font-serif text-2xl text-[#d4af37]">
-              Light a Candle
+              {candleModalTitle}
             </h2>
 
             <input
@@ -490,7 +531,11 @@ export default function GuestAccess({ memorial, token }: any) {
 
             <textarea
               className="mb-4 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              placeholder="Leave a short message..."
+              placeholder={
+                isLivingLegacy
+                  ? "Leave a blessing, words of love, or encouragement..."
+                  : "Leave a short message..."
+              }
               value={tributeMessage}
               onChange={(e) => setTributeMessage(e.target.value)}
             />
@@ -500,7 +545,7 @@ export default function GuestAccess({ memorial, token }: any) {
                 onClick={() => submitReaction("candle")}
                 className="flex-1 rounded bg-[#d4af37] py-3 font-semibold text-black"
               >
-                Light Candle
+                {candleSubmitLabel}
               </button>
 
               <button
@@ -522,7 +567,7 @@ export default function GuestAccess({ memorial, token }: any) {
             </div>
 
             <h2 className="mb-4 text-center font-serif text-2xl text-[#d4af37]">
-              Plant a Flower
+              {flowerActionLabel}
             </h2>
 
             <input
@@ -547,7 +592,11 @@ export default function GuestAccess({ memorial, token }: any) {
 
             <textarea
               className="mb-4 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              placeholder="Leave a short message..."
+              placeholder={
+                isLivingLegacy
+                  ? "Send flowers with a short message..."
+                  : "Leave a short message..."
+              }
               value={tributeMessage}
               onChange={(e) => setTributeMessage(e.target.value)}
             />
@@ -557,7 +606,7 @@ export default function GuestAccess({ memorial, token }: any) {
                 onClick={() => submitReaction("flower")}
                 className="flex-1 rounded bg-[#d4af37] py-3 font-semibold text-black"
               >
-                Plant Flower
+                {flowerSubmitLabel}
               </button>
 
               <button
@@ -780,10 +829,12 @@ export default function GuestAccess({ memorial, token }: any) {
             onClick={openCandleModal}
             className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
           >
-            <div className="mb-3 text-4xl">🕯️</div>
-            <h3 className="font-serif text-xl">Light a Candle</h3>
+            <div className="mb-3 text-4xl">
+              {isLivingLegacy ? "❤️" : "🕯️"}
+            </div>
+            <h3 className="font-serif text-xl">{candleActionLabel}</h3>
             <p className="mt-2 text-sm text-gray-400">
-              {candles} candles lit
+              {candles} {candleCountText}
             </p>
           </button>
 
@@ -792,9 +843,9 @@ export default function GuestAccess({ memorial, token }: any) {
             className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
           >
             <div className="mb-3 text-4xl">🌸</div>
-            <h3 className="font-serif text-xl">Plant a Flower</h3>
+            <h3 className="font-serif text-xl">{flowerActionLabel}</h3>
             <p className="mt-2 text-sm text-gray-400">
-              {flowers} flowers planted
+              {flowers} {flowerCountText}
             </p>
           </button>
         </div>
@@ -806,11 +857,11 @@ export default function GuestAccess({ memorial, token }: any) {
       >
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
           <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-            Candle Room
+            {candleRoomTitle}
           </h2>
 
           {candleReactions.length === 0 ? (
-            <p className="text-gray-400">No candles lit yet.</p>
+            <p className="text-gray-400">{candleEmptyText}</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {candleReactions.map((reaction: any) => (
@@ -819,7 +870,9 @@ export default function GuestAccess({ memorial, token }: any) {
                   className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
                 >
                   <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/10 shadow-[0_0_30px_rgba(212,175,55,0.35)]">
-                    <span className="animate-pulse text-5xl">🕯️</span>
+                    <span className="animate-pulse text-5xl">
+                      {isLivingLegacy ? "❤️" : "🕯️"}
+                    </span>
                   </div>
 
                   <p className="font-semibold text-white">
@@ -843,7 +896,7 @@ export default function GuestAccess({ memorial, token }: any) {
           </h2>
 
           {flowerReactions.length === 0 ? (
-            <p className="text-gray-400">No flowers planted yet.</p>
+            <p className="text-gray-400">{flowerEmptyText}</p>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
               {flowerReactions.map((reaction: any) => {
@@ -858,7 +911,7 @@ export default function GuestAccess({ memorial, token }: any) {
                     <div className="mb-3 text-6xl">{selectedFlower}</div>
 
                     <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
-                      Planted by {reaction.guest_name}
+                      {flowerByLabel} {reaction.guest_name}
                     </div>
 
                     {reaction.message && (
