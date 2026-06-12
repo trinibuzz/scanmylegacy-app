@@ -43,12 +43,6 @@ export default async function Dashboard() {
 
   const now = new Date();
 
-  /*
-    Bank transfer rule:
-    - pending_bank_transfer is temporarily active until payment_due_at.
-    - after payment_due_at passes, mark it expired_bank_transfer.
-    - data is not deleted.
-  */
   for (const memorial of memorials) {
     const paymentDueAt = memorial.payment_due_at
       ? new Date(memorial.payment_due_at)
@@ -83,11 +77,6 @@ export default async function Dashboard() {
     );
   });
 
-  /*
-    Trial rules:
-    - Prefer users.trial_ends_at when it exists.
-    - If it does not exist, fall back to created_at + 14 days.
-  */
   let trialEndsAt: Date | null = null;
 
   if (isFreePlan) {
@@ -136,6 +125,24 @@ export default async function Dashboard() {
       ? "Eternal Legacy"
       : "Starter Tribute";
 
+  const getPageTypeLabel = (type: string) => {
+    if (type === "living") return "Living Legacy";
+    return "Memorial";
+  };
+
+  const getPageTypeBadgeClass = (type: string) => {
+    if (type === "living") {
+      return "border-emerald-400/40 bg-emerald-500/15 text-emerald-200";
+    }
+
+    return "border-[#d4af37]/40 bg-[#d4af37]/15 text-[#d4af37]";
+  };
+
+  const getPageTypeIcon = (type: string) => {
+    if (type === "living") return "✍️";
+    return "🕊️";
+  };
+
   const getPaymentLabel = (status: string) => {
     if (status === "paid") return "Paid";
     if (status === "free") return "Free Trial";
@@ -175,14 +182,14 @@ export default async function Dashboard() {
 
   const packageStatusText = currentPaidMemorial
     ? currentPaidMemorial.payment_status === "paid"
-      ? "Your memorial package is active."
+      ? "Your legacy package is active."
       : currentPaidMemorial.payment_status === "pending_bank_transfer"
       ? "Bank transfer submitted. Temporary access is active while payment is reviewed."
       : currentPaidMemorial.payment_status === "expired_bank_transfer"
       ? "Bank transfer review expired. Payment must be verified to reactivate."
       : "Your paid package is pending payment."
     : !isFreePlan
-    ? "Your memorial package is active."
+    ? "Your legacy package is active."
     : !trialEndsAt
     ? "Free trial date needs to be checked."
     : trialExpired
@@ -192,9 +199,13 @@ export default async function Dashboard() {
     : `${trialStatusLabel} in your free trial`;
 
   const accountIsActive =
-    Number(user.is_active) !== 0 && (!trialExpired || hasPaidOrPendingPaidMemorial);
+    Number(user.is_active) !== 0 &&
+    (!trialExpired || hasPaidOrPendingPaidMemorial);
 
-  if ((trialExpired || Number(user.is_active) === 0) && !hasPaidOrPendingPaidMemorial) {
+  if (
+    (trialExpired || Number(user.is_active) === 0) &&
+    !hasPaidOrPendingPaidMemorial
+  ) {
     redirect("/packages?expired=1");
   }
 
@@ -214,8 +225,9 @@ export default async function Dashboard() {
                 </h1>
 
                 <p className="mt-4 max-w-2xl text-gray-300">
-                  Manage your loved one’s memorial, share the memorial link,
-                  view your package status, and continue preserving their story.
+                  Manage your legacy pages, share your private links, view your
+                  package status, and continue preserving stories, wishes,
+                  memories, and family history.
                 </p>
               </div>
 
@@ -245,7 +257,7 @@ export default async function Dashboard() {
 
         <section className="mb-8 grid gap-5 md:grid-cols-4">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
-            <p className="text-sm text-gray-400">Memorials</p>
+            <p className="text-sm text-gray-400">Legacy Pages</p>
             <h3 className="mt-2 text-3xl font-bold text-[#d4af37]">
               {memorials.length}
             </h3>
@@ -299,17 +311,17 @@ export default async function Dashboard() {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-                Memorial Control
+                Legacy Control
               </p>
 
-              <h2 className="mt-2 font-serif text-3xl">Your Memorials</h2>
+              <h2 className="mt-2 font-serif text-3xl">Your Legacy Pages</h2>
             </div>
 
             <a
               href="/packages"
               className="rounded-lg border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
             >
-              Create Another Memorial
+              Create Another Page
             </a>
           </div>
 
@@ -318,20 +330,20 @@ export default async function Dashboard() {
               <div className="mb-4 text-5xl">🕯️</div>
 
               <h3 className="mb-3 font-serif text-2xl text-[#d4af37]">
-                No memorials yet
+                No legacy pages yet
               </h3>
 
               <p className="mx-auto max-w-xl text-gray-400">
-                Begin by creating a beautiful memorial page where family and
-                friends can view memories, leave tributes, and keep their story
-                alive.
+                Begin by creating a beautiful legacy page where stories,
+                memories, wishes, photos, and family history can be preserved
+                for generations.
               </p>
 
               <a
                 href="/packages"
                 className="mt-6 inline-block rounded-lg bg-[#d4af37] px-6 py-3 font-semibold text-black"
               >
-                Create Memorial
+                Create Legacy Page
               </a>
             </div>
           ) : (
@@ -341,6 +353,31 @@ export default async function Dashboard() {
                 const isExpiredBankTransfer =
                   m.payment_status === "expired_bank_transfer";
                 const bankTransferMessage = getBankTransferMessage(m);
+
+                const pageType = m.page_type === "living" ? "living" : "memorial";
+                const pageTypeLabel = getPageTypeLabel(pageType);
+                const pageTypeIcon = getPageTypeIcon(pageType);
+
+                const pageWord =
+                  pageType === "living" ? "legacy page" : "memorial";
+
+                const viewButtonLabel =
+                  pageType === "living" ? "View Legacy Page" : "View Memorial";
+
+                const manageButtonLabel =
+                  pageType === "living"
+                    ? "Manage Legacy Page"
+                    : "Manage Memorial";
+
+                const shareText =
+                  pageType === "living"
+                    ? `View this legacy page: ${link}`
+                    : `View this memorial: ${link}`;
+
+                const emailSubject =
+                  pageType === "living"
+                    ? `Legacy Page of ${m.full_name}`
+                    : `Memorial of ${m.full_name}`;
 
                 return (
                   <div
@@ -361,7 +398,7 @@ export default async function Dashboard() {
                           />
                         ) : (
                           <div className="flex h-full min-h-[220px] items-center justify-center text-6xl">
-                            🕯️
+                            {pageTypeIcon}
                           </div>
                         )}
 
@@ -371,8 +408,18 @@ export default async function Dashboard() {
                       <div className="p-6 md:p-8">
                         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                           <div>
+                            <div className="mb-3 flex flex-wrap items-center gap-2">
+                              <span
+                                className={`rounded-full border px-4 py-2 text-xs font-semibold ${getPageTypeBadgeClass(
+                                  pageType
+                                )}`}
+                              >
+                                {pageTypeIcon} {pageTypeLabel}
+                              </span>
+                            </div>
+
                             <p className="mb-2 text-xs uppercase tracking-[0.25em] text-[#d4af37]">
-                              Memorial
+                              {pageTypeLabel}
                             </p>
 
                             <h3 className="font-serif text-3xl text-white">
@@ -383,9 +430,11 @@ export default async function Dashboard() {
                               {m.birth_date
                                 ? new Date(m.birth_date).toLocaleDateString()
                                 : ""}
-                              {" — "}
+                              {m.death_date ? " — " : ""}
                               {m.death_date
                                 ? new Date(m.death_date).toLocaleDateString()
+                                : pageType === "living"
+                                ? "Living Legacy"
                                 : ""}
                             </p>
                           </div>
@@ -407,20 +456,20 @@ export default async function Dashboard() {
 
                         {isExpiredBankTransfer && (
                           <div className="mb-5 rounded-2xl border border-red-400/30 bg-red-500/10 p-4 text-sm leading-relaxed text-red-100">
-                            This memorial was temporarily active while bank
-                            transfer payment was being reviewed. Payment was
-                            not verified within 48 hours, so access is now
+                            This {pageWord} was temporarily active while bank
+                            transfer payment was being reviewed. Payment was not
+                            verified within 48 hours, so access is now
                             temporarily deactivated until payment is confirmed.
                           </div>
                         )}
 
                         <p className="line-clamp-3 text-gray-300">
-                          {m.biography || "No biography added yet."}
+                          {m.biography || "No story added yet."}
                         </p>
 
                         <div className="mt-6 rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4">
                           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-gray-500">
-                            Memorial Link
+                            Legacy Link
                           </p>
 
                           <div className="break-all rounded-lg bg-black/30 p-3 text-sm text-gray-300">
@@ -443,27 +492,28 @@ export default async function Dashboard() {
                                   href={`/memorial/${m.invite_token}`}
                                   className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
                                 >
-                                  View Memorial
+                                  {viewButtonLabel}
                                 </a>
 
                                 <a
                                   href={`/dashboard/memorial/${m.id}`}
                                   className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white"
                                 >
-                                  Manage Memorial
+                                  {manageButtonLabel}
                                 </a>
+
                                 {Number(m.enable_family_tree) === 1 && (
-  <a
-    href={`/family-tree/${m.id}`}
-    className="rounded-lg bg-[#111a2e] border border-[#d4af37]/50 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
-  >
-    Manage Family Tree
-  </a>
-)}
+                                  <a
+                                    href={`/family-tree/${m.id}`}
+                                    className="rounded-lg border border-[#d4af37]/50 bg-[#111a2e] px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+                                  >
+                                    Manage Family Tree
+                                  </a>
+                                )}
 
                                 <a
                                   href={`https://wa.me/?text=${encodeURIComponent(
-                                    `View this memorial: ${link}`
+                                    shareText
                                   )}`}
                                   target="_blank"
                                   rel="noreferrer"
@@ -474,10 +524,8 @@ export default async function Dashboard() {
 
                                 <a
                                   href={`mailto:?subject=${encodeURIComponent(
-                                    `Memorial of ${m.full_name}`
-                                  )}&body=${encodeURIComponent(
-                                    `View this memorial: ${link}`
-                                  )}`}
+                                    emailSubject
+                                  )}&body=${encodeURIComponent(shareText)}`}
                                   className="rounded-lg border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37]"
                                 >
                                   Share Email
