@@ -46,9 +46,13 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-[9999] border-b border-[#d4af37]/30 bg-[#26447F] shadow-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        <a href={withRef("/")} onClick={closeMenu} className="flex items-center gap-3">
+        <a
+          href={withRef("/")}
+          onClick={closeMenu}
+          className="flex items-center gap-3"
+        >
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
-            🕯️
+            ✍️
           </div>
 
           <div>
@@ -56,7 +60,7 @@ export default function SiteHeader() {
               Scan<span className="text-[#d4af37]">My</span>Legacy
             </div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
-              Preserve Memories Forever
+              Preserve Stories Forever
             </div>
           </div>
         </a>
@@ -76,7 +80,7 @@ export default function SiteHeader() {
             href={withRef("/packages")}
             className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
           >
-            Create Memorial
+            Start Legacy Page
           </a>
         </nav>
 
@@ -109,7 +113,7 @@ export default function SiteHeader() {
               onClick={closeMenu}
               className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-center text-sm font-semibold text-black"
             >
-              Create Memorial
+              Start Legacy Page
             </a>
           </div>
         </div>
