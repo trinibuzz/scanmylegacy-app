@@ -14,10 +14,22 @@ export default async function MemorialPage({ params }: any) {
   if (!memorial) {
     return (
       <main className="min-h-screen bg-[#0b1320] p-10 text-white">
-        Invalid memorial link.
+        Invalid legacy link.
       </main>
     );
   }
+
+  const pageType = memorial.page_type === "living" ? "living" : "memorial";
+
+  const pageTypeLabel =
+    pageType === "living" ? "Living Legacy Page" : "Memorial Page";
+
+  const pageWord = pageType === "living" ? "legacy page" : "memorial";
+
+  const lockedTitle =
+    pageType === "living"
+      ? "Living Legacy Page Not Active Yet"
+      : "Memorial Not Active Yet";
 
   const [galleryRows]: any = await db.execute(
     "SELECT file_url FROM memorial_gallery WHERE memorial_id = ? ORDER BY id ASC",
@@ -27,6 +39,9 @@ export default async function MemorialPage({ params }: any) {
   memorial.gallery_photos = galleryRows.map((photo: any) =>
     photo.file_url.startsWith("/") ? photo.file_url : `/${photo.file_url}`
   );
+
+  memorial.page_type = pageType;
+  memorial.page_type_label = pageTypeLabel;
 
   const price = Number(memorial.package_price || 0);
   const isPaidPackage = price > 0;
@@ -70,20 +85,24 @@ export default async function MemorialPage({ params }: any) {
         <div className="max-w-xl rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center shadow-2xl">
           <div className="mb-4 text-5xl">🔒</div>
 
+          <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            {pageTypeLabel}
+          </p>
+
           <h1 className="mb-4 font-serif text-3xl text-[#d4af37]">
-            Memorial Not Active Yet
+            {lockedTitle}
           </h1>
 
           {memorial.payment_status === "expired_bank_transfer" ? (
             <p className="text-gray-300">
-              This memorial was temporarily active while bank transfer payment
+              This {pageWord} was temporarily active while bank transfer payment
               was being reviewed. Payment could not be confirmed within 48
-              hours, so the memorial has been temporarily deactivated until
+              hours, so the {pageWord} has been temporarily deactivated until
               payment is verified.
             </p>
           ) : (
             <p className="text-gray-300">
-              This memorial is pending payment and cannot be viewed until
+              This {pageWord} is pending payment and cannot be viewed until
               payment is completed or verified.
             </p>
           )}
