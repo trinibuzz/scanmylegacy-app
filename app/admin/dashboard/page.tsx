@@ -10,6 +10,59 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
+  const cards = [
+    {
+      href: "/admin/living-legacy",
+      icon: "✍️",
+      title: "Living Legacy Pages",
+      description:
+        "Pages created by people who are alive and want to preserve their story, wishes, family messages, memories, and instructions for future generations.",
+      button: "Open Living Legacy Pages →",
+      wide: true,
+    },
+    {
+      href: "/admin/memorials",
+      icon: "🕊️",
+      title: "Memorial Pages",
+      description:
+        "Pages created to honor loved ones who have passed away with photos, videos, tributes, candles, flowers, guestbook messages, and family memories.",
+      button: "Open Memorial Pages →",
+      wide: true,
+    },
+    {
+      href: "/admin/trials",
+      icon: "⏳",
+      title: "Trial Manager",
+      description:
+        "View free users, expired trials, living legacy pages, memorial pages, and activate packages after cash or manual payment.",
+      button: "Open Trial Manager →",
+    },
+    {
+      href: "/admin/legacy-pages",
+      icon: "📖",
+      title: "Legacy Pages",
+      description:
+        "Manage all living legacy and memorial pages, review content, view public links, and see page type badges.",
+      button: "Open Legacy Pages →",
+    },
+    {
+      href: "/admin/payments",
+      icon: "💳",
+      title: "Payments",
+      description:
+        "Review bank transfer and WiPay payment status for Living Legacy and Memorial packages.",
+      button: "Open Payments →",
+    },
+    {
+      href: "/admin/reports",
+      icon: "🛡️",
+      title: "Reports",
+      description:
+        "Review reported content, flagged chats, and platform activity when this section is enabled.",
+      button: "Open Reports →",
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-[#0b1320] px-6 py-12 text-white">
       <div className="mx-auto max-w-6xl">
@@ -20,126 +73,58 @@ export default async function AdminDashboardPage() {
 
           <h1 className="font-serif text-4xl font-bold">Admin Dashboard</h1>
 
-          <p className="mt-3 max-w-2xl text-gray-400">
-            Manage living legacy pages, memorial pages, free trials, manual
-            cash payments, package activations, and account status.
+          <p className="mt-3 max-w-2xl text-sm text-white/70">
+            Manage living legacy pages, memorial pages, free trials, manual cash
+            payments, package activations, and account status.
           </p>
         </div>
 
-        <div className="mb-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-5">
-            <div className="mb-3 text-3xl">✍️</div>
-            <h2 className="font-serif text-2xl text-emerald-200">
-              Living Legacy Pages
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-300">
-              Pages created by people who are alive and want to preserve their
-              story, wishes, family messages, memories, and instructions for
-              future generations.
-            </p>
-          </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          {cards.slice(0, 2).map((card) => (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="block rounded-2xl border border-[#d4af37]/30 bg-white/10 p-6 transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-white/15"
+            >
+              <div className="text-3xl">{card.icon}</div>
 
-          <div className="rounded-2xl border border-[#d4af37]/30 bg-[#d4af37]/10 p-5">
-            <div className="mb-3 text-3xl">🕊️</div>
-            <h2 className="font-serif text-2xl text-[#d4af37]">
-              Memorial Pages
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-gray-300">
-              Pages created to honor loved ones who have passed away with
-              photos, videos, tributes, candles, flowers, guestbook messages,
-              and family memories.
-            </p>
-          </div>
+              <h2 className="mt-4 font-serif text-2xl font-bold text-[#d4af37]">
+                {card.title}
+              </h2>
+
+              <p className="mt-3 text-sm leading-6 text-white/75">
+                {card.description}
+              </p>
+
+              <p className="mt-5 text-sm font-semibold text-[#d4af37]">
+                {card.button}
+              </p>
+            </Link>
+          ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-4">
-          <Link
-            href="/admin/trials"
-            className="group rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-[#18243d]"
-          >
-            <div className="mb-4 text-4xl transition group-hover:scale-110">
-              ⏳
-            </div>
+        <div className="mt-6 grid gap-6 md:grid-cols-4">
+          {cards.slice(2).map((card) => (
+            <Link
+              key={card.title}
+              href={card.href}
+              className="block rounded-2xl border border-[#d4af37]/30 bg-white/10 p-6 transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-white/15"
+            >
+              <div className="text-3xl">{card.icon}</div>
 
-            <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-              Trial Manager
-            </h2>
+              <h2 className="mt-4 font-serif text-xl font-bold text-[#d4af37]">
+                {card.title}
+              </h2>
 
-            <p className="text-sm leading-relaxed text-gray-400">
-              View free users, expired trials, living legacy pages, memorial
-              pages, and activate packages after cash or manual payment.
-            </p>
+              <p className="mt-3 text-sm leading-6 text-white/75">
+                {card.description}
+              </p>
 
-            <p className="mt-5 text-sm font-semibold text-[#d4af37]">
-              Open Trial Manager →
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/memorials"
-            className="group rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-[#18243d]"
-          >
-            <div className="mb-4 text-4xl transition group-hover:scale-110">
-              📖
-            </div>
-
-            <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-              Legacy Pages
-            </h2>
-
-            <p className="text-sm leading-relaxed text-gray-400">
-              Manage all living legacy and memorial pages, review content, view
-              public links, and see page type badges.
-            </p>
-
-            <p className="mt-5 text-sm font-semibold text-[#d4af37]">
-              Open Legacy Pages →
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/bank-transfers"
-            className="group rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-[#18243d]"
-          >
-            <div className="mb-4 text-4xl transition group-hover:scale-110">
-              💳
-            </div>
-
-            <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-              Payments
-            </h2>
-
-            <p className="text-sm leading-relaxed text-gray-400">
-              Review bank transfer and WiPay payment status for Living Legacy
-              and Memorial packages.
-            </p>
-
-            <p className="mt-5 text-sm font-semibold text-[#d4af37]">
-              Open Payments →
-            </p>
-          </Link>
-
-          <Link
-            href="/admin/reports"
-            className="group rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-xl transition hover:-translate-y-1 hover:border-[#d4af37] hover:bg-[#18243d]"
-          >
-            <div className="mb-4 text-4xl transition group-hover:scale-110">
-              🛡️
-            </div>
-
-            <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-              Reports
-            </h2>
-
-            <p className="text-sm leading-relaxed text-gray-400">
-              Review reported content, flagged chats, and platform activity
-              when this section is enabled.
-            </p>
-
-            <p className="mt-5 text-sm font-semibold text-[#d4af37]">
-              Open Reports →
-            </p>
-          </Link>
+              <p className="mt-5 text-sm font-semibold text-[#d4af37]">
+                {card.button}
+              </p>
+            </Link>
+          ))}
         </div>
       </div>
     </main>
