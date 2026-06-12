@@ -31,6 +31,30 @@ export default function GuestAccess({ memorial, token }: any) {
   const [tributeMessage, setTributeMessage] = useState("");
   const [flowerType, setFlowerType] = useState("rose");
 
+  const pageType = memorial.page_type === "living" ? "living" : "memorial";
+  const isLivingLegacy = pageType === "living";
+
+  const pageTypeLabel = isLivingLegacy ? "Living Legacy" : "Memorial Tribute";
+  const pageTitlePrefix = isLivingLegacy ? "Living Legacy of" : "In Loving Memory";
+  const enterButtonLabel = isLivingLegacy ? "Enter Legacy Page" : "Enter Memorial";
+  const shareButtonLabel = isLivingLegacy ? "Share Legacy Page" : "Share Memorial";
+  const pageLinkCopiedLabel = isLivingLegacy
+    ? "Legacy page link copied to clipboard"
+    : "Memorial link copied to clipboard";
+  const slideshowTitle = isLivingLegacy ? "Legacy Slideshow" : "Memorial Slideshow";
+  const slideshowDescription = isLivingLegacy
+    ? "A beautiful collection of photos, moments, and memories that tell the story of this life and legacy."
+    : "A beautiful collection of memories that gently plays through each photo like a tribute film.";
+  const musicButtonText = isLivingLegacy ? "Legacy Music" : "Memorial Music";
+  const lifeStoryTitle = isLivingLegacy ? "My Life Story" : "Life Story";
+  const guestbookTitle = isLivingLegacy ? "Family Messages" : "Guestbook";
+  const guestbookPlaceholder = isLivingLegacy
+    ? "Write a message, memory, blessing, or words of love..."
+    : "Write a message...";
+  const noGuestbookText = isLivingLegacy
+    ? "No family messages yet."
+    : "No guestbook messages yet.";
+
   const flowerOptions: any = {
     rose: "🌹",
     tulip: "🌷",
@@ -67,7 +91,7 @@ export default function GuestAccess({ memorial, token }: any) {
     { label: "Tributes", href: "#tributes" },
     { label: "Family Tree", href: "#family-tree" },
     { label: "Chat", href: "#chat" },
-    { label: "Guestbook", href: "#guestbook" },
+    { label: isLivingLegacy ? "Messages" : "Guestbook", href: "#guestbook" },
   ];
 
   const publicNavItems = [
@@ -91,7 +115,7 @@ export default function GuestAccess({ memorial, token }: any) {
           className="flex items-center gap-3"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d4af37]/50 bg-[#111a2e] text-lg">
-            🕯️
+            {isLivingLegacy ? "✍️" : "🕯️"}
           </div>
 
           <div>
@@ -99,7 +123,7 @@ export default function GuestAccess({ memorial, token }: any) {
               Scan<span className="text-[#d4af37]">My</span>Legacy
             </div>
             <div className="text-[10px] uppercase tracking-[0.22em] text-[#d4af37]">
-              Memorial Tribute
+              {pageTypeLabel}
             </div>
           </div>
         </a>
@@ -170,7 +194,7 @@ export default function GuestAccess({ memorial, token }: any) {
                 }}
                 className="rounded-xl border border-[#d4af37]/40 bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-[#d4af37] transition hover:border-[#d4af37]"
               >
-                Enter Memorial
+                {enterButtonLabel}
               </button>
             ) : (
               navItems.map((item) => (
@@ -193,7 +217,7 @@ export default function GuestAccess({ memorial, token }: any) {
               }}
               className="mt-2 rounded-xl bg-[#d4af37] px-4 py-3 text-sm font-semibold text-black"
             >
-              Share Memorial
+              {shareButtonLabel}
             </button>
           </div>
         </div>
@@ -201,12 +225,13 @@ export default function GuestAccess({ memorial, token }: any) {
     </header>
   );
 
-const galleryPhotos =
-  memorial.gallery_photos && memorial.gallery_photos.length > 0
-    ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
-    : memorial.cover_photo
-    ? [safeMediaPath(memorial.cover_photo)]
-    : [];
+  const galleryPhotos =
+    memorial.gallery_photos && memorial.gallery_photos.length > 0
+      ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
+      : memorial.cover_photo
+      ? [safeMediaPath(memorial.cover_photo)]
+      : [];
+
   const loadGuestbook = async () => {
     const res = await fetch(`/api/guestbook?token=${token}`);
     const data = await res.json();
@@ -272,13 +297,17 @@ const galleryPhotos =
 
     if (navigator.share) {
       await navigator.share({
-        title: `${memorial.full_name} Memorial`,
-        text: `Visit the memorial of ${memorial.full_name}`,
+        title: isLivingLegacy
+          ? `${memorial.full_name} Living Legacy`
+          : `${memorial.full_name} Memorial`,
+        text: isLivingLegacy
+          ? `Visit the living legacy page of ${memorial.full_name}`
+          : `Visit the memorial of ${memorial.full_name}`,
         url: shareUrl,
       });
     } else {
       await navigator.clipboard.writeText(shareUrl);
-      alert("Memorial link copied to clipboard");
+      alert(pageLinkCopiedLabel);
     }
   };
 
@@ -345,7 +374,7 @@ const galleryPhotos =
         .play()
         .then(() => setIsMusicPlaying(true))
         .catch(() => {
-          alert("Please tap Play Music again to start the memorial music.");
+          alert(`Please tap Play ${musicButtonText} again to start the audio.`);
         });
     }
   };
@@ -373,7 +402,7 @@ const galleryPhotos =
       return;
     }
 
-    alert("Guestbook message posted ❤️");
+    alert(isLivingLegacy ? "Message posted ❤️" : "Guestbook message posted ❤️");
 
     setMessage("");
     setImage(null);
@@ -410,7 +439,7 @@ const galleryPhotos =
             </h1>
 
             <p className="mb-6 text-center text-gray-400">
-              Memorial Tribute — Enter your name to continue
+              {pageTypeLabel} — Enter your name to continue
             </p>
 
             <input
@@ -431,7 +460,7 @@ const galleryPhotos =
               onClick={enterMemorial}
               className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
             >
-              Enter Memorial
+              {enterButtonLabel}
             </button>
           </div>
         </section>
@@ -442,6 +471,7 @@ const galleryPhotos =
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
       <MemorialHeader />
+
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
@@ -483,7 +513,8 @@ const galleryPhotos =
           </div>
         </div>
       )}
-            {showFlowerModal && (
+
+      {showFlowerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
             <div className="mb-4 text-center text-5xl">
@@ -559,7 +590,7 @@ const galleryPhotos =
 
         <div className="relative z-10 mx-auto max-w-4xl px-6">
           <p className="mb-4 text-sm uppercase tracking-[0.35em] text-[#d4af37]">
-            In Loving Memory
+            {pageTitlePrefix}
           </p>
 
           <h1 className="mb-6 font-serif text-3xl sm:text-4xl md:text-7xl">
@@ -570,10 +601,15 @@ const galleryPhotos =
             {memorial.birth_date
               ? new Date(memorial.birth_date).toLocaleDateString()
               : ""}
-            {" — "}
-            {memorial.death_date
-              ? new Date(memorial.death_date).toLocaleDateString()
-              : ""}
+            {isLivingLegacy
+              ? memorial.death_date
+                ? ` — ${new Date(memorial.death_date).toLocaleDateString()}`
+                : " — Living Legacy"
+              : ` — ${
+                  memorial.death_date
+                    ? new Date(memorial.death_date).toLocaleDateString()
+                    : ""
+                }`}
           </p>
 
           <div className="mx-auto mb-8 h-px max-w-md bg-[#d4af37]/40" />
@@ -582,7 +618,7 @@ const galleryPhotos =
             onClick={shareMemorial}
             className="rounded-xl border border-[#d4af37]/40 bg-black/30 px-6 py-3 text-sm font-semibold text-[#d4af37] backdrop-blur transition hover:bg-[#d4af37] hover:text-black"
           >
-            Share Memorial
+            {shareButtonLabel}
           </button>
 
           <div className="mt-5 flex flex-wrap justify-center gap-3">
@@ -608,12 +644,11 @@ const galleryPhotos =
             </p>
 
             <h2 className="font-serif text-3xl md:text-4xl">
-              Memorial Slideshow
+              {slideshowTitle}
             </h2>
 
             <p className="mx-auto mt-3 max-w-2xl text-sm text-gray-400">
-              A beautiful collection of memories that gently plays through each
-              photo like a tribute film.
+              {slideshowDescription}
             </p>
           </div>
 
@@ -622,7 +657,7 @@ const galleryPhotos =
               <img
                 key={activePhoto}
                 src={galleryPhotos[activePhoto]}
-                alt="Memorial slideshow"
+                alt={slideshowTitle}
                 className="h-full w-full object-contain memorial-cinematic"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
@@ -693,7 +728,7 @@ const galleryPhotos =
                 onClick={toggleMusic}
                 className="rounded-full border border-[#d4af37]/40 px-5 py-2 text-sm text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
               >
-                {isMusicPlaying ? "Pause Music" : "Play Music"}
+                {isMusicPlaying ? "Pause Music" : `Play ${musicButtonText}`}
               </button>
             </div>
 
@@ -732,10 +767,12 @@ const galleryPhotos =
       >
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-            Life Story
+            {lifeStoryTitle}
           </h2>
 
-          <p className="leading-relaxed text-gray-300">{memorial.biography}</p>
+          <p className="leading-relaxed text-gray-300">
+            {memorial.biography || "No story added yet."}
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -851,7 +888,7 @@ const galleryPhotos =
       <section id="guestbook" className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
         <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-            Guestbook
+            {guestbookTitle}
           </h2>
 
           <input
@@ -863,7 +900,7 @@ const galleryPhotos =
 
           <textarea
             className="mb-3 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-            placeholder="Write a message..."
+            placeholder={guestbookPlaceholder}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
@@ -904,15 +941,13 @@ const galleryPhotos =
             onClick={submitGuestbook}
             className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
           >
-            Post to Guestbook
+            {isLivingLegacy ? "Post Family Message" : "Post to Guestbook"}
           </button>
         </div>
 
         <div className="space-y-4">
           {entries.length === 0 ? (
-            <p className="text-center text-gray-400">
-              No guestbook messages yet.
-            </p>
+            <p className="text-center text-gray-400">{noGuestbookText}</p>
           ) : (
             entries.map((entry: any) => (
               <div
