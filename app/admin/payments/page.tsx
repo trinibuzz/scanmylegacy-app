@@ -1,25 +1,71 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+
+type PaymentRecord = {
+  id: number;
+  full_name?: string | null;
+  creator_name?: string | null;
+  creator_email?: string | null;
+  creator_phone?: string | null;
+  owner_name?: string | null;
+  owner_email?: string | null;
+  invite_token?: string | null;
+  package_name?: string | null;
+  package_slug?: string | null;
+  package_price?: number | string | null;
+  payment_status?: string | null;
+  payment_method?: string | null;
+  payment_reference?: string | null;
+  payment_due_at?: string | null;
+  created_at?: string | null;
+};
 
 export default function AdminPaymentsPage() {
-  const [records, setRecords] = useState<any[]>([]);
+  const [records, setRecords] = useState<PaymentRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const [workingId, setWorkingId] = useState<number | null>(null);
 
   const loadPayments = async () => {
     try {
       setLoading(true);
+      setErrorMessage("");
 
-      const res = await fetch("/api/admin/payments");
-      const data = await res.json();
+      const res = await fetch("/api/admin/payments", {
+        cache: "no-store",
+      });
 
-      if (!res.ok) {
-        alert(data.error || "Failed to load payments.");
+      const text = await res.text();
+
+      let data: any = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setErrorMessage("The payments API did not return valid JSON.");
+        setRecords([]);
         return;
       }
 
-      setRecords(data.records || []);
+      if (!res.ok) {
+        setErrorMessage(data.error || "Failed to load payments.");
+        setRecords([]);
+        return;
+      }
+
+      const incomingRecords = data.records || data.payments || data.items || [];
+
+      if (Array.isArray(incomingRecords)) {
+        setRecords(incomingRecords);
+      } else {
+        setErrorMessage("The payments API response was not a list.");
+        setRecords([]);
+      }
+    } catch {
+      setErrorMessage("Could not connect to the payments API.");
+      setRecords([]);
     } finally {
       setLoading(false);
     }
@@ -28,6 +74,32 @@ export default function AdminPaymentsPage() {
   useEffect(() => {
     loadPayments();
   }, []);
+
+  const summary = useMemo(() => {
+    const total = records.length;
+
+    const verified = records.filter((item) => {
+      const status = String(item.payment_status || "").toLowerCase();
+      return status === "paid" || status === "verified";
+    }).length;
+
+    const pending = records.filter((item) => {
+      const status = String(item.payment_status || "").toLowerCase();
+      return status.includes("pending");
+    }).length;
+
+    const expired = records.filter((item) => {
+      const status = String(item.payment_status || "").toLowerCase();
+      return status.includes("expired");
+    }).length;
+
+    const rejected = records.filter((item) => {
+      const status = String(item.payment_status || "").toLowerCase();
+      return status.includes("rejected");
+    }).length;
+
+    return { total, verified, pending, expired, rejected };
+  }, [records]);
 
   const updatePayment = async (memorialId: number, action: string) => {
     let message = "Are you sure you want to update this payment?";
@@ -69,7 +141,16 @@ export default function AdminPaymentsPage() {
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data: any = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        alert("The payments API did not return valid JSON.");
+        return;
+      }
 
       if (!res.ok) {
         alert(data.error || "Payment update failed.");
@@ -78,15 +159,23 @@ export default function AdminPaymentsPage() {
 
       alert(data.message || "Payment updated.");
       await loadPayments();
+    } catch {
+      alert("Payment update failed.");
     } finally {
       setWorkingId(null);
     }
   };
 
-  const formatDateTime = (dateValue: string) => {
+  const formatDateTime = (dateValue?: string | null) => {
     if (!dateValue) return "Not set";
 
-    return new Date(dateValue).toLocaleString([], {
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not set";
+    }
+
+    return date.toLocaleString([], {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -95,27 +184,50 @@ export default function AdminPaymentsPage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    if (status === "paid") {
-      return "bg-green-500/20 text-green-300 border-green-400/30";
-    }
+  const formatStatus = (value?: string | null) => {
+    if (!value) return "Unknown";
 
-    if (status === "pending_bank_transfer") {
-      return "bg-yellow-500/20 text-yellow-200 border-yellow-400/30";
-    }
-
-    if (status === "expired_bank_transfer") {
-      return "bg-red-500/20 text-red-300 border-red-400/30";
-    }
-
-    if (status === "rejected_bank_transfer") {
-      return "bg-red-900/40 text-red-200 border-red-400/30";
-    }
-
-    return "bg-gray-500/20 text-gray-300 border-gray-400/30";
+    return value
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
   };
 
-  const getTimeStatus = (item: any) => {
+  const formatPrice = (value?: number | string | null) => {
+    if (!value) return "N/A";
+
+    const amount = Number(value);
+
+    if (Number.isNaN(amount)) {
+      return String(value);
+    }
+
+    return `$${amount.toFixed(2)} USD`;
+  };
+
+  const getStatusBadge = (statusValue?: string | null) => {
+    const status = String(statusValue || "").toLowerCase();
+
+    if (status === "paid" || status === "verified") {
+      return "bg-green-500/15 text-green-300 ring-green-500/30";
+    }
+
+    if (status.includes("pending")) {
+      return "bg-yellow-500/15 text-yellow-200 ring-yellow-500/30";
+    }
+
+    if (status.includes("expired")) {
+      return "bg-red-500/15 text-red-300 ring-red-500/30";
+    }
+
+    if (status.includes("rejected")) {
+      return "bg-red-900/50 text-red-200 ring-red-400/30";
+    }
+
+    return "bg-gray-500/15 text-gray-300 ring-gray-500/30";
+  };
+
+  const getTimeStatus = (item: PaymentRecord) => {
     if (!item.payment_due_at) {
       return "No deadline";
     }
@@ -123,7 +235,13 @@ export default function AdminPaymentsPage() {
     const now = new Date();
     const due = new Date(item.payment_due_at);
 
-    if (item.payment_status === "paid") {
+    if (Number.isNaN(due.getTime())) {
+      return "No deadline";
+    }
+
+    const paymentStatus = String(item.payment_status || "").toLowerCase();
+
+    if (paymentStatus === "paid" || paymentStatus === "verified") {
       return "Verified";
     }
 
@@ -139,154 +257,221 @@ export default function AdminPaymentsPage() {
     return `${hoursLeft} hour${hoursLeft === 1 ? "" : "s"} left`;
   };
 
+  const getTimeBadgeClass = (item: PaymentRecord) => {
+    const timeStatus = getTimeStatus(item).toLowerCase();
+
+    if (timeStatus === "verified") {
+      return "bg-green-500/15 text-green-300 ring-green-500/30";
+    }
+
+    if (timeStatus === "expired") {
+      return "bg-red-500/15 text-red-300 ring-red-500/30";
+    }
+
+    return "bg-[#d4af37]/15 text-[#d4af37] ring-[#d4af37]/30";
+  };
+
   return (
-    <main className="min-h-screen bg-[#0b1320] px-6 py-12 text-white">
+    <main className="min-h-screen bg-[#0b1320] px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-              Admin Control
+              ScanMyLegacy Admin
             </p>
 
             <h1 className="font-serif text-4xl font-bold">
-              Bank Transfer Payments
+              Payment Manager
             </h1>
 
-            <p className="mt-3 max-w-3xl text-gray-400">
-              Review customer transfer references, verify payments, reject
-              payments, or expire unpaid memorials.
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
+              Review customer bank transfer references, verify payments, reject
+              payments, expire unpaid records, or reopen a 48-hour review
+              window.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <a
-              href="/admin"
-              className="rounded-lg border border-[#d4af37]/40 px-5 py-3 text-sm font-semibold text-[#d4af37]"
-            >
-              Back to Admin
-            </a>
-
             <button
               type="button"
               onClick={loadPayments}
-              className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
+              className="rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               Refresh
             </button>
+
+            <Link
+              href="/admin/dashboard"
+              className="rounded-full border border-[#d4af37]/50 px-5 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+            >
+              Back to Dashboard
+            </Link>
           </div>
         </div>
 
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          {[
+            { label: "Total Payments", value: summary.total },
+            { label: "Verified", value: summary.verified },
+            { label: "Pending", value: summary.pending },
+            { label: "Expired", value: summary.expired },
+            { label: "Rejected", value: summary.rejected },
+          ].map((card) => (
+            <div
+              key={card.label}
+              className="rounded-2xl border border-[#d4af37]/20 bg-white/10 p-5 shadow-xl"
+            >
+              <p className="text-sm text-white/70">{card.label}</p>
+              <p className="mt-2 font-serif text-3xl font-bold text-[#d4af37]">
+                {card.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
         {loading ? (
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center text-gray-300">
-            Loading bank transfers...
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-white/10 p-8 text-center text-white/70">
+            Loading payments...
+          </div>
+        ) : errorMessage ? (
+          <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-8 text-center">
+            <h2 className="font-serif text-2xl text-red-300">
+              Could Not Load Payments
+            </h2>
+
+            <p className="mt-3 text-sm text-white/70">{errorMessage}</p>
+
+            <p className="mt-4 text-xs text-white/50">
+              Next file to check: app/api/admin/payments/route.ts
+            </p>
           </div>
         ) : records.length === 0 ? (
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center text-gray-300">
-            No bank transfer records found.
+          <div className="rounded-3xl border border-[#d4af37]/20 bg-white/10 p-8 text-center">
+            <h2 className="font-serif text-2xl text-[#d4af37]">
+              No Payment Records Found
+            </h2>
+
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              There are no bank transfer or manual payment records waiting for
+              review right now.
+            </p>
           </div>
         ) : (
           <div className="space-y-5">
             {records.map((item) => {
-              const memorialUrl = `/memorial/${item.invite_token}`;
+              const memorialUrl = item.invite_token
+                ? `/memorial/${item.invite_token}`
+                : "#";
+
               const isWorking = workingId === item.id;
+              const isVerified =
+                String(item.payment_status || "").toLowerCase() === "paid" ||
+                String(item.payment_status || "").toLowerCase() === "verified";
 
               return (
                 <div
                   key={item.id}
-                  className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5 shadow-xl"
+                  className="rounded-3xl border border-[#d4af37]/20 bg-white/10 p-5 shadow-2xl"
                 >
                   <div className="grid gap-5 lg:grid-cols-[1.4fr_0.9fr_1fr]">
                     <div>
                       <div className="mb-3 flex flex-wrap items-center gap-2">
                         <span
-                          className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusBadge(
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusBadge(
                             item.payment_status
                           )}`}
                         >
-                          {item.payment_status || "unknown"}
+                          {formatStatus(item.payment_status)}
                         </span>
 
-                        <span className="rounded-full border border-[#d4af37]/30 bg-[#0b1320] px-3 py-1 text-xs text-[#d4af37]">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getTimeBadgeClass(
+                            item
+                          )}`}
+                        >
                           {getTimeStatus(item)}
                         </span>
                       </div>
 
                       <p className="mb-1 text-xs uppercase tracking-[0.2em] text-[#d4af37]">
-                        Memorial
+                        Memorial / Legacy Page
                       </p>
 
                       <h2 className="font-serif text-2xl text-white">
-                        {item.full_name}
+                        {item.full_name || "Untitled Page"}
                       </h2>
 
-                      <p className="mt-2 text-sm text-gray-400">
-                        Created by {item.creator_name || item.owner_name || "Unknown"}
+                      <p className="mt-2 text-sm text-white/60">
+                        Created by{" "}
+                        <span className="text-white">
+                          {item.creator_name || item.owner_name || "Unknown"}
+                        </span>
                       </p>
 
-                      <p className="mt-1 text-sm text-gray-400">
+                      <p className="mt-1 text-sm text-white/60">
                         {item.creator_email || item.owner_email || "No email"}
                       </p>
 
                       {item.creator_phone && (
-                        <p className="mt-1 text-sm text-gray-400">
+                        <p className="mt-1 text-sm text-white/60">
                           Phone: {item.creator_phone}
                         </p>
                       )}
 
-                      <a
-                        href={memorialUrl}
-                        target="_blank"
-                        className="mt-4 inline-block rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37]"
-                      >
-                        View Memorial
-                      </a>
+                      {item.invite_token && (
+                        <Link
+                          href={memorialUrl}
+                          target="_blank"
+                          className="mt-4 inline-flex rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+                        >
+                          View Public Page
+                        </Link>
+                      )}
                     </div>
 
-                    <div className="rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4">
+                    <div className="rounded-xl border border-[#d4af37]/15 bg-[#0b1320] p-4">
                       <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#d4af37]">
                         Payment Details
                       </p>
 
                       <div className="space-y-2 text-sm">
                         <p>
-                          <span className="text-gray-500">Package:</span>{" "}
+                          <span className="text-white/45">Package:</span>{" "}
                           <span className="text-white">
                             {item.package_name || item.package_slug || "N/A"}
                           </span>
                         </p>
 
                         <p>
-                          <span className="text-gray-500">Price:</span>{" "}
+                          <span className="text-white/45">Price:</span>{" "}
                           <span className="text-white">
-                            {item.package_price
-                              ? `$${item.package_price} USD`
-                              : "N/A"}
+                            {formatPrice(item.package_price)}
                           </span>
                         </p>
 
                         <p>
-                          <span className="text-gray-500">Method:</span>{" "}
+                          <span className="text-white/45">Method:</span>{" "}
                           <span className="text-white">
-                            {item.payment_method || "N/A"}
+                            {formatStatus(item.payment_method || "N/A")}
                           </span>
                         </p>
 
                         <p>
-                          <span className="text-gray-500">Reference:</span>{" "}
+                          <span className="text-white/45">Reference:</span>{" "}
                           <span className="break-all text-[#d4af37]">
                             {item.payment_reference || "No reference"}
                           </span>
                         </p>
 
                         <p>
-                          <span className="text-gray-500">Submitted:</span>{" "}
+                          <span className="text-white/45">Submitted:</span>{" "}
                           <span className="text-white">
                             {formatDateTime(item.created_at)}
                           </span>
                         </p>
 
                         <p>
-                          <span className="text-gray-500">Due:</span>{" "}
+                          <span className="text-white/45">Due:</span>{" "}
                           <span className="text-white">
                             {formatDateTime(item.payment_due_at)}
                           </span>
@@ -294,7 +479,7 @@ export default function AdminPaymentsPage() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4">
+                    <div className="rounded-xl border border-[#d4af37]/15 bg-[#0b1320] p-4">
                       <p className="mb-3 text-xs uppercase tracking-[0.2em] text-[#d4af37]">
                         Actions
                       </p>
@@ -302,7 +487,7 @@ export default function AdminPaymentsPage() {
                       <div className="grid gap-3">
                         <button
                           type="button"
-                          disabled={isWorking || item.payment_status === "paid"}
+                          disabled={isWorking || isVerified}
                           onClick={() =>
                             updatePayment(item.id, "verify_payment")
                           }
@@ -313,7 +498,7 @@ export default function AdminPaymentsPage() {
 
                         <button
                           type="button"
-                          disabled={isWorking || item.payment_status === "paid"}
+                          disabled={isWorking || isVerified}
                           onClick={() =>
                             updatePayment(item.id, "reject_payment")
                           }
@@ -324,7 +509,7 @@ export default function AdminPaymentsPage() {
 
                         <button
                           type="button"
-                          disabled={isWorking || item.payment_status === "paid"}
+                          disabled={isWorking || isVerified}
                           onClick={() =>
                             updatePayment(item.id, "mark_expired")
                           }
@@ -335,18 +520,18 @@ export default function AdminPaymentsPage() {
 
                         <button
                           type="button"
-                          disabled={isWorking || item.payment_status === "paid"}
+                          disabled={isWorking || isVerified}
                           onClick={() =>
                             updatePayment(item.id, "reactivate_pending")
                           }
-                          className="rounded-lg border border-[#d4af37]/40 px-4 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-lg border border-[#d4af37]/40 px-4 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Reopen 48 Hours
                         </button>
                       </div>
 
                       {isWorking && (
-                        <p className="mt-3 text-center text-xs text-gray-400">
+                        <p className="mt-3 text-center text-xs text-white/50">
                           Updating...
                         </p>
                       )}
@@ -357,6 +542,14 @@ export default function AdminPaymentsPage() {
             })}
           </div>
         )}
+
+        <div className="mt-6 rounded-2xl border border-[#d4af37]/20 bg-white/10 p-5 text-sm leading-relaxed text-white/70">
+          <p>
+            <span className="font-semibold text-[#d4af37]">Note:</span> This
+            page handles bank transfer and manual payment review. Gift payment
+            verification is handled separately in the gift order flow.
+          </p>
+        </div>
       </div>
     </main>
   );
