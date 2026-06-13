@@ -21,7 +21,7 @@ export default async function AdminDashboardPage() {
       wide: true,
     },
     {
-      href: "/admin/memorials",
+      href: "/admin/memorial",
       icon: "🕊️",
       title: "Memorial Pages",
       description:
