@@ -24,20 +24,20 @@ function PackagesContent() {
   const pageTypeLabel = isLiving
     ? "Living Legacy Page"
     : isMemorial
-      ? "Memorial Page"
-      : "Legacy Page";
+    ? "Memorial Page"
+    : "Legacy Page";
 
   const heroTitle = isLiving
     ? "Choose the plan for your living legacy page."
     : isMemorial
-      ? "Choose the plan that honors your loved one."
-      : "Choose the legacy plan that fits your family.";
+    ? "Choose the plan that honors your loved one."
+    : "Choose the legacy plan that fits your family.";
 
   const heroText = isLiving
     ? "Create a secure place to preserve your life story, final wishes, family messages, photos, videos, and important instructions for the people you love."
     : isMemorial
-      ? "Start with a free tribute or choose a lasting memorial package designed to preserve photos, stories, tributes, and family memories for years to come."
-      : "Choose a package for a living legacy page or a memorial page. Preserve stories, wishes, photos, videos, and family memories for generations.";
+    ? "Start with a free tribute or choose a lasting memorial package designed to preserve photos, stories, tributes, and family memories for years to come."
+    : "Choose a package for a living legacy page or a memorial page. Preserve stories, wishes, photos, videos, and family memories for generations.";
 
   const cleanPackagesLink = pageType
     ? `/packages?type=${pageType}`
@@ -102,6 +102,24 @@ function PackagesContent() {
     },
   ];
 
+  const clearReferral = () => {
+    localStorage.removeItem("ref");
+    localStorage.removeItem("referral");
+    localStorage.removeItem("affiliate_ref");
+    localStorage.removeItem("affiliateCode");
+    localStorage.removeItem("referralCode");
+    localStorage.removeItem("scanmylegacy_ref");
+
+    sessionStorage.removeItem("scanmylegacy_ref");
+    sessionStorage.removeItem("ref");
+    sessionStorage.removeItem("referral");
+    sessionStorage.removeItem("affiliate_ref");
+    sessionStorage.removeItem("affiliateCode");
+    sessionStorage.removeItem("referralCode");
+
+    window.location.href = cleanPackagesLink;
+  };
+
   const buildPackageLink = (pkg: { slug: string; amount: number }) => {
     const params = new URLSearchParams();
 
@@ -112,7 +130,6 @@ function PackagesContent() {
       params.set("type", pageType);
     }
 
-    // Only carry affiliate when the current URL has a referral code.
     if (refCode) {
       params.set("ref", refCode);
     }
@@ -211,12 +228,13 @@ function PackagesContent() {
             <p className="text-sm text-gray-400">Referral code applied:</p>
             <p className="font-mono text-[#d4af37]">{refCode}</p>
 
-            <a
-              href={cleanPackagesLink}
+            <button
+              type="button"
+              onClick={clearReferral}
               className="mt-4 inline-flex rounded-full border border-red-400/40 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20"
             >
               Remove Referral For Testing
-            </a>
+            </button>
           </div>
         )}
 
