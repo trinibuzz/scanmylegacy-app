@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 type LegacyRecord = {
-  id?: number;
-  memorial_id?: number;
-  user_id?: number;
+  id?: number | string | null;
+  memorial_id?: number | string | null;
+  user_id?: number | string | null;
   owner_name?: string | null;
   name?: string | null;
   full_name?: string | null;
@@ -21,7 +21,7 @@ type LegacyRecord = {
   package_name?: string | null;
   package_slug?: string | null;
   plan?: string | null;
-  is_active?: number | boolean | null;
+  is_active?: number | boolean | string | null;
   created_at?: string | null;
   updated_at?: string | null;
   public_token?: string | null;
@@ -33,6 +33,76 @@ export default function AdminLivingLegacyPage() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const safeText = (value: unknown, fallback = "N/A") => {
+    if (value === null || value === undefined || value === "") return fallback;
+
+    return String(value)
+      .replaceAll("_", " ")
+      .replaceAll("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  const safeDate = (value: unknown) => {
+    if (!value) return "N/A";
+
+    const date = new Date(String(value));
+
+    if (Number.isNaN(date.getTime())) {
+      return "N/A";
+    }
+
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getRecordId = (item: LegacyRecord) => {
+    return item.memorial_id || item.id || null;
+  };
+
+  const getTitle = (item: LegacyRecord) => {
+    return (
+      item.memorial_name ||
+      item.full_name ||
+      item.name ||
+      item.title ||
+      "Untitled Living Legacy"
+    );
+  };
+
+  const getOwner = (item: LegacyRecord) => {
+    return item.owner_name || item.email || "No owner listed";
+  };
+
+  const isActive = (item: LegacyRecord) => {
+    return (
+      item.status === "active" ||
+      item.is_active === true ||
+      item.is_active === "1" ||
+      Number(item.is_active) === 1
+    );
+  };
+
+  const getStatusClass = (item: LegacyRecord) => {
+    const status = String(item.status || "").toLowerCase();
+
+    if (status.includes("active") || isActive(item)) {
+      return "bg-green-500/15 text-green-300 ring-green-500/30";
+    }
+
+    if (status.includes("pending")) {
+      return "bg-yellow-500/15 text-yellow-200 ring-yellow-500/30";
+    }
+
+    if (status.includes("expired") || status.includes("inactive")) {
+      return "bg-red-500/15 text-red-300 ring-red-500/30";
+    }
+
+    return "bg-gray-500/15 text-gray-300 ring-gray-500/30";
+  };
+
   const loadRecords = async () => {
     try {
       setLoading(true);
@@ -42,7 +112,17 @@ export default function AdminLivingLegacyPage() {
         cache: "no-store",
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data: any = {};
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        setErrorMessage("The API did not return valid JSON.");
+        setRecords([]);
+        return;
+      }
 
       if (!res.ok) {
         setErrorMessage(data.error || "Failed to load Living Legacy records.");
@@ -51,10 +131,15 @@ export default function AdminLivingLegacyPage() {
       }
 
       const incomingRecords =
-        data.records || data.memorials || data.items || data.pages || [];
+        data.records || data.memorials || data.items || data.pages || data || [];
 
-      setRecords(Array.isArray(incomingRecords) ? incomingRecords : []);
-    } catch (error) {
+      if (Array.isArray(incomingRecords)) {
+        setRecords(incomingRecords);
+      } else {
+        setErrorMessage("The API response was not a list of records.");
+        setRecords([]);
+      }
+    } catch {
       setErrorMessage("Could not connect to the admin records API.");
       setRecords([]);
     } finally {
@@ -74,6 +159,7 @@ export default function AdminLivingLegacyPage() {
 
       return (
         pageType.includes("living") ||
+        pageType.includes("living legacy") ||
         pageType.includes("living_legacy") ||
         pageType.includes("living-legacy")
       );
@@ -83,82 +169,20 @@ export default function AdminLivingLegacyPage() {
   const summary = useMemo(() => {
     const total = livingLegacyRecords.length;
 
-    const active = livingLegacyRecords.filter(
-      (item) =>
-        item.status === "active" ||
-        item.is_active === true ||
-        Number(item.is_active) === 1
-    ).length;
+    const active = livingLegacyRecords.filter((item) => isActive(item)).length;
 
-    const pendingPayment = livingLegacyRecords.filter((item) =>
-      String(item.payment_status || item.status || "")
-        .toLowerCase()
-        .includes("pending")
-    ).length;
+    const pendingPayment = livingLegacyRecords.filter((item) => {
+      const value = String(item.payment_status || item.status || "").toLowerCase();
+      return value.includes("pending");
+    }).length;
 
-    const paid = livingLegacyRecords.filter((item) =>
-      String(item.payment_status || "")
-        .toLowerCase()
-        .includes("paid")
-    ).length;
+    const paid = livingLegacyRecords.filter((item) => {
+      const value = String(item.payment_status || "").toLowerCase();
+      return value.includes("paid") || value.includes("verified");
+    }).length;
 
     return { total, active, pendingPayment, paid };
   }, [livingLegacyRecords]);
-
-  const formatDate = (dateValue?: string | null) => {
-    if (!dateValue) return "N/A";
-
-    return new Date(dateValue).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  const formatText = (value?: string | null) => {
-    if (!value) return "N/A";
-
-    return value
-      .replaceAll("_", " ")
-      .replaceAll("-", " ")
-      .replace(/\b\w/g, (char) => char.toUpperCase());
-  };
-
-  const getRecordId = (item: LegacyRecord) => {
-    return item.memorial_id || item.id;
-  };
-
-  const getTitle = (item: LegacyRecord) => {
-    return (
-      item.memorial_name ||
-      item.full_name ||
-      item.name ||
-      item.title ||
-      "Untitled Living Legacy"
-    );
-  };
-
-  const getOwner = (item: LegacyRecord) => {
-    return item.owner_name || item.email || "No owner listed";
-  };
-
-  const getStatusClass = (item: LegacyRecord) => {
-    const status = String(item.status || "").toLowerCase();
-
-    if (status.includes("active") || item.is_active === true || Number(item.is_active) === 1) {
-      return "bg-green-500/15 text-green-300 ring-green-500/30";
-    }
-
-    if (status.includes("pending")) {
-      return "bg-yellow-500/15 text-yellow-200 ring-yellow-500/30";
-    }
-
-    if (status.includes("expired") || status.includes("inactive")) {
-      return "bg-red-500/15 text-red-300 ring-red-500/30";
-    }
-
-    return "bg-gray-500/15 text-gray-300 ring-gray-500/30";
-  };
 
   return (
     <main className="min-h-screen bg-[#0b1320] px-4 py-10 text-white sm:px-6">
@@ -224,7 +248,9 @@ export default function AdminLivingLegacyPage() {
             <h2 className="font-serif text-2xl text-red-300">
               Could Not Load Records
             </h2>
+
             <p className="mt-3 text-sm text-white/70">{errorMessage}</p>
+
             <p className="mt-4 text-xs text-white/50">
               Next file to check: app/api/admin/memorials/route.ts
             </p>
@@ -236,14 +262,12 @@ export default function AdminLivingLegacyPage() {
             </h2>
 
             <p className="mt-3 text-sm leading-6 text-white/70">
-              The page is working, but no records came back with a page type of
-              Living Legacy.
+              The page is working, but no records came back with a Living Legacy
+              page type.
             </p>
 
             <p className="mt-4 text-xs text-white/50">
-              If you know Living Legacy records exist, send me
-              app/api/admin/memorials/route.ts so I can make the filter match
-              your database fields exactly.
+              Total records loaded from API: {records.length}
             </p>
           </div>
         ) : (
@@ -252,6 +276,7 @@ export default function AdminLivingLegacyPage() {
               <h2 className="font-serif text-2xl text-[#d4af37]">
                 Living Legacy Record List
               </h2>
+
               <p className="mt-1 text-sm text-white/70">
                 Review Living Legacy pages, payment status, account status, and
                 public page links.
@@ -308,7 +333,7 @@ export default function AdminLivingLegacyPage() {
 
                         <td className="p-4">
                           <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/75">
-                            {formatText(
+                            {safeText(
                               item.package_name ||
                                 item.package_slug ||
                                 item.plan ||
@@ -319,7 +344,7 @@ export default function AdminLivingLegacyPage() {
 
                         <td className="p-4">
                           <span className="rounded-full bg-black/25 px-3 py-1 text-xs text-white/70">
-                            {formatText(item.payment_status || "N/A")}
+                            {safeText(item.payment_status || "N/A")}
                           </span>
                         </td>
 
@@ -329,17 +354,15 @@ export default function AdminLivingLegacyPage() {
                               item
                             )}`}
                           >
-                            {formatText(
+                            {safeText(
                               item.status ||
-                                (Number(item.is_active) === 1
-                                  ? "Active"
-                                  : "Inactive")
+                                (isActive(item) ? "Active" : "Inactive")
                             )}
                           </span>
                         </td>
 
                         <td className="p-4 text-white/70">
-                          {formatDate(item.created_at)}
+                          {safeDate(item.created_at)}
                         </td>
 
                         <td className="p-4">
@@ -376,8 +399,8 @@ export default function AdminLivingLegacyPage() {
         <div className="mt-6 rounded-2xl border border-[#d4af37]/20 bg-white/10 p-5 text-sm leading-relaxed text-white/70">
           <p>
             <span className="font-semibold text-[#d4af37]">Note:</span> This
-            page is filtering records from your admin memorial API and showing
-            only records marked as Living Legacy.
+            page reads from your existing admin memorial API and filters records
+            marked as Living Legacy.
           </p>
         </div>
       </div>
