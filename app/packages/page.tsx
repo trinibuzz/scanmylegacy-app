@@ -7,7 +7,9 @@ import SiteHeader from "../components/SiteHeader";
 function PackagesContent() {
   const searchParams = useSearchParams();
 
-  const refCode = searchParams.get("ref") || "";
+  const rawRefCode = searchParams.get("ref") || "";
+  const refCode = rawRefCode.trim();
+
   const expiredTrial = searchParams.get("expired") === "1";
 
   const rawPageType = searchParams.get("type") || "";
@@ -36,6 +38,10 @@ function PackagesContent() {
     : isMemorial
       ? "Start with a free tribute or choose a lasting memorial package designed to preserve photos, stories, tributes, and family memories for years to come."
       : "Choose a package for a living legacy page or a memorial page. Preserve stories, wishes, photos, videos, and family memories for generations.";
+
+  const cleanPackagesLink = pageType
+    ? `/packages?type=${pageType}`
+    : "/packages";
 
   const packages = [
     {
@@ -106,6 +112,7 @@ function PackagesContent() {
       params.set("type", pageType);
     }
 
+    // Only carry affiliate when the current URL has a referral code.
     if (refCode) {
       params.set("ref", refCode);
     }
@@ -117,7 +124,6 @@ function PackagesContent() {
     <main className="min-h-screen bg-[#0b1320] text-white">
       <SiteHeader />
 
-      {/* HERO */}
       <section className="relative min-h-[68vh] overflow-hidden bg-[#26447F]">
         <img
           src="/images/home-hero.jpg"
@@ -204,6 +210,13 @@ function PackagesContent() {
           <div className="mx-auto mb-10 max-w-xl rounded-xl border border-[#d4af37]/40 bg-[#111a2e] p-4 text-center">
             <p className="text-sm text-gray-400">Referral code applied:</p>
             <p className="font-mono text-[#d4af37]">{refCode}</p>
+
+            <a
+              href={cleanPackagesLink}
+              className="mt-4 inline-flex rounded-full border border-red-400/40 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20"
+            >
+              Remove Referral For Testing
+            </a>
           </div>
         )}
 
