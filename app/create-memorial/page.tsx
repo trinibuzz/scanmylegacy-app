@@ -42,7 +42,9 @@ function CreateMemorialForm() {
 
   const normalPackageSlug = searchParams.get("package") || "";
   const normalPackagePrice = searchParams.get("price") || "0";
-  const refCode = searchParams.get("ref") || "";
+
+  const urlRefCode = searchParams.get("ref") || "";
+  const [refCode, setRefCode] = useState("");
 
   const rawPageType = searchParams.get("type") || "";
   const pageType =
@@ -104,6 +106,25 @@ function CreateMemorialForm() {
 
   const [enableFamilyTree, setEnableFamilyTree] = useState(false);
   const [enableReminders, setEnableReminders] = useState(false);
+
+  useEffect(() => {
+    const cleanUrlRef = urlRefCode.trim();
+
+    localStorage.removeItem("ref");
+    localStorage.removeItem("referral");
+    localStorage.removeItem("affiliate_ref");
+    localStorage.removeItem("affiliateCode");
+    localStorage.removeItem("referralCode");
+
+    if (cleanUrlRef) {
+      sessionStorage.setItem("scanmylegacy_ref", cleanUrlRef);
+      setRefCode(cleanUrlRef);
+      return;
+    }
+
+    const sessionRef = sessionStorage.getItem("scanmylegacy_ref") || "";
+    setRefCode(sessionRef);
+  }, [urlRefCode]);
 
   useEffect(() => {
     if (isLivingLegacy && !creatorRelationship) {
