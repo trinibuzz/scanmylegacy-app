@@ -628,7 +628,7 @@ export default function GuestAccess({ memorial, token }: any) {
           <img
             src={safeMediaPath(memorial.cover_photo)}
             alt={memorial.full_name}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}
