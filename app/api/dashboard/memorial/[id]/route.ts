@@ -5,6 +5,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 async function getSessionUserId() {
   const cookieStore = await cookies();
@@ -24,14 +25,6 @@ async function getSessionUserId() {
 
 function getPublicHtmlRoot() {
   const cwd = process.cwd();
-
-  /*
-    Hostinger can run the Next.js app from:
-    /home/USER/domains/scanmylegacy.com/nodejs
-
-    Public browser files must live in:
-    /home/USER/domains/scanmylegacy.com/public_html
-  */
 
   if (cwd.includes("public_html")) {
     const beforePublicHtml = cwd.split("public_html")[0];
@@ -73,9 +66,25 @@ function makeSafeFileName(originalName: string, fallback: string) {
   const safeName = cleanOriginalName
     .toLowerCase()
     .replace(/[^a-z0-9.]/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 
-  return `${Date.now()}-${safeName}`;
+  return `${Date.now()}-${safeName || fallback}`;
+}
+
+function cleanPublicPath(pathValue: any) {
+  if (!pathValue) return "";
+
+  let cleanPath = String(pathValue).trim();
+  cleanPath = cleanPath.replace(/\\/g, "/");
+  cleanPath = cleanPath.replace(/^public\//, "");
+  cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+  if (!cleanPath.startsWith("/")) {
+    cleanPath = `/${cleanPath}`;
+  }
+
+  return cleanPath;
 }
 
 async function expireBankTransferIfNeeded(memorial: any) {
@@ -95,9 +104,11 @@ async function expireBankTransferIfNeeded(memorial: any) {
   }
 
   await db.execute(
-    `UPDATE memorials
-     SET payment_status = ?
-     WHERE id = ? AND payment_status = ?`,
+    `
+    UPDATE memorials
+    SET payment_status = ?
+    WHERE id = ? AND payment_status = ?
+    `,
     ["expired_bank_transfer", memorial.id, "pending_bank_transfer"]
   );
 
@@ -122,7 +133,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const memorialId = params.id;
 
     const [memorialRows]: any = await db.execute(
-      "SELECT * FROM memorials WHERE id = ? AND user_id = ? LIMIT 1",
+      `
+      SELECT *
+      FROM memorials
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+      `,
       [memorialId, userId]
     );
 
@@ -135,18 +151,43 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const memorial = await expireBankTransferIfNeeded(memorialRows[0]);
 
+    memorial.cover_photo = cleanPublicPath(memorial.cover_photo);
+    memorial.memorial_music = cleanPublicPath(memorial.memorial_music);
+
     const [galleryRows]: any = await db.execute(
-      "SELECT * FROM memorial_gallery WHERE memorial_id = ? ORDER BY id ASC",
+      `
+      SELECT *
+      FROM memorial_gallery
+      WHERE memorial_id = ?
+      ORDER BY id ASC
+      `,
       [memorialId]
     );
 
-    return NextResponse.json({ memorial, gallery: galleryRows });
+    const gallery = galleryRows.map((photo: any) => ({
+      ...photo,
+      file_url: cleanPublicPath(photo.file_url),
+    }));
+
+    return NextResponse.json({
+      success: true,
+      memorial,
+      gallery,
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Dashboard memorial GET error:", error);
+
+    return NextResponse.json(
+      { error: error.message || "Unable to load memorial." },
+      { status: 500 }
+    );
   }
 }
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const userId = await getSessionUserId();
 
@@ -157,7 +198,12 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const memorialId = params.id;
 
     const [checkRows]: any = await db.execute(
-      "SELECT * FROM memorials WHERE id = ? AND user_id = ? LIMIT 1",
+      `
+      SELECT *
+      FROM memorials
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+      `,
       [memorialId, userId]
     );
 
@@ -182,10 +228,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const formData = await req.formData();
 
-    const full_name = formData.get("full_name") as string;
-    const birth_date = formData.get("birth_date") as string;
-    const death_date = formData.get("death_date") as string;
-    const biography = formData.get("biography") as string;
+    const full_name = String(formData.get("full_name") || "").trim();
+    const birth_date = String(formData.get("birth_date") || "");
+    const death_date = String(formData.get("death_date") || "");
+    const biography = String(formData.get("biography") || "");
 
     const coverPhoto = formData.get("cover_photo") as File | null;
     const memorialMusic = formData.get("memorial_music") as File | null;
@@ -200,8 +246,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const { uploadsRoot, musicRoot, galleryRoot } = await ensureUploadFolders();
 
-    let coverPhotoPath = memorial.cover_photo || "";
-    let memorialMusicPath = memorial.memorial_music || "";
+    let coverPhotoPath = cleanPublicPath(memorial.cover_photo);
+    let memorialMusicPath = cleanPublicPath(memorial.memorial_music);
 
     if (coverPhoto && coverPhoto.size > 0) {
       const bytes = await coverPhoto.arrayBuffer();
@@ -229,14 +275,16 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     }
 
     await db.execute(
-      `UPDATE memorials
-       SET full_name = ?,
-           birth_date = ?,
-           death_date = ?,
-           biography = ?,
-           cover_photo = ?,
-           memorial_music = ?
-       WHERE id = ? AND user_id = ?`,
+      `
+      UPDATE memorials
+      SET full_name = ?,
+          birth_date = ?,
+          death_date = ?,
+          biography = ?,
+          cover_photo = ?,
+          memorial_music = ?
+      WHERE id = ? AND user_id = ?
+      `,
       [
         full_name,
         birth_date || null,
@@ -261,16 +309,26 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         const photoPath = `/uploads/gallery/${fileName}`;
 
         await db.execute(
-          `INSERT INTO memorial_gallery (memorial_id, file_type, file_url)
-           VALUES (?, ?, ?)`,
+          `
+          INSERT INTO memorial_gallery (memorial_id, file_type, file_url)
+          VALUES (?, ?, ?)
+          `,
           [memorialId, "image", photoPath]
         );
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "Memorial updated successfully.",
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Dashboard memorial POST error:", error);
+
+    return NextResponse.json(
+      { error: error.message || "Unable to update memorial." },
+      { status: 500 }
+    );
   }
 }
 
@@ -296,7 +354,12 @@ export async function DELETE(
     }
 
     const [checkRows]: any = await db.execute(
-      "SELECT * FROM memorials WHERE id = ? AND user_id = ? LIMIT 1",
+      `
+      SELECT *
+      FROM memorials
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+      `,
       [memorialId, userId]
     );
 
@@ -320,12 +383,23 @@ export async function DELETE(
     }
 
     await db.execute(
-      "DELETE FROM memorial_gallery WHERE id = ? AND memorial_id = ?",
+      `
+      DELETE FROM memorial_gallery
+      WHERE id = ? AND memorial_id = ?
+      `,
       [gallery_id, memorialId]
     );
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "Gallery photo removed.",
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Dashboard memorial DELETE error:", error);
+
+    return NextResponse.json(
+      { error: error.message || "Unable to remove gallery photo." },
+      { status: 500 }
+    );
   }
 }
