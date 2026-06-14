@@ -55,7 +55,6 @@ function CreateMemorialForm() {
       : "memorial";
 
   const isLivingLegacy = pageType === "living";
-  const isMemorialPage = pageType === "memorial";
 
   const pageTypeLabel = isLivingLegacy
     ? "Living Legacy Page"
@@ -325,7 +324,9 @@ function CreateMemorialForm() {
           data.memorial.package_name
         )}&package_price=${encodeURIComponent(
           data.memorial.package_price
-        )}&customer_name=${encodeURIComponent(creatorName)}`;
+        )}&customer_name=${encodeURIComponent(
+          creatorName
+        )}&type=${encodeURIComponent(pageType)}`;
 
         window.location.href = paymentOptionsUrl;
         return;
