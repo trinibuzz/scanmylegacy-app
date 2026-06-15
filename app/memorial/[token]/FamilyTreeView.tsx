@@ -4,11 +4,56 @@ import { useEffect, useState } from "react";
 
 export default function FamilyTreeView({ token }: { token: string }) {
   const [members, setMembers] = useState<any[]>([]);
+  const [pageType, setPageType] = useState<"living" | "memorial">("memorial");
   const [loading, setLoading] = useState(true);
   const [treeOpen, setTreeOpen] = useState(true);
   const [horizontalOpen, setHorizontalOpen] = useState(true);
   const [openBranches, setOpenBranches] = useState<Record<string, boolean>>({});
   const [openSpouses, setOpenSpouses] = useState<Record<string, boolean>>({});
+
+  const isLivingLegacy = pageType === "living";
+
+  const mainPersonLabel = isLivingLegacy ? "Main Person" : "Deceased";
+  const mainTitle = isLivingLegacy ? "Family Legacy" : "Family Lineage";
+  const mainSubtitle = isLivingLegacy
+    ? "Honoring the roots, branches, and living legacy of this family."
+    : "Honoring the roots and branches of this life.";
+
+  const emptyDescription = isLivingLegacy
+    ? "This Living Legacy page has family tree access enabled, but no family members have been added yet. The page owner can build the family tree from the dashboard."
+    : "This memorial has family tree access enabled, but no family members have been added yet. The memorial owner can build the family tree from the dashboard.";
+
+  const safeMediaPath = (pathValue: any) => {
+    if (!pathValue) return "";
+
+    let cleanPath = String(pathValue).trim();
+    cleanPath = cleanPath.replace(/\\/g, "/");
+
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+
+    cleanPath = cleanPath.replace(/^public\//, "");
+    cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+
+    return encodeURI(cleanPath);
+  };
+
+  const displayRelationship = (relationship: string) => {
+    if (isLivingLegacy && relationship === "Deceased") return "Main Person";
+    if (isLivingLegacy && relationship === "Spouse") {
+      return "Spouse of Main Person";
+    }
+    if (!isLivingLegacy && relationship === "Spouse") {
+      return "Spouse of Deceased";
+    }
+
+    return relationship;
+  };
 
   useEffect(() => {
     const loadFamilyTree = async () => {
@@ -19,6 +64,22 @@ export default function FamilyTreeView({ token }: { token: string }) {
         const data = await res.json();
 
         setMembers(data.members || []);
+
+        const incomingPageType =
+          data?.memorial?.page_type ||
+          data?.page_type ||
+          data?.memorial?.legacy_type ||
+          "";
+
+        if (
+          incomingPageType === "living" ||
+          incomingPageType === "living_legacy" ||
+          incomingPageType === "living-legacy"
+        ) {
+          setPageType("living");
+        } else {
+          setPageType("memorial");
+        }
       } catch {
         setMembers([]);
       } finally {
@@ -50,12 +111,12 @@ export default function FamilyTreeView({ token }: { token: string }) {
     (m) => m.relationship === "Mother" || m.relationship === "Father"
   );
 
-  const deceased = members.find((m) => m.relationship === "Deceased");
+  const mainPerson = members.find((m) => m.relationship === "Deceased");
 
-  const deceasedSpouse = members.find(
+  const mainPersonSpouse = members.find(
     (m) =>
       m.relationship === "Spouse" &&
-      Number(m.spouse_id) === Number(deceased?.id)
+      Number(m.spouse_id) === Number(mainPerson?.id)
   );
 
   const siblings = members.filter(
@@ -81,6 +142,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
     <button
       onClick={() => toggleBranch(id)}
       className="absolute -bottom-2 left-1/2 z-20 flex h-6 w-6 -translate-x-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg"
+      aria-label="Toggle branch"
     >
       {isBranchOpen(id) ? "⌃" : "⌄"}
     </button>
@@ -90,6 +152,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
     <button
       onClick={() => toggleSpouse(id)}
       className="absolute -right-2 top-1/2 z-30 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg"
+      aria-label="Toggle spouse"
     >
       {isSpouseOpen(id) ? "‹" : "›"}
     </button>
@@ -99,37 +162,43 @@ export default function FamilyTreeView({ token }: { token: string }) {
     <button
       onClick={() => setHorizontalOpen(!horizontalOpen)}
       className="absolute -right-2 top-1/2 z-30 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full border border-[#d4af37]/70 bg-[#0b1320] text-xs text-[#d4af37] shadow-lg"
+      aria-label="Toggle sibling row"
     >
       {horizontalOpen ? "‹" : "›"}
     </button>
   );
 
   const renderPerson = (m: any, canToggleDown = false) => {
-    const isDeceased = m.relationship === "Deceased";
+    const isMainPerson = m.relationship === "Deceased";
 
     return (
       <div
         className={`relative z-10 min-w-[130px] rounded-2xl border p-3 pb-5 text-center shadow-xl ${
-          isDeceased
+          isMainPerson
             ? "border-[#d4af37] bg-[#24385d] shadow-[0_0_25px_rgba(212,175,55,0.25)]"
             : "border-[#d4af37]/30 bg-[#111a2e]"
         }`}
       >
         {m.photo_url ? (
           <img
-            src={m.photo_url}
+            src={safeMediaPath(m.photo_url)}
             alt={m.name}
             className="mx-auto mb-2 h-16 w-16 rounded-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
           <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[#0b1320] text-2xl">
-            👤
+            {isMainPerson ? (isLivingLegacy ? "✍️" : "🕊️") : "👤"}
           </div>
         )}
 
         <h3 className="text-xs font-semibold text-white">{m.name}</h3>
 
-        <p className="mt-1 text-[10px] text-[#d4af37]">{m.relationship}</p>
+        <p className="mt-1 text-[10px] text-[#d4af37]">
+          {displayRelationship(m.relationship)}
+        </p>
 
         {canToggleDown && <DownToggle id={m.id} />}
       </div>
@@ -216,7 +285,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
     );
   }
 
-  if (members.length === 0 || !deceased) {
+  if (members.length === 0 || !mainPerson) {
     return (
       <section className="mx-auto max-w-7xl px-4 py-16">
         <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-8 text-center shadow-2xl">
@@ -231,9 +300,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
           </h2>
 
           <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-gray-300">
-            This memorial has family tree access enabled, but no family members
-            have been added yet. The memorial owner can build the family tree
-            from the dashboard.
+            {emptyDescription}
           </p>
         </div>
       </section>
@@ -245,35 +312,50 @@ export default function FamilyTreeView({ token }: { token: string }) {
       <div className="mb-8 text-center">
         <div className="mb-3 text-3xl text-[#d4af37]">⌘</div>
 
-        <h2 className="font-serif text-4xl text-white">Family Lineage</h2>
+        <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+          Family Tree
+        </p>
+
+        <h2 className="font-serif text-4xl text-white">{mainTitle}</h2>
 
         <p className="mx-auto mt-3 max-w-xl text-xs italic text-gray-400">
-          Honoring the roots and branches of this life.
+          {mainSubtitle}
         </p>
       </div>
 
       <div className="rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-2xl">
-        <div className="mb-4 flex justify-start">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <button
             onClick={() => setTreeOpen(!treeOpen)}
             className="rounded-xl border border-[#d4af37]/40 bg-[#0b1320] px-4 py-2 text-sm text-[#d4af37]"
           >
             {treeOpen ? "Hide Family Tree" : "Show Family Tree"}
           </button>
+
+          <div className="rounded-full border border-[#d4af37]/20 bg-[#0b1320] px-4 py-2 text-xs text-gray-300">
+            {mainPersonLabel}:{" "}
+            <span className="font-semibold text-[#d4af37]">
+              {mainPerson.name}
+            </span>
+          </div>
         </div>
 
         {treeOpen && (
           <div className="overflow-x-auto">
             <div className={horizontalOpen ? "min-w-max" : "mx-auto w-fit"}>
-              <div className="text-center">
-                <div className="flex justify-center gap-3">
-                  {parents.map((parent) => (
-                    <div key={parent.id}>{renderPerson(parent)}</div>
-                  ))}
-                </div>
-              </div>
+              {parents.length > 0 && (
+                <>
+                  <div className="text-center">
+                    <div className="flex justify-center gap-3">
+                      {parents.map((parent) => (
+                        <div key={parent.id}>{renderPerson(parent)}</div>
+                      ))}
+                    </div>
+                  </div>
 
-              <div className="mx-auto h-6 w-px bg-[#d4af37]/40" />
+                  <div className="mx-auto h-6 w-px bg-[#d4af37]/40" />
+                </>
+              )}
 
               <div className="relative">
                 <div
@@ -291,12 +373,12 @@ export default function FamilyTreeView({ token }: { token: string }) {
 
                   <div className="min-w-[240px] text-center">
                     {renderCouple(
-                      deceased,
-                      deceasedSpouse,
-                      getChildrenFor(deceased).length > 0
+                      mainPerson,
+                      mainPersonSpouse,
+                      getChildrenFor(mainPerson).length > 0
                     )}
 
-                    {renderDescendants(deceased)}
+                    {renderDescendants(mainPerson)}
                   </div>
 
                   {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
