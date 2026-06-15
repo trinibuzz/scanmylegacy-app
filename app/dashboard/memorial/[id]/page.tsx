@@ -72,7 +72,7 @@ export default function ManageMemorialPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Unable to load memorial.");
+        alert(data.error || "Unable to load page.");
         window.location.href = "/dashboard";
         return;
       }
@@ -98,6 +98,56 @@ export default function ManageMemorialPage() {
   useEffect(() => {
     if (id) loadMemorial();
   }, [id]);
+
+  const pageType = memorial?.page_type === "living" ? "living" : "memorial";
+  const isLivingLegacy = pageType === "living";
+
+  const pageName = isLivingLegacy ? "Living Legacy" : "Memorial";
+  const pageNameLower = isLivingLegacy ? "living legacy page" : "memorial";
+  const manageTitle = isLivingLegacy
+    ? "Manage Living Legacy"
+    : "Manage Memorial";
+  const loadingText = isLivingLegacy
+    ? "Loading legacy editor..."
+    : "Loading memorial editor...";
+  const notFoundText = isLivingLegacy
+    ? "Living Legacy page not found."
+    : "Memorial not found.";
+  const detailsTitle = isLivingLegacy ? "Legacy Details" : "Memorial Details";
+  const namePlaceholder = isLivingLegacy
+    ? "Full Name"
+    : "Loved One’s Full Name";
+  const biographyPlaceholder = isLivingLegacy
+    ? "My Story / Life Journey"
+    : "Biography / Life Story";
+  const coverPhotoLabel = isLivingLegacy
+    ? "Change Legacy Cover Photo"
+    : "Change Cover Photo";
+  const musicLabel = isLivingLegacy
+    ? "Change Legacy Song / Voice Note"
+    : "Change Memorial Song";
+  const saveButtonLabel = isLivingLegacy
+    ? "Save Legacy Updates"
+    : "Save Memorial Updates";
+  const successMessage = isLivingLegacy
+    ? "Living Legacy updated successfully."
+    : "Memorial updated successfully.";
+  const viewButtonLabel = isLivingLegacy
+    ? "View Legacy Page"
+    : "View Memorial";
+  const linkLabel = isLivingLegacy ? "Legacy Link" : "Memorial Link";
+  const galleryTitle = isLivingLegacy
+    ? "Legacy Gallery Manager"
+    : "Gallery Manager";
+  const noGalleryText = isLivingLegacy
+    ? "No legacy photos uploaded yet."
+    : "No gallery photos uploaded yet.";
+  const paymentExpiredText = isLivingLegacy
+    ? "This living legacy page was temporarily active while bank transfer payment was being reviewed. Payment was not verified within 48 hours, so editing is now temporarily disabled until payment is confirmed by admin."
+    : "This memorial was temporarily active while bank transfer payment was being reviewed. Payment was not verified within 48 hours, so editing is now temporarily disabled until payment is confirmed by admin.";
+  const bankReviewText = isLivingLegacy
+    ? "Your living legacy page is temporarily active while your bank transfer is being reviewed. You can view and manage this page during this review period."
+    : "Your memorial is temporarily active while your bank transfer is being reviewed. You can view and manage this memorial during this review period.";
 
   const now = new Date();
 
@@ -134,7 +184,7 @@ export default function ManageMemorialPage() {
   const saveMemorial = async () => {
     if (!canManage) {
       alert(
-        "This memorial is temporarily deactivated because payment was not verified within 48 hours."
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
       );
       return;
     }
@@ -168,11 +218,11 @@ export default function ManageMemorialPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to update memorial.");
+        alert(data.error || `Failed to update ${pageNameLower}.`);
         return;
       }
 
-      alert("Memorial updated successfully.");
+      alert(successMessage);
       setCoverPhoto(null);
       setMemorialMusic(null);
       setGalleryPhotos([]);
@@ -185,12 +235,12 @@ export default function ManageMemorialPage() {
   const deleteGalleryPhoto = async (galleryId: number) => {
     if (!canManage) {
       alert(
-        "This memorial is temporarily deactivated because payment was not verified within 48 hours."
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
       );
       return;
     }
 
-    const confirmed = confirm("Remove this photo from the memorial gallery?");
+    const confirmed = confirm(`Remove this photo from the ${pageNameLower}?`);
     if (!confirmed) return;
 
     const res = await fetch(`/api/dashboard/memorial/${id}`, {
@@ -212,13 +262,13 @@ export default function ManageMemorialPage() {
   const deleteChatMessage = async (messageId: number) => {
     if (!canManage) {
       alert(
-        "This memorial is temporarily deactivated because payment was not verified within 48 hours."
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
       );
       return;
     }
 
     const confirmed = confirm(
-      "Delete this chat message? This will remove it from the public memorial chat."
+      "Delete this chat message? This will remove it from the public family chat."
     );
 
     if (!confirmed) return;
@@ -295,7 +345,7 @@ export default function ManageMemorialPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-        Loading memorial editor...
+        {loadingText}
       </main>
     );
   }
@@ -303,7 +353,7 @@ export default function ManageMemorialPage() {
   if (!memorial) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0b1320] p-6 text-white">
-        Memorial not found.
+        {notFoundText}
       </main>
     );
   }
@@ -318,11 +368,12 @@ export default function ManageMemorialPage() {
             Owner Control
           </p>
 
-          <h1 className="font-serif text-4xl font-bold">Manage Memorial</h1>
+          <h1 className="font-serif text-4xl font-bold">{manageTitle}</h1>
 
           <p className="mt-3 max-w-2xl text-gray-400">
-            Update your loved one’s story, media, gallery, and manage visitor
-            chat messages.
+            {isLivingLegacy
+              ? "Update your story, media, gallery, and manage visitor chat messages."
+              : "Update your loved one’s story, media, gallery, and manage visitor chat messages."}
           </p>
         </div>
 
@@ -333,9 +384,7 @@ export default function ManageMemorialPage() {
             </p>
 
             <p className="leading-relaxed">
-              Your memorial is temporarily active while your bank transfer is
-              being reviewed. You can view and manage this memorial during this
-              review period. About {hoursLeft} hour
+              {bankReviewText} About {hoursLeft} hour
               {hoursLeft === 1 ? "" : "s"} left before automatic deactivation
               if payment is not verified.
             </p>
@@ -348,12 +397,7 @@ export default function ManageMemorialPage() {
               Payment Review Expired
             </p>
 
-            <p className="leading-relaxed">
-              This memorial was temporarily active while bank transfer payment
-              was being reviewed. Payment was not verified within 48 hours, so
-              editing is now temporarily disabled until payment is confirmed by
-              admin.
-            </p>
+            <p className="leading-relaxed">{paymentExpiredText}</p>
           </div>
         )}
 
@@ -371,7 +415,7 @@ export default function ManageMemorialPage() {
               target="_blank"
               className="rounded-lg bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
             >
-              View Memorial
+              {viewButtonLabel}
             </a>
           ) : (
             <button
@@ -400,13 +444,13 @@ export default function ManageMemorialPage() {
           <section className="space-y-6">
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
               <h2 className="mb-5 font-serif text-2xl text-[#d4af37]">
-                Memorial Details
+                {detailsTitle}
               </h2>
 
               <input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Loved One’s Full Name"
+                placeholder={namePlaceholder}
                 disabled={!canManage}
                 className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -433,7 +477,7 @@ export default function ManageMemorialPage() {
                 value={biography}
                 onChange={(e) => setBiography(e.target.value)}
                 rows={8}
-                placeholder="Biography / Life Story"
+                placeholder={biographyPlaceholder}
                 disabled={!canManage}
                 className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
               />
@@ -446,7 +490,7 @@ export default function ManageMemorialPage() {
 
               <div className="mb-5 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
                 <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                  Change Cover Photo
+                  {coverPhotoLabel}
                 </label>
 
                 <input
@@ -466,7 +510,7 @@ export default function ManageMemorialPage() {
 
               <div className="mb-5 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4">
                 <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
-                  Change Memorial Song
+                  {musicLabel}
                 </label>
 
                 <input
@@ -520,7 +564,7 @@ export default function ManageMemorialPage() {
                 ? "Awaiting Payment Verification"
                 : saving
                 ? "Saving Updates..."
-                : "Save Memorial Updates"}
+                : saveButtonLabel}
             </button>
 
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
@@ -603,7 +647,7 @@ export default function ManageMemorialPage() {
                   />
                 ) : (
                   <div className="flex min-h-[260px] items-center justify-center text-6xl">
-                    🕯️
+                    {isLivingLegacy ? "✍️" : "🕯️"}
                   </div>
                 )}
 
@@ -620,7 +664,7 @@ export default function ManageMemorialPage() {
 
               <div className="p-5">
                 <p className="mb-2 text-xs uppercase tracking-[0.2em] text-gray-500">
-                  Memorial Link
+                  {linkLabel}
                 </p>
 
                 <div className="break-all rounded-lg bg-[#0b1320] p-3 text-sm text-gray-300">
@@ -631,13 +675,11 @@ export default function ManageMemorialPage() {
 
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
               <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-                Gallery Manager
+                {galleryTitle}
               </h2>
 
               {gallery.length === 0 ? (
-                <p className="text-gray-400">
-                  No gallery photos uploaded yet.
-                </p>
+                <p className="text-gray-400">{noGalleryText}</p>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   {gallery.map((photo) => (
