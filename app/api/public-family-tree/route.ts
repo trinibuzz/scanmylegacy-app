@@ -11,7 +11,20 @@ export async function GET(req: Request) {
     }
 
     const [memorialRows]: any = await db.execute(
-      "SELECT id FROM memorials WHERE invite_token = ? LIMIT 1",
+      `
+        SELECT 
+          id,
+          page_type,
+          legacy_type,
+          memorial_type,
+          type,
+          first_name,
+          last_name,
+          full_name
+        FROM memorials
+        WHERE invite_token = ?
+        LIMIT 1
+      `,
       [token]
     );
 
@@ -21,13 +34,45 @@ export async function GET(req: Request) {
 
     const memorial = memorialRows[0];
 
+    const rawPageType =
+      memorial.page_type ||
+      memorial.legacy_type ||
+      memorial.memorial_type ||
+      memorial.type ||
+      "";
+
+    const normalizedPageType =
+      rawPageType === "living" ||
+      rawPageType === "living_legacy" ||
+      rawPageType === "living-legacy"
+        ? "living"
+        : "memorial";
+
     const [members]: any = await db.execute(
-      "SELECT * FROM family_members WHERE memorial_id = ? ORDER BY generation ASC, created_at ASC",
+      `
+        SELECT *
+        FROM family_members
+        WHERE memorial_id = ?
+        ORDER BY generation ASC, created_at ASC
+      `,
       [memorial.id]
     );
 
-    return NextResponse.json({ members });
+    return NextResponse.json({
+      members,
+      page_type: normalizedPageType,
+      memorial: {
+        id: memorial.id,
+        page_type: normalizedPageType,
+        name:
+          memorial.full_name ||
+          `${memorial.first_name || ""} ${memorial.last_name || ""}`.trim(),
+      },
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || "Failed to load public family tree." },
+      { status: 500 }
+    );
   }
 }
