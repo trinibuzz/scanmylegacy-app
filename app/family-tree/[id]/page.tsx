@@ -6,6 +6,7 @@ export default function FamilyTreeManager({ params }: any) {
   const memorialId = params.id;
 
   const [members, setMembers] = useState<any[]>([]);
+  const [memorial, setMemorial] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -17,6 +18,30 @@ export default function FamilyTreeManager({ params }: any) {
   const [birthDate, setBirthDate] = useState("");
   const [deathDate, setDeathDate] = useState("");
   const [photo, setPhoto] = useState<File | null>(null);
+
+  const isLivingLegacy = memorial?.page_type === "living";
+
+  const pageName = isLivingLegacy ? "Living Legacy" : "Memorial";
+  const mainPersonLabel = isLivingLegacy ? "Main Person" : "Deceased";
+  const manageButtonLabel = isLivingLegacy
+    ? "Manage Living Legacy"
+    : "Manage Memorial";
+
+  const heroTitle = isLivingLegacy
+    ? "Build the roots and branches of this living legacy."
+    : "Build the roots and branches of this memorial legacy.";
+
+  const heroDescription = isLivingLegacy
+    ? "Add parents, siblings, spouse, children, grandchildren, and extended family so future generations can understand this living legacy and where they came from."
+    : "Add parents, siblings, spouses, children, grandchildren, and extended family so future generations can understand where they came from.";
+
+  const formDescription = isLivingLegacy
+    ? "Start with the main person, then add parents, spouse, siblings, children, and future generations."
+    : "Start with the deceased, then add parents, spouse, siblings, children, and future generations.";
+
+  const mainSectionTitle = isLivingLegacy
+    ? "Main Person, Spouse, Siblings & In-Laws"
+    : "Deceased, Spouse, Siblings & In-Laws";
 
   const relationships = [
     "Mother",
@@ -36,9 +61,31 @@ export default function FamilyTreeManager({ params }: any) {
     "Cousin",
   ];
 
+  const displayRelationship = (rel: string) => {
+    if (isLivingLegacy && rel === "Deceased") return "Main Person";
+    if (isLivingLegacy && rel === "Spouse") return "Spouse of Main Person";
+    if (!isLivingLegacy && rel === "Spouse") return "Spouse of Deceased";
+    return rel;
+  };
+
+  const loadMemorialInfo = async () => {
+    try {
+      const res = await fetch(`/api/dashboard/memorial/${memorialId}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        setMemorial(data.memorial || null);
+      }
+    } catch {
+      setMemorial(null);
+    }
+  };
+
   const loadMembers = async () => {
     try {
       setPageLoading(true);
+
+      await loadMemorialInfo();
 
       const res = await fetch(`/api/family-tree?memorial_id=${memorialId}`);
       const data = await res.json();
@@ -326,7 +373,7 @@ export default function FamilyTreeManager({ params }: any) {
           </h4>
 
           <p className="mt-1 w-fit rounded-full border border-[#d4af37]/40 bg-black/40 px-3 py-1 text-xs text-[#d4af37] backdrop-blur">
-            {m.relationship}
+            {displayRelationship(m.relationship)}
           </p>
         </div>
       </div>
@@ -403,13 +450,11 @@ export default function FamilyTreeManager({ params }: any) {
               </p>
 
               <h1 className="font-serif text-4xl font-bold leading-tight text-white sm:text-5xl">
-                Build the roots and branches of this legacy.
+                {heroTitle}
               </h1>
 
               <p className="mt-4 max-w-2xl leading-relaxed text-white/80">
-                Add parents, siblings, spouses, children, grandchildren, and
-                extended family so future generations can understand where they
-                came from.
+                {heroDescription}
               </p>
             </div>
 
@@ -425,7 +470,7 @@ export default function FamilyTreeManager({ params }: any) {
                 href={`/dashboard/memorial/${memorialId}`}
                 className="rounded-full bg-[#d4af37] px-5 py-3 text-sm font-semibold text-[#0b1320] transition hover:bg-[#f0c94a]"
               >
-                Manage Memorial
+                {manageButtonLabel}
               </a>
             </div>
           </div>
@@ -451,8 +496,7 @@ export default function FamilyTreeManager({ params }: any) {
               </h2>
 
               <p className="mt-3 text-sm leading-relaxed text-gray-400">
-                Start with the deceased, then add parents, spouse, siblings,
-                children, and future generations.
+                {formDescription}
               </p>
             </div>
 
@@ -481,7 +525,7 @@ export default function FamilyTreeManager({ params }: any) {
                   <option value="">Choose relationship</option>
                   {relationships.map((rel) => (
                     <option key={rel} value={rel}>
-                      {rel === "Spouse" ? "Spouse of Deceased" : rel}
+                      {displayRelationship(rel)}
                     </option>
                   ))}
                 </select>
@@ -499,7 +543,7 @@ export default function FamilyTreeManager({ params }: any) {
 
                     {parentOptions.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} ({m.relationship})
+                        {m.name} ({displayRelationship(m.relationship)})
                       </option>
                     ))}
                   </select>
@@ -518,7 +562,7 @@ export default function FamilyTreeManager({ params }: any) {
 
                     {spouseOptions.map((m) => (
                       <option key={m.id} value={m.id}>
-                        {m.name} ({m.relationship})
+                        {m.name} ({displayRelationship(m.relationship)})
                       </option>
                     ))}
                   </select>
@@ -584,7 +628,7 @@ export default function FamilyTreeManager({ params }: any) {
               </div>
 
               <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
-                <p className="text-sm text-gray-400">Main Person</p>
+                <p className="text-sm text-gray-400">{mainPersonLabel}</p>
                 <h3 className="mt-2 text-xl font-semibold text-white">
                   {members.some((m) => m.relationship === "Deceased")
                     ? "Added"
@@ -606,14 +650,10 @@ export default function FamilyTreeManager({ params }: any) {
               </div>
             ) : (
               <>
-                {renderSection(
-                  "Parents",
-                  "Generation Above",
-                  parents
-                )}
+                {renderSection("Parents", "Generation Above", parents)}
 
                 {renderSection(
-                  "Deceased, Spouse, Siblings & In-Laws",
+                  mainSectionTitle,
                   "Main Generation",
                   mainLine
                 )}
