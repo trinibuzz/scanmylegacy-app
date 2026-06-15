@@ -38,10 +38,29 @@ export default async function Dashboard() {
   );
 
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    "https://deepskyblue-donkey-850675.hostingersite.com";
+    process.env.NEXT_PUBLIC_SITE_URL || "https://scanmylegacy.com";
 
   const now = new Date();
+
+  const safeMediaPath = (pathValue: any) => {
+    if (!pathValue) return "";
+
+    let cleanPath = String(pathValue).trim();
+    cleanPath = cleanPath.replace(/\\/g, "/");
+
+    if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+      return cleanPath;
+    }
+
+    cleanPath = cleanPath.replace(/^public\//, "");
+    cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = `/${cleanPath}`;
+    }
+
+    return encodeURI(cleanPath);
+  };
 
   for (const memorial of memorials) {
     const paymentDueAt = memorial.payment_due_at
@@ -64,6 +83,14 @@ export default async function Dashboard() {
       memorial.payment_status = "expired_bank_transfer";
     }
   }
+
+  const livingLegacyCount = memorials.filter(
+    (m: any) => m.page_type === "living"
+  ).length;
+
+  const memorialCount = memorials.filter(
+    (m: any) => m.page_type !== "living"
+  ).length;
 
   const isFreePlan = !user.plan || user.plan === "free";
 
@@ -225,9 +252,9 @@ export default async function Dashboard() {
                 </h1>
 
                 <p className="mt-4 max-w-2xl text-gray-300">
-                  Manage your legacy pages, share your private links, view your
-                  package status, and continue preserving stories, wishes,
-                  memories, and family history.
+                  Manage your Living Legacy and Memorial pages, share your
+                  private links, view your package status, and continue
+                  preserving stories, wishes, memories, and family history.
                 </p>
               </div>
 
@@ -257,12 +284,39 @@ export default async function Dashboard() {
 
         <section className="mb-8 grid gap-5 md:grid-cols-4">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
-            <p className="text-sm text-gray-400">Legacy Pages</p>
+            <p className="text-sm text-gray-400">Total Pages</p>
             <h3 className="mt-2 text-3xl font-bold text-[#d4af37]">
               {memorials.length}
             </h3>
           </div>
 
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+            <p className="text-sm text-gray-400">Living Legacy</p>
+            <h3 className="mt-2 text-3xl font-bold text-emerald-300">
+              {livingLegacyCount}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+            <p className="text-sm text-gray-400">Memorials</p>
+            <h3 className="mt-2 text-3xl font-bold text-[#d4af37]">
+              {memorialCount}
+            </h3>
+          </div>
+
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
+            <p className="text-sm text-gray-400">Account</p>
+            <h3
+              className={`mt-2 text-xl font-semibold ${
+                accountIsActive ? "text-green-300" : "text-red-300"
+              }`}
+            >
+              {accountIsActive ? "Active" : "Inactive"}
+            </h3>
+          </div>
+        </section>
+
+        <section className="mb-8 grid gap-5 md:grid-cols-2">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
             <p className="text-sm text-gray-400">Plan</p>
             <h3 className="mt-2 text-xl font-semibold text-white">
@@ -294,17 +348,6 @@ export default async function Dashboard() {
                 : trialStatusLabel}
             </h3>
           </div>
-
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5">
-            <p className="text-sm text-gray-400">Account</p>
-            <h3
-              className={`mt-2 text-xl font-semibold ${
-                accountIsActive ? "text-green-300" : "text-red-300"
-              }`}
-            >
-              {accountIsActive ? "Active" : "Inactive"}
-            </h3>
-          </div>
         </section>
 
         <section>
@@ -314,7 +357,9 @@ export default async function Dashboard() {
                 Legacy Control
               </p>
 
-              <h2 className="mt-2 font-serif text-3xl">Your Legacy Pages</h2>
+              <h2 className="mt-2 font-serif text-3xl">
+                Your Legacy Pages
+              </h2>
             </div>
 
             <a
@@ -327,16 +372,16 @@ export default async function Dashboard() {
 
           {memorials.length === 0 ? (
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-8 text-center">
-              <div className="mb-4 text-5xl">🕯️</div>
+              <div className="mb-4 text-5xl">✍️</div>
 
               <h3 className="mb-3 font-serif text-2xl text-[#d4af37]">
                 No legacy pages yet
               </h3>
 
               <p className="mx-auto max-w-xl text-gray-400">
-                Begin by creating a beautiful legacy page where stories,
-                memories, wishes, photos, and family history can be preserved
-                for generations.
+                Begin by creating a beautiful Living Legacy or Memorial page
+                where stories, memories, wishes, photos, and family history can
+                be preserved for generations.
               </p>
 
               <a
@@ -354,12 +399,16 @@ export default async function Dashboard() {
                   m.payment_status === "expired_bank_transfer";
                 const bankTransferMessage = getBankTransferMessage(m);
 
-                const pageType = m.page_type === "living" ? "living" : "memorial";
+                const pageType =
+                  m.page_type === "living" ? "living" : "memorial";
                 const pageTypeLabel = getPageTypeLabel(pageType);
                 const pageTypeIcon = getPageTypeIcon(pageType);
 
                 const pageWord =
                   pageType === "living" ? "legacy page" : "memorial";
+
+                const linkLabel =
+                  pageType === "living" ? "Legacy Link" : "Memorial Link";
 
                 const viewButtonLabel =
                   pageType === "living" ? "View Legacy Page" : "View Memorial";
@@ -392,9 +441,9 @@ export default async function Dashboard() {
                       <div className="relative min-h-[220px] bg-[#081827]">
                         {m.cover_photo ? (
                           <img
-                            src={m.cover_photo}
+                            src={safeMediaPath(m.cover_photo)}
                             alt={m.full_name}
-                            className="h-full min-h-[220px] w-full object-cover"
+                            className="h-full min-h-[220px] w-full object-cover object-[center_20%]"
                           />
                         ) : (
                           <div className="flex h-full min-h-[220px] items-center justify-center text-6xl">
@@ -469,7 +518,7 @@ export default async function Dashboard() {
 
                         <div className="mt-6 rounded-xl border border-[#1f2a44] bg-[#0b1320] p-4">
                           <p className="mb-2 text-xs uppercase tracking-[0.2em] text-gray-500">
-                            Legacy Link
+                            {linkLabel}
                           </p>
 
                           <div className="break-all rounded-lg bg-black/30 p-3 text-sm text-gray-300">
