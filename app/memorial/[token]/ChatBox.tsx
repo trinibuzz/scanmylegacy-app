@@ -465,11 +465,16 @@ export default function ChatBox({
             </button>
           </div>
 
-          <p className="mt-2 text-center text-[11px] text-gray-500">
-            Text, photo, video, and audio chat are active. Keep uploads under
-            50MB.
-          </p>
-        </div>
+<div className="mt-2 text-center text-[11px] leading-relaxed text-gray-500">
+  <p>
+    Click the <span className="font-semibold text-[#d4af37]">plus sign (+)</span>{" "}
+    to upload your images, videos, or audio messages.
+  </p>
+
+  <p className="mt-1">
+    Text, photo, video, and audio chat are active. Keep uploads under 50MB.
+  </p>
+</div>        </div>
       </div>
     </section>
   );
