@@ -1102,7 +1102,7 @@ export default function GuestAccess({ memorial, token }: any) {
                   <img
                     src={safeMediaPath(entry.image_url)}
                     alt="Guestbook image"
-                    className="mt-4 max-h-[420px] w-full rounded-xl object-cover"
+                    className="mt-5 max-h-[520px] w-full bg-white object-contain"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
