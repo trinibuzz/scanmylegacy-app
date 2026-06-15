@@ -23,26 +23,25 @@ async function getSessionUserId() {
   return sessionRows[0].user_id;
 }
 
-function getPublicHtmlRoot() {
+function getPersistentUploadsRoot() {
   const cwd = process.cwd();
 
   if (cwd.includes("public_html")) {
     const beforePublicHtml = cwd.split("public_html")[0];
-    return path.join(beforePublicHtml, "public_html");
+    return path.join(beforePublicHtml, "uploads");
   }
 
   if (cwd.includes("nodejs")) {
     const beforeNodejs = cwd.split("nodejs")[0];
-    return path.join(beforeNodejs, "public_html");
+    return path.join(beforeNodejs, "uploads");
   }
 
-  return path.join(cwd, "public");
+  return path.join(cwd, "uploads");
 }
 
 async function ensureUploadFolders() {
-  const publicRoot = getPublicHtmlRoot();
+  const uploadsRoot = getPersistentUploadsRoot();
 
-  const uploadsRoot = path.join(publicRoot, "uploads");
   const musicRoot = path.join(uploadsRoot, "music");
   const galleryRoot = path.join(uploadsRoot, "gallery");
   const chatRoot = path.join(uploadsRoot, "chat");
@@ -79,6 +78,10 @@ function cleanPublicPath(pathValue: any) {
   cleanPath = cleanPath.replace(/\\/g, "/");
   cleanPath = cleanPath.replace(/^public\//, "");
   cleanPath = cleanPath.replace(/^\/public\//, "/");
+
+  if (cleanPath.startsWith("http://") || cleanPath.startsWith("https://")) {
+    return cleanPath;
+  }
 
   if (!cleanPath.startsWith("/")) {
     cleanPath = `/${cleanPath}`;
@@ -220,7 +223,7 @@ export async function POST(
       return NextResponse.json(
         {
           error:
-            "This memorial is temporarily deactivated because payment was not verified within 48 hours.",
+            "This page is temporarily deactivated because payment was not verified within 48 hours.",
         },
         { status: 403 }
       );
@@ -257,7 +260,7 @@ export async function POST(
 
       await writeFile(path.join(uploadsRoot, fileName), buffer);
 
-      coverPhotoPath = `/uploads/${fileName}`;
+      coverPhotoPath = `/api/uploads/${fileName}`;
     }
 
     if (memorialMusic && memorialMusic.size > 0) {
@@ -271,7 +274,7 @@ export async function POST(
 
       await writeFile(path.join(musicRoot, fileName), buffer);
 
-      memorialMusicPath = `/uploads/music/${fileName}`;
+      memorialMusicPath = `/api/uploads/music/${fileName}`;
     }
 
     await db.execute(
@@ -306,7 +309,7 @@ export async function POST(
 
         await writeFile(path.join(galleryRoot, fileName), buffer);
 
-        const photoPath = `/uploads/gallery/${fileName}`;
+        const photoPath = `/api/uploads/gallery/${fileName}`;
 
         await db.execute(
           `
@@ -320,13 +323,13 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: "Memorial updated successfully.",
+      message: "Page updated successfully.",
     });
   } catch (error: any) {
     console.error("Dashboard memorial POST error:", error);
 
     return NextResponse.json(
-      { error: error.message || "Unable to update memorial." },
+      { error: error.message || "Unable to update page." },
       { status: 500 }
     );
   }
@@ -376,7 +379,7 @@ export async function DELETE(
       return NextResponse.json(
         {
           error:
-            "This memorial is temporarily deactivated because payment was not verified within 48 hours.",
+            "This page is temporarily deactivated because payment was not verified within 48 hours.",
         },
         { status: 403 }
       );
