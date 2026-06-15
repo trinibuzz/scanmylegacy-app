@@ -6,34 +6,35 @@ import path from "path";
 
 export const runtime = "nodejs";
 
-function getPublicHtmlRoot() {
+function getPersistentUploadsRoot() {
   const cwd = process.cwd();
 
   /*
-    Hostinger can run the Next.js app from:
+    Hostinger usually runs the Next.js app from:
     /home/USER/domains/scanmylegacy.com/nodejs
 
-    Public browser files must live in:
-    /home/USER/domains/scanmylegacy.com/public_html
-  */
+    We want uploads stored outside the deploy folder:
+    /home/USER/domains/scanmylegacy.com/uploads
 
-  if (cwd.includes("public_html")) {
-    const beforePublicHtml = cwd.split("public_html")[0];
-    return path.join(beforePublicHtml, "public_html");
-  }
+    Files are served publicly through:
+    /api/uploads/...
+  */
 
   if (cwd.includes("nodejs")) {
     const beforeNodejs = cwd.split("nodejs")[0];
-    return path.join(beforeNodejs, "public_html");
+    return path.join(beforeNodejs, "uploads");
   }
 
-  return path.join(cwd, "public");
+  if (cwd.includes("public_html")) {
+    const beforePublicHtml = cwd.split("public_html")[0];
+    return path.join(beforePublicHtml, "uploads");
+  }
+
+  return path.join(cwd, "uploads");
 }
 
 async function ensureChatUploadFolder() {
-  const publicRoot = getPublicHtmlRoot();
-
-  const uploadsRoot = path.join(publicRoot, "uploads");
+  const uploadsRoot = getPersistentUploadsRoot();
   const chatRoot = path.join(uploadsRoot, "chat");
 
   await mkdir(uploadsRoot, { recursive: true });
@@ -48,9 +49,10 @@ function makeSafeFileName(originalName: string, fallback: string) {
   const safeName = cleanOriginalName
     .toLowerCase()
     .replace(/[^a-z0-9.]/g, "-")
-    .replace(/-+/g, "-");
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 
-  return `${Date.now()}-${safeName}`;
+  return `${Date.now()}-${safeName || fallback}`;
 }
 
 async function getSessionUserId() {
@@ -104,6 +106,30 @@ async function canDeleteChatMessage(messageId: string, memorialId: string) {
   return rows.length > 0;
 }
 
+function normalizeMediaUrl(value: any) {
+  if (!value) return null;
+
+  let cleanValue = String(value).trim().replace(/\\/g, "/");
+
+  if (
+    cleanValue.startsWith("http://") ||
+    cleanValue.startsWith("https://") ||
+    cleanValue.startsWith("/api/uploads/")
+  ) {
+    return cleanValue;
+  }
+
+  if (cleanValue.startsWith("/uploads/")) {
+    return cleanValue.replace("/uploads/", "/api/uploads/");
+  }
+
+  if (cleanValue.startsWith("uploads/")) {
+    return cleanValue.replace("uploads/", "/api/uploads/");
+  }
+
+  return cleanValue;
+}
+
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -123,14 +149,21 @@ export async function GET(req: Request) {
       [memorialId]
     );
 
+    const messages = rows.map((row: any) => ({
+      ...row,
+      image_url: normalizeMediaUrl(row.image_url),
+      video_url: normalizeMediaUrl(row.video_url),
+      audio_url: normalizeMediaUrl(row.audio_url),
+    }));
+
     return NextResponse.json({
       success: true,
-      messages: rows,
+      messages,
     });
   } catch (error: any) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message || "Failed to load chat messages.",
       },
       { status: 500 }
     );
@@ -191,7 +224,7 @@ export async function POST(req: Request) {
 
         await writeFile(path.join(chatRoot, fileName), buffer);
 
-        const fileUrl = `/uploads/chat/${fileName}`;
+        const fileUrl = `/api/uploads/chat/${fileName}`;
 
         if (isImage) imageUrl = fileUrl;
         if (isVideo) videoUrl = fileUrl;
@@ -244,7 +277,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message || "Failed to send chat message.",
       },
       { status: 500 }
     );
@@ -292,7 +325,7 @@ export async function DELETE(req: Request) {
   } catch (error: any) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message || "Failed to delete chat message.",
       },
       { status: 500 }
     );
