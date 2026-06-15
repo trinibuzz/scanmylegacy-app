@@ -70,8 +70,8 @@ export default function Login() {
               </h1>
 
               <p className="mt-3 text-sm leading-relaxed text-gray-300">
-                Access your memorial dashboard and continue preserving your
-                loved one’s legacy.
+                Access your legacy dashboard and continue preserving stories,
+                memories, and family history.
               </p>
             </div>
 
@@ -121,7 +121,7 @@ export default function Login() {
             </button>
 
             <div className="mt-6 text-center text-sm text-gray-400">
-              Need to create a memorial?{" "}
+              Need to create a legacy page?{" "}
               <a
                 href="/packages"
                 className="font-semibold text-[#d4af37] hover:underline"
