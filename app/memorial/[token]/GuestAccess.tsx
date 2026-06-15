@@ -35,30 +35,42 @@ export default function GuestAccess({ memorial, token }: any) {
   const isLivingLegacy = pageType === "living";
 
   const pageTypeLabel = isLivingLegacy ? "Living Legacy" : "Memorial Tribute";
+  const pageTypeFullLabel = isLivingLegacy
+    ? "Living Legacy Page"
+    : "Memorial Page";
+
   const pageTitlePrefix = isLivingLegacy
     ? "Living Legacy of"
     : "In Loving Memory";
+
   const enterButtonLabel = isLivingLegacy
     ? "Enter Legacy Page"
     : "Enter Memorial";
+
   const shareButtonLabel = isLivingLegacy
     ? "Share Legacy Page"
     : "Share Memorial";
+
   const pageLinkCopiedLabel = isLivingLegacy
     ? "Legacy page link copied to clipboard"
     : "Memorial link copied to clipboard";
+
   const slideshowTitle = isLivingLegacy
     ? "Legacy Slideshow"
     : "Memorial Slideshow";
+
   const slideshowDescription = isLivingLegacy
-    ? "A beautiful collection of photos, moments, and memories that tell the story of this life and legacy."
+    ? "A beautiful collection of photos, milestones, family moments, and memories that tell the story of this living legacy."
     : "A beautiful collection of memories that gently plays through each photo like a tribute film.";
+
   const musicButtonText = isLivingLegacy ? "Legacy Music" : "Memorial Music";
   const lifeStoryTitle = isLivingLegacy ? "My Life Story" : "Life Story";
   const guestbookTitle = isLivingLegacy ? "Family Messages" : "Guestbook";
+
   const guestbookPlaceholder = isLivingLegacy
     ? "Write a message, memory, blessing, or words of love..."
-    : "Write a message...";
+    : "Write a message, memory, tribute, or words of comfort...";
+
   const noGuestbookText = isLivingLegacy
     ? "No family messages yet."
     : "No guestbook messages yet.";
@@ -66,33 +78,58 @@ export default function GuestAccess({ memorial, token }: any) {
   const candleActionLabel = isLivingLegacy
     ? "Leave a Blessing"
     : "Light a Candle";
+
   const candleRoomTitle = isLivingLegacy ? "Blessings" : "Candle Room";
   const candleCountText = isLivingLegacy ? "blessings left" : "candles lit";
+
   const candleEmptyText = isLivingLegacy
     ? "No blessings left yet."
     : "No candles lit yet.";
+
   const candleModalTitle = isLivingLegacy
     ? "Leave a Blessing"
     : "Light a Candle";
+
   const candleSubmitLabel = isLivingLegacy
     ? "Leave Blessing"
     : "Light Candle";
+
   const candleAlertText = isLivingLegacy
     ? "Blessing left ❤️"
     : "Candle lit 🕯️";
 
   const flowerActionLabel = isLivingLegacy ? "Send Flowers" : "Plant a Flower";
+
   const flowerCountText = isLivingLegacy
     ? "flowers sent"
     : "flowers planted";
+
   const flowerEmptyText = isLivingLegacy
     ? "No flowers sent yet."
     : "No flowers planted yet.";
+
   const flowerSubmitLabel = isLivingLegacy ? "Send Flowers" : "Plant Flower";
   const flowerByLabel = isLivingLegacy ? "Sent by" : "Planted by";
+
   const flowerAlertText = isLivingLegacy
     ? "Flowers sent 🌸"
     : "Flower planted 🌸";
+
+  const heroSubText = isLivingLegacy
+    ? "A living tribute filled with stories, memories, blessings, family love, and legacy."
+    : "A lasting tribute filled with memories, love, family history, and heartfelt messages.";
+
+  const entryHeading = isLivingLegacy
+    ? "You’re invited to visit this Living Legacy"
+    : "You’re invited to visit this Memorial Tribute";
+
+  const entryDescription = isLivingLegacy
+    ? "Enter your name to view this private legacy page, explore the story, share blessings, send flowers, and connect with family."
+    : "Enter your name to view this private memorial, explore memories, light a candle, plant a flower, and leave a tribute.";
+
+  const storyEmptyText = isLivingLegacy
+    ? "No life story added yet."
+    : "No story added yet.";
 
   const flowerOptions: any = {
     rose: "🌹",
@@ -126,8 +163,8 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const navItems = [
     { label: "Slideshow", href: "#slideshow" },
-    { label: "Life Story", href: "#life-story" },
-    { label: "Tributes", href: "#tributes" },
+    { label: isLivingLegacy ? "My Story" : "Life Story", href: "#life-story" },
+    { label: isLivingLegacy ? "Blessings" : "Tributes", href: "#tributes" },
     { label: "Family Tree", href: "#family-tree" },
     { label: "Chat", href: "#chat" },
     { label: isLivingLegacy ? "Messages" : "Guestbook", href: "#guestbook" },
@@ -194,7 +231,7 @@ export default function GuestAccess({ memorial, token }: any) {
             onClick={shareMemorial}
             className="rounded-full bg-[#d4af37] px-5 py-2 font-semibold text-black transition hover:opacity-90"
           >
-            Share
+            {simple ? "Share" : shareButtonLabel}
           </button>
         </nav>
 
@@ -306,6 +343,11 @@ export default function GuestAccess({ memorial, token }: any) {
   }, [isSlideshowPlaying, galleryPhotos.length]);
 
   const enterMemorial = async () => {
+    if (!guestName.trim()) {
+      alert("Please enter your name to continue.");
+      return;
+    }
+
     const res = await fetch("/api/guest-access", {
       method: "POST",
       headers: {
@@ -464,43 +506,74 @@ export default function GuestAccess({ memorial, token }: any) {
       <main className="min-h-screen bg-[#0b1320] text-white">
         <MemorialHeader simple />
 
-        <section className="flex min-h-screen items-center justify-center p-6 pt-28">
+        <section className="relative flex min-h-screen items-center justify-center overflow-hidden p-6 pt-28">
+          {memorial.cover_photo && (
+            <img
+              src={safeMediaPath(memorial.cover_photo)}
+              alt={memorial.full_name}
+              className="absolute inset-0 h-full w-full object-cover object-[center_20%] opacity-35"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          )}
+
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0b1320]/80 via-[#0b1320]/90 to-[#0b1320]" />
+
           <div
             id="enter-memorial-box"
-            className="w-full max-w-md rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 sm:p-8"
+            className="relative z-10 w-full max-w-xl rounded-3xl border border-[#d4af37]/25 bg-[#111a2e]/95 p-6 text-center shadow-2xl backdrop-blur sm:p-8"
           >
-            <p className="mb-2 text-center text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-              You are invited to view
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#0b1320] text-3xl">
+              {isLivingLegacy ? "✍️" : "🕯️"}
+            </div>
+
+            <p className="mb-3 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              {entryHeading}
             </p>
 
-            <h1 className="mb-2 text-center font-serif text-3xl">
+            <h1 className="mb-3 font-serif text-3xl text-white sm:text-4xl">
               {memorial.full_name}
             </h1>
 
-            <p className="mb-6 text-center text-gray-400">
-              {pageTypeLabel} — Enter your name to continue
+            <p className="mx-auto mb-6 max-w-md text-sm leading-relaxed text-gray-300">
+              {entryDescription}
             </p>
 
-            <input
-              className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              placeholder="Your Name"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-            />
+            <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4 text-left">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                Your Name
+              </label>
 
-            <input
-              className="mb-4 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-              placeholder="Email Address (optional)"
-              value={guestEmail}
-              onChange={(e) => setGuestEmail(e.target.value)}
-            />
+              <input
+                className="mb-3 w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                placeholder="Enter your name"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+              />
+
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                Email Address Optional
+              </label>
+
+              <input
+                className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                placeholder="Email Address (optional)"
+                value={guestEmail}
+                onChange={(e) => setGuestEmail(e.target.value)}
+              />
+            </div>
 
             <button
               onClick={enterMemorial}
-              className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+              className="w-full rounded-xl bg-[#d4af37] py-4 font-semibold text-black transition hover:opacity-90"
             >
               {enterButtonLabel}
             </button>
+
+            <p className="mt-4 text-xs text-gray-500">
+              Private {pageTypeFullLabel} powered by ScanMyLegacy.
+            </p>
           </div>
         </section>
       </main>
@@ -622,7 +695,7 @@ export default function GuestAccess({ memorial, token }: any) {
 
       <section
         id="top"
-        className="relative flex min-h-[70vh] items-center justify-center overflow-hidden pt-20 text-center"
+        className="relative flex min-h-[75vh] items-center justify-center overflow-hidden pt-20 text-center"
       >
         {memorial.cover_photo && (
           <img
@@ -635,16 +708,24 @@ export default function GuestAccess({ memorial, token }: any) {
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-b from-black/65 via-[#0b1320]/75 to-[#0b1320]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-[#0b1320]/78 to-[#0b1320]" />
 
-        <div className="relative z-10 mx-auto max-w-4xl px-6">
+        <div className="relative z-10 mx-auto max-w-5xl px-6">
+          <div className="mx-auto mb-6 w-fit rounded-full border border-[#d4af37]/30 bg-black/30 px-5 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-[#d4af37] backdrop-blur">
+            {pageTypeFullLabel}
+          </div>
+
           <p className="mb-4 text-sm uppercase tracking-[0.35em] text-[#d4af37]">
             {pageTitlePrefix}
           </p>
 
-          <h1 className="mb-6 font-serif text-3xl sm:text-4xl md:text-7xl">
+          <h1 className="mb-5 font-serif text-4xl sm:text-5xl md:text-7xl">
             {memorial.full_name}
           </h1>
+
+          <p className="mx-auto mb-5 max-w-2xl text-base leading-relaxed text-gray-300 sm:text-lg">
+            {heroSubText}
+          </p>
 
           <p className="mb-8 text-lg text-gray-300">
             {memorial.birth_date
@@ -815,12 +896,16 @@ export default function GuestAccess({ memorial, token }: any) {
         className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3"
       >
         <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
+          <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+            {isLivingLegacy ? "Personal Story" : "Legacy Story"}
+          </p>
+
           <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
             {lifeStoryTitle}
           </h2>
 
           <p className="leading-relaxed text-gray-300">
-            {memorial.biography || "No story added yet."}
+            {memorial.biography || storyEmptyText}
           </p>
         </div>
 
