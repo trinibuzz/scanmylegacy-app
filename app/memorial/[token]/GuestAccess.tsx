@@ -1044,8 +1044,8 @@ export default function GuestAccess({ memorial, token }: any) {
       {renderFeatureCards()}
 
       {activeSection === "story" && (
-        <section className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-8 sm:px-6 md:grid-cols-3">
-          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
+        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
               {isLivingLegacy ? "Personal Story" : "Legacy Story"}
             </p>
@@ -1057,38 +1057,6 @@ export default function GuestAccess({ memorial, token }: any) {
             <p className="leading-relaxed text-gray-300">
               {memorial.biography || storyEmptyText}
             </p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                setActiveSection("blessings");
-                openCandleModal();
-              }}
-              className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-            >
-              <div className="mb-3 text-4xl">
-                {isLivingLegacy ? "❤️" : "🕯️"}
-              </div>
-              <h3 className="font-serif text-xl">{candleActionLabel}</h3>
-              <p className="mt-2 text-sm text-gray-400">
-                {candles} {candleCountText}
-              </p>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveSection("flowers");
-                openFlowerModal();
-              }}
-              className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-            >
-              <div className="mb-3 text-4xl">🌸</div>
-              <h3 className="font-serif text-xl">{flowerActionLabel}</h3>
-              <p className="mt-2 text-sm text-gray-400">
-                {flowers} {flowerCountText}
-              </p>
-            </button>
           </div>
         </section>
       )}
