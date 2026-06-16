@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import FamilyTreeView from "./FamilyTreeView";
 import ChatBox from "./ChatBox";
 
+type ActiveSection =
+  | "story"
+  | "blessings"
+  | "flowers"
+  | "family-tree"
+  | "chat"
+  | "messages";
+
 export default function GuestAccess({ memorial, token }: any) {
   const [allowed, setAllowed] = useState(false);
   const [guestName, setGuestName] = useState("");
@@ -13,6 +21,7 @@ export default function GuestAccess({ memorial, token }: any) {
   const [isSlideshowPlaying, setIsSlideshowPlaying] = useState(true);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<ActiveSection>("story");
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -140,6 +149,62 @@ export default function GuestAccess({ memorial, token }: any) {
     orchid: "💮",
   };
 
+  const candleReactions = reactions.filter(
+    (reaction) => reaction.reaction_type === "candle"
+  );
+
+  const flowerReactions = reactions.filter(
+    (reaction) => reaction.reaction_type === "flower"
+  );
+
+  const featureCards: {
+    key: ActiveSection;
+    icon: string;
+    title: string;
+    text: string;
+  }[] = [
+    {
+      key: "story",
+      icon: "📖",
+      title: isLivingLegacy ? "My Legacy" : "Life Story",
+      text: isLivingLegacy
+        ? "Read the personal story and legacy journey."
+        : "Read the life story and memories.",
+    },
+    {
+      key: "blessings",
+      icon: isLivingLegacy ? "❤️" : "🕯️",
+      title: isLivingLegacy ? "Blessings" : "Candles",
+      text: `${candles} ${candleCountText}`,
+    },
+    {
+      key: "flowers",
+      icon: "🌸",
+      title: isLivingLegacy ? "Flowers" : "Flower Garden",
+      text: `${flowers} ${flowerCountText}`,
+    },
+    {
+      key: "family-tree",
+      icon: "🌳",
+      title: "Family Tree",
+      text: "View family roots and branches.",
+    },
+    {
+      key: "chat",
+      icon: "💬",
+      title: "Chatroom",
+      text: "Share live messages with family.",
+    },
+    {
+      key: "messages",
+      icon: "✍️",
+      title: isLivingLegacy ? "Family Messages" : "Guestbook",
+      text: isLivingLegacy
+        ? "Post memories, blessings, and love."
+        : "Leave tributes and words of comfort.",
+    },
+  ];
+
   const safeMediaPath = (pathValue: any) => {
     if (!pathValue) return "";
 
@@ -161,13 +226,33 @@ export default function GuestAccess({ memorial, token }: any) {
     return encodeURI(cleanPath);
   };
 
-  const navItems = [
-    { label: "Slideshow", href: "#slideshow" },
-    { label: isLivingLegacy ? "My Story" : "Life Story", href: "#life-story" },
-    { label: isLivingLegacy ? "Blessings" : "Tributes", href: "#tributes" },
-    { label: "Family Tree", href: "#family-tree" },
-    { label: "Chat", href: "#chat" },
-    { label: isLivingLegacy ? "Messages" : "Guestbook", href: "#guestbook" },
+  const navItems: {
+    label: string;
+    href: string;
+    section: ActiveSection;
+  }[] = [
+    { label: "Slideshow", href: "#slideshow", section: "story" },
+    {
+      label: isLivingLegacy ? "My Story" : "Life Story",
+      href: "#legacy-sections",
+      section: "story",
+    },
+    {
+      label: isLivingLegacy ? "Blessings" : "Tributes",
+      href: "#legacy-sections",
+      section: "blessings",
+    },
+    {
+      label: "Family Tree",
+      href: "#legacy-sections",
+      section: "family-tree",
+    },
+    { label: "Chat", href: "#legacy-sections", section: "chat" },
+    {
+      label: isLivingLegacy ? "Messages" : "Guestbook",
+      href: "#legacy-sections",
+      section: "messages",
+    },
   ];
 
   const publicNavItems = [
@@ -180,6 +265,19 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const closeMenu = () => {
     setMenuOpen(false);
+  };
+
+  const goToSection = (section: ActiveSection, href = "#legacy-sections") => {
+    setActiveSection(section);
+    setMenuOpen(false);
+
+    setTimeout(() => {
+      const targetId = href.replace("#", "");
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
   };
 
   const MemorialHeader = ({ simple = false }: { simple?: boolean }) => (
@@ -217,13 +315,14 @@ export default function GuestAccess({ memorial, token }: any) {
 
           {!simple &&
             navItems.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => goToSection(item.section, item.href)}
                 className="text-gray-300 transition hover:text-[#d4af37]"
               >
                 {item.label}
-              </a>
+              </button>
             ))}
 
           <button
@@ -274,14 +373,14 @@ export default function GuestAccess({ memorial, token }: any) {
               </button>
             ) : (
               navItems.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => goToSection(item.section, item.href)}
+                  className="rounded-xl border border-[#1f2a44] bg-[#111a2e] px-4 py-3 text-left text-sm font-semibold text-gray-200 transition hover:border-[#d4af37] hover:text-[#d4af37]"
                 >
                   {item.label}
-                </a>
+                </button>
               ))
             )}
 
@@ -493,12 +592,63 @@ export default function GuestAccess({ memorial, token }: any) {
     await loadGuestbook();
   };
 
-  const candleReactions = reactions.filter(
-    (reaction) => reaction.reaction_type === "candle"
-  );
+  const renderFeatureCards = () => (
+    <section
+      id="legacy-sections"
+      className="mx-auto max-w-6xl px-4 py-8 sm:px-6"
+    >
+      <div className="mb-5 text-center">
+        <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+          Explore This Legacy
+        </p>
 
-  const flowerReactions = reactions.filter(
-    (reaction) => reaction.reaction_type === "flower"
+        <h2 className="font-serif text-3xl text-white">
+          Choose What You Want To View
+        </h2>
+
+        <p className="mx-auto mt-2 max-w-2xl text-sm text-gray-400">
+          Tap a card below to open that section without making the page too
+          long.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        {featureCards.map((card) => {
+          const isActive = activeSection === card.key;
+
+          return (
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => setActiveSection(card.key)}
+              className={`rounded-2xl border p-4 text-center shadow-xl transition hover:-translate-y-1 ${
+                isActive
+                  ? "border-[#d4af37] bg-[#d4af37] text-black"
+                  : "border-[#d4af37]/20 bg-[#111a2e] text-white hover:border-[#d4af37]/70"
+              }`}
+            >
+              <div className="mb-2 text-3xl">{card.icon}</div>
+
+              <h3
+                className={`font-serif text-lg ${
+                  isActive ? "text-black" : "text-[#d4af37]"
+                }`}
+              >
+                {card.title}
+              </h3>
+
+              <p
+                className={`mt-2 text-xs leading-relaxed ${
+                  isActive ? "text-black/75" : "text-gray-400"
+                }`}
+              >
+                {card.text}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 
   if (!allowed) {
@@ -891,113 +1041,104 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
-      <section
-        id="life-story"
-        className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-3"
-      >
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
-          <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
-            {isLivingLegacy ? "Personal Story" : "Legacy Story"}
-          </p>
+      {renderFeatureCards()}
 
-          <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-            {lifeStoryTitle}
-          </h2>
-
-          <p className="leading-relaxed text-gray-300">
-            {memorial.biography || storyEmptyText}
-          </p>
-        </div>
-
-        <div className="space-y-4">
-          <button
-            onClick={openCandleModal}
-            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-          >
-            <div className="mb-3 text-4xl">
-              {isLivingLegacy ? "❤️" : "🕯️"}
-            </div>
-            <h3 className="font-serif text-xl">{candleActionLabel}</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              {candles} {candleCountText}
+      {activeSection === "story" && (
+        <section className="mx-auto grid max-w-5xl grid-cols-1 gap-6 px-4 py-8 sm:px-6 md:grid-cols-3">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 md:col-span-2">
+            <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+              {isLivingLegacy ? "Personal Story" : "Legacy Story"}
             </p>
-          </button>
 
-          <button
-            onClick={openFlowerModal}
-            className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
-          >
-            <div className="mb-3 text-4xl">🌸</div>
-            <h3 className="font-serif text-xl">{flowerActionLabel}</h3>
-            <p className="mt-2 text-sm text-gray-400">
-              {flowers} {flowerCountText}
+            <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
+              {lifeStoryTitle}
+            </h2>
+
+            <p className="leading-relaxed text-gray-300">
+              {memorial.biography || storyEmptyText}
             </p>
-          </button>
-        </div>
-      </section>
+          </div>
 
-      <section
-        id="tributes"
-        className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-10 sm:px-6 md:grid-cols-2"
-      >
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-            {candleRoomTitle}
-          </h2>
+          <div className="space-y-4">
+            <button
+              onClick={() => {
+                setActiveSection("blessings");
+                openCandleModal();
+              }}
+              className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
+            >
+              <div className="mb-3 text-4xl">
+                {isLivingLegacy ? "❤️" : "🕯️"}
+              </div>
+              <h3 className="font-serif text-xl">{candleActionLabel}</h3>
+              <p className="mt-2 text-sm text-gray-400">
+                {candles} {candleCountText}
+              </p>
+            </button>
 
-          {candleReactions.length === 0 ? (
-            <p className="text-gray-400">{candleEmptyText}</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {candleReactions.map((reaction: any) => (
-                <div
-                  key={reaction.id}
-                  className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
-                >
-                  <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/10 shadow-[0_0_30px_rgba(212,175,55,0.35)]">
-                    <span className="animate-pulse text-5xl">
-                      {isLivingLegacy ? "❤️" : "🕯️"}
-                    </span>
-                  </div>
+            <button
+              onClick={() => {
+                setActiveSection("flowers");
+                openFlowerModal();
+              }}
+              className="w-full rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 text-center transition hover:border-[#d4af37]"
+            >
+              <div className="mb-3 text-4xl">🌸</div>
+              <h3 className="font-serif text-xl">{flowerActionLabel}</h3>
+              <p className="mt-2 text-sm text-gray-400">
+                {flowers} {flowerCountText}
+              </p>
+            </button>
+          </div>
+        </section>
+      )}
 
-                  <p className="font-semibold text-white">
-                    {reaction.guest_name}
-                  </p>
+      {activeSection === "blessings" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                  {isLivingLegacy ? "Words of Love" : "Tributes"}
+                </p>
 
-                  {reaction.message && (
-                    <p className="mt-3 text-sm italic text-gray-300">
-                      “{reaction.message}”
-                    </p>
-                  )}
-                </div>
-              ))}
+                <h2 className="font-serif text-2xl text-[#d4af37]">
+                  {candleRoomTitle}
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-400">
+                  {candles} {candleCountText}
+                </p>
+              </div>
+
+              <button
+                onClick={openCandleModal}
+                className="rounded-xl bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#f0c94a]"
+              >
+                {candleActionLabel}
+              </button>
             </div>
-          )}
-        </div>
 
-        <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-2 font-serif text-2xl text-[#d4af37]">
-            Flower Garden
-          </h2>
-
-          {flowerReactions.length === 0 ? (
-            <p className="text-gray-400">{flowerEmptyText}</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {flowerReactions.map((reaction: any) => {
-                const selectedFlower =
-                  flowerOptions[reaction.flower_type] || "🌸";
-
-                return (
+            {candleReactions.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                {candleEmptyText}
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {candleReactions.map((reaction: any) => (
                   <div
                     key={reaction.id}
                     className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
                   >
-                    <div className="mb-3 text-6xl">{selectedFlower}</div>
-
-                    <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
-                      {flowerByLabel} {reaction.guest_name}
+                    <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-full bg-[#d4af37]/10 shadow-[0_0_30px_rgba(212,175,55,0.35)]">
+                      <span className="animate-pulse text-5xl">
+                        {isLivingLegacy ? "❤️" : "🕯️"}
+                      </span>
                     </div>
+
+                    <p className="font-semibold text-white">
+                      {reaction.guest_name}
+                    </p>
 
                     {reaction.message && (
                       <p className="mt-3 text-sm italic text-gray-300">
@@ -1005,126 +1146,190 @@ export default function GuestAccess({ memorial, token }: any) {
                       </p>
                     )}
                   </div>
-                );
-              })}
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeSection === "flowers" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                  Flower Garden
+                </p>
+
+                <h2 className="font-serif text-2xl text-[#d4af37]">
+                  {isLivingLegacy ? "Flowers Sent With Love" : "Flower Garden"}
+                </h2>
+
+                <p className="mt-2 text-sm text-gray-400">
+                  {flowers} {flowerCountText}
+                </p>
+              </div>
+
+              <button
+                onClick={openFlowerModal}
+                className="rounded-xl bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#f0c94a]"
+              >
+                {flowerActionLabel}
+              </button>
             </div>
-          )}
-        </div>
-      </section>
 
-      <section
-        id="family-tree"
-        className="mx-auto max-w-6xl px-4 py-10 sm:px-6"
-      >
-        <FamilyTreeView token={token} />
-      </section>
+            {flowerReactions.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                {flowerEmptyText}
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {flowerReactions.map((reaction: any) => {
+                  const selectedFlower =
+                    flowerOptions[reaction.flower_type] || "🌸";
 
-      <section id="chat" className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-        <ChatBox memorialId={memorial.id} guestName={messageName || guestName} />
-      </section>
+                  return (
+                    <div
+                      key={reaction.id}
+                      className="rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-4 text-center"
+                    >
+                      <div className="mb-3 text-6xl">{selectedFlower}</div>
 
-      <section id="guestbook" className="mx-auto max-w-5xl px-4 pb-16 sm:px-6">
-        <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
-          <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
-            {guestbookTitle}
-          </h2>
+                      <div className="mx-auto mb-2 w-fit rounded-full border border-[#d4af37]/40 px-3 py-1 text-xs text-[#d4af37]">
+                        {flowerByLabel} {reaction.guest_name}
+                      </div>
 
-          <input
-            className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-            placeholder="Your Name"
-            value={messageName}
-            onChange={(e) => setMessageName(e.target.value)}
-          />
+                      {reaction.message && (
+                        <p className="mt-3 text-sm italic text-gray-300">
+                          “{reaction.message}”
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
-          <textarea
-            className="mb-3 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
-            placeholder={guestbookPlaceholder}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
+      {activeSection === "family-tree" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <FamilyTreeView token={token} />
+        </section>
+      )}
 
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
-              Photo
-              <input
-                type="file"
-                accept="image/*"
-                className="mt-2 w-full text-xs"
-                onChange={(e) => setImage(e.target.files?.[0] || null)}
-              />
-            </label>
+      {activeSection === "chat" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <ChatBox memorialId={memorial.id} guestName={messageName || guestName} />
+        </section>
+      )}
 
-            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
-              Video
-              <input
-                type="file"
-                accept="video/*"
-                className="mt-2 w-full text-xs"
-                onChange={(e) => setVideo(e.target.files?.[0] || null)}
-              />
-            </label>
+      {activeSection === "messages" && (
+        <section className="mx-auto max-w-5xl px-4 py-8 pb-16 sm:px-6">
+          <div className="mb-6 rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <h2 className="mb-4 font-serif text-2xl text-[#d4af37]">
+              {guestbookTitle}
+            </h2>
 
-            <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
-              Audio
-              <input
-                type="file"
-                accept="audio/*"
-                className="mt-2 w-full text-xs"
-                onChange={(e) => setAudio(e.target.files?.[0] || null)}
-              />
-            </label>
+            <input
+              className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+              placeholder="Your Name"
+              value={messageName}
+              onChange={(e) => setMessageName(e.target.value)}
+            />
+
+            <textarea
+              className="mb-3 min-h-[100px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+              placeholder={guestbookPlaceholder}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+              <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+                Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="mt-2 w-full text-xs"
+                  onChange={(e) => setImage(e.target.files?.[0] || null)}
+                />
+              </label>
+
+              <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+                Video
+                <input
+                  type="file"
+                  accept="video/*"
+                  className="mt-2 w-full text-xs"
+                  onChange={(e) => setVideo(e.target.files?.[0] || null)}
+                />
+              </label>
+
+              <label className="rounded border border-[#2a3550] bg-[#0b1320] p-3 text-sm text-gray-300">
+                Audio
+                <input
+                  type="file"
+                  accept="audio/*"
+                  className="mt-2 w-full text-xs"
+                  onChange={(e) => setAudio(e.target.files?.[0] || null)}
+                />
+              </label>
+            </div>
+
+            <button
+              onClick={submitGuestbook}
+              className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
+            >
+              {isLivingLegacy ? "Post Family Message" : "Post to Guestbook"}
+            </button>
           </div>
 
-          <button
-            onClick={submitGuestbook}
-            className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
-          >
-            {isLivingLegacy ? "Post Family Message" : "Post to Guestbook"}
-          </button>
-        </div>
+          <div className="space-y-4">
+            {entries.length === 0 ? (
+              <p className="text-center text-gray-400">{noGuestbookText}</p>
+            ) : (
+              entries.map((entry: any) => (
+                <div
+                  key={entry.id}
+                  className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5"
+                >
+                  <h3 className="font-semibold text-white">
+                    {entry.guest_name}
+                  </h3>
 
-        <div className="space-y-4">
-          {entries.length === 0 ? (
-            <p className="text-center text-gray-400">{noGuestbookText}</p>
-          ) : (
-            entries.map((entry: any) => (
-              <div
-                key={entry.id}
-                className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-5"
-              >
-                <h3 className="font-semibold text-white">
-                  {entry.guest_name}
-                </h3>
+                  <p className="mt-2 text-gray-300">{entry.message}</p>
 
-                <p className="mt-2 text-gray-300">{entry.message}</p>
+                  {entry.image_url && (
+                    <img
+                      src={safeMediaPath(entry.image_url)}
+                      alt="Guestbook image"
+                      className="mt-4 max-h-[520px] w-full rounded-xl bg-white object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  )}
 
-                {entry.image_url && (
-                  <img
-                    src={safeMediaPath(entry.image_url)}
-                    alt="Guestbook image"
-                    className="mt-5 max-h-[520px] w-full bg-white object-contain"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                )}
+                  {entry.video_url && (
+                    <video controls className="mt-4 w-full rounded-xl">
+                      <source src={safeMediaPath(entry.video_url)} />
+                    </video>
+                  )}
 
-                {entry.video_url && (
-                  <video controls className="mt-4 w-full rounded-xl">
-                    <source src={safeMediaPath(entry.video_url)} />
-                  </video>
-                )}
-
-                {entry.audio_url && (
-                  <audio controls className="mt-4 w-full">
-                    <source src={safeMediaPath(entry.audio_url)} />
-                  </audio>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+                  {entry.audio_url && (
+                    <audio controls className="mt-4 w-full">
+                      <source src={safeMediaPath(entry.audio_url)} />
+                    </audio>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
