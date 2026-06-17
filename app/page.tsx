@@ -184,6 +184,90 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* GIFT A LEGACY */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
+        <div className="overflow-hidden rounded-3xl border border-[#d4af37]/25 bg-[#082652] shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative min-h-[340px] overflow-hidden">
+              <img
+                src="/images/welcome-hero.jpg"
+                alt="Gift a legacy page to family"
+                className="absolute inset-0 h-full w-full object-cover opacity-55"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-r from-[#061b3a]/95 via-[#061b3a]/70 to-transparent" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(212,175,55,0.28),transparent_35%)]" />
+
+              <div className="relative z-10 flex min-h-[340px] flex-col justify-center p-7 sm:p-10">
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#061b3a]/70 text-3xl backdrop-blur">
+                  🎁
+                </div>
+
+                <p className="mb-3 text-sm uppercase tracking-[0.3em] text-[#d4af37]">
+                  Gift A Legacy
+                </p>
+
+                <h2 className="max-w-xl font-serif text-3xl leading-tight text-white sm:text-4xl md:text-5xl">
+                  Give someone the gift of preserving their story.
+                </h2>
+
+                <p className="mt-5 max-w-xl text-base leading-relaxed text-gray-300">
+                  Buy a Living Legacy or Memorial package for a parent,
+                  grandparent, family elder, loved one, or friend. They can
+                  create their page later, and the package will already be paid
+                  for.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col justify-center p-7 sm:p-10">
+              <div className="mb-6 rounded-2xl border border-[#d4af37]/20 bg-[#061b3a]/75 p-5">
+                <h3 className="mb-3 font-serif text-2xl text-[#d4af37]">
+                  Perfect for:
+                </h3>
+
+                <div className="grid grid-cols-1 gap-3 text-sm text-gray-300 sm:grid-cols-2">
+                  <div className="rounded-xl border border-[#d4af37]/10 bg-[#082652] p-3">
+                    ✓ Parents
+                  </div>
+                  <div className="rounded-xl border border-[#d4af37]/10 bg-[#082652] p-3">
+                    ✓ Grandparents
+                  </div>
+                  <div className="rounded-xl border border-[#d4af37]/10 bg-[#082652] p-3">
+                    ✓ Family elders
+                  </div>
+                  <div className="rounded-xl border border-[#d4af37]/10 bg-[#082652] p-3">
+                    ✓ Memorial tributes
+                  </div>
+                </div>
+              </div>
+
+              <p className="mb-6 text-sm leading-relaxed text-gray-300">
+                A gift order lets someone pay for the legacy page first. Once
+                the recipient or family links the gift to their page, the page
+                can be activated without asking them to pay again.
+              </p>
+
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <a
+                  href="/gift/start"
+                  className="rounded-full bg-[#d4af37] px-8 py-4 text-center font-semibold text-[#061b3a] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+                >
+                  Buy A Legacy Page As A Gift
+                </a>
+
+                <a
+                  href="/packages"
+                  className="rounded-full border border-[#d4af37]/60 px-8 py-4 text-center font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#061b3a]"
+                >
+                  View Packages First
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
         <div className="mb-12 text-center">
