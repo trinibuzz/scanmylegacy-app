@@ -28,16 +28,16 @@ function PackagesContent() {
     : "Legacy Page";
 
   const heroTitle = isLiving
-    ? "Choose the plan for your living legacy page."
+    ? "Invest in a living legacy your family can keep forever."
     : isMemorial
-    ? "Choose the plan that honors your loved one."
-    : "Choose the legacy plan that fits your family.";
+    ? "Choose a memorial package worthy of their memory."
+    : "Choose the legacy package that fits your family.";
 
   const heroText = isLiving
-    ? "Create a secure place to preserve your life story, final wishes, family messages, photos, videos, and important instructions for the people you love."
+    ? "Preserve your life story, family wisdom, photos, videos, messages, wishes, and memories in one secure page your loved ones can visit for years to come."
     : isMemorial
-    ? "Start with a free tribute or choose a lasting memorial package designed to preserve photos, stories, tributes, and family memories for years to come."
-    : "Choose a package for a living legacy page or a memorial page. Preserve stories, wishes, photos, videos, and family memories for generations.";
+    ? "Create a beautiful digital memorial where family and friends can visit, share memories, leave tributes, light candles, send flowers, and keep your loved one’s legacy alive."
+    : "Build a living legacy page or a memorial page with photos, stories, messages, family history, and memories preserved in one beautiful place.";
 
   const cleanPackagesLink = pageType
     ? `/packages?type=${pageType}`
@@ -46,58 +46,92 @@ function PackagesContent() {
   const packages = [
     {
       name: "Starter Tribute",
+      badge: "Free Trial",
       usd: "Free",
       ttd: "Free",
       years: "14 Days",
       slug: "starter-tribute",
       amount: 0,
+      description:
+        "A simple way to start building a legacy page and see how it works.",
+      includesLine: "Starter includes:",
+      bestFor: "Best for testing the service",
       features: [
-        "Guest Book",
-        "Life Timeline",
-        "Stories & Tributes",
+        "Private legacy page",
+        "Guest Access for family and friends",
+        "Guestbook / Family Messages",
+        "Life Story section",
         "Family Tree",
+        "Slideshow preview",
       ],
     },
     {
       name: "Standard Legacy",
+      badge: "Popular Start",
       usd: "$59.00 USD",
       ttd: "TTD $400.00",
       years: "3 Years",
       slug: "standard-legacy",
       amount: 59,
+      description:
+        "A stronger package for families who want a complete legacy page with sharing and core memory features.",
+      includesLine: "Includes everything in Starter, plus:",
+      bestFor: "Best for most families getting started",
       features: [
-        "Secure Hosting",
-        "Sharable Legacy Page",
-        "Photo Upload",
-        "Guest Access",
+        "Everything in Starter Tribute",
+        "Secure hosting for 3 years",
+        "Shareable legacy page link",
+        "Photo uploads",
+        "Legacy music / voice note",
+        "Blessings or candle feature",
+        "Flower garden",
+        "Family chatroom",
       ],
     },
     {
       name: "Premium Legacy",
+      badge: "Best Value",
       usd: "$89.00 USD",
       ttd: "TTD $600.00",
       years: "5 Years",
       slug: "premium-legacy",
       amount: 89,
+      description:
+        "The better family package for preserving more memories, media, and heartfelt messages over a longer time.",
+      includesLine: "Includes everything in Standard, plus:",
+      bestFor: "Best for families sharing photos, videos, and audio",
       features: [
-        "Priority Support",
-        "Extended Storage",
-        "Photo/Video/Audio Memories",
-        "Guestbook",
+        "Everything in Standard Legacy",
+        "5 years of legacy access",
+        "Photo, video, and audio memories",
+        "Full Guestbook / Family Messages with media",
+        "Larger gallery storage",
+        "Priority support",
+        "Extended legacy storage",
+        "Better for active family participation",
       ],
     },
     {
       name: "Eternal Legacy",
+      badge: "Lifetime",
       usd: "$129.00 USD",
       ttd: "TTD $875.00",
       years: "Lifetime",
       slug: "eternal-legacy",
       amount: 129,
+      description:
+        "The long-term preservation package for families who want their legacy page kept as a lasting family archive.",
+      includesLine: "Includes everything in Premium, plus:",
+      bestFor: "Best for lifetime family preservation",
       features: [
-        "Lifetime Access",
-        "Permanent Hosting",
-        "Unlimited Memory Preservation",
-        "Premium Legacy Page",
+        "Everything in Premium Legacy",
+        "Lifetime access",
+        "Permanent hosting",
+        "Unlimited memory preservation",
+        "Premium legacy page",
+        "Long-term family history archive",
+        "Best value for generations",
+        "Maintenance only $25 USD every 5 years",
       ],
     },
   ];
@@ -164,8 +198,14 @@ function PackagesContent() {
               {heroText}
             </p>
 
-            <div className="mt-8 inline-flex rounded-full border border-[#d4af37]/40 bg-[#0b1320]/45 px-5 py-3 text-sm font-semibold text-[#d4af37] backdrop-blur">
-              Selected: {pageTypeLabel}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <div className="inline-flex rounded-full border border-[#d4af37]/40 bg-[#0b1320]/45 px-5 py-3 text-sm font-semibold text-[#d4af37] backdrop-blur">
+                Selected: {pageTypeLabel}
+              </div>
+
+              <div className="inline-flex rounded-full border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white/85 backdrop-blur">
+                Higher packages include all smaller package features
+              </div>
             </div>
           </div>
         </div>
@@ -212,13 +252,13 @@ function PackagesContent() {
             </p>
 
             <h2 className="mb-4 font-serif text-3xl text-white">
-              Your Free Memorial Trial Has Ended
+              Your Free Trial Has Ended
             </h2>
 
             <p className="mx-auto max-w-2xl text-gray-300">
-              Your free memorial trial has ended, but the memories don’t have
-              to stop here. Please choose a paid package to continue
-              celebrating, preserving, and sharing your loved one’s legacy.
+              Your free trial has ended, but the memories do not have to stop
+              here. Please choose a paid package to continue preserving and
+              sharing this legacy page.
             </p>
           </div>
         )}
@@ -247,25 +287,73 @@ function PackagesContent() {
             Select Your Package
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-gray-300">
-            Your package will continue as a {pageTypeLabel.toLowerCase()}.
+          <p className="mx-auto mt-4 max-w-3xl text-gray-300">
+            Each package builds on the one before it. Choose the plan that gives
+            your family the level of preservation, access, and media support
+            they need.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-10 grid gap-4 rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-2xl md:grid-cols-2">
+          <div>
+            <h3 className="mb-2 font-serif text-2xl text-[#d4af37]">
+              What is Guest Access?
+            </h3>
+
+            <p className="text-sm leading-relaxed text-gray-300">
+              Guest Access lets invited family and friends enter the private
+              legacy page by typing their name. This allows them to view the
+              page, slideshow, story, family tree, blessings, flowers, chat, and
+              available memories.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="mb-2 font-serif text-2xl text-[#d4af37]">
+              What is Guestbook / Family Messages?
+            </h3>
+
+            <p className="text-sm leading-relaxed text-gray-300">
+              Guestbook or Family Messages lets visitors leave written
+              memories, tributes, blessings, photos, videos, and audio messages
+              on the page. It is where family members can contribute to the
+              legacy, not just view it.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 xl:grid-cols-4">
           {packages.map((pkg) => {
             const freeTrialBlocked = expiredTrial && pkg.amount === 0;
+            const isBestValue = pkg.slug === "premium-legacy";
+            const isLifetime = pkg.slug === "eternal-legacy";
 
             return (
               <div
                 key={pkg.slug}
-                className={`flex min-h-[520px] flex-col rounded-2xl border p-8 shadow-xl transition ${
+                className={`relative flex min-h-[660px] flex-col rounded-3xl border p-7 shadow-xl transition ${
                   freeTrialBlocked
                     ? "border-gray-700 bg-[#111a2e]/40 opacity-50"
+                    : isBestValue
+                    ? "border-[#d4af37] bg-[#111a2e] shadow-[0_0_35px_rgba(212,175,55,0.2)] hover:-translate-y-1"
                     : "border-[#d4af37]/40 bg-[#111a2e] hover:-translate-y-1 hover:border-[#d4af37]"
                 }`}
               >
-                <div className="text-center">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                  <span
+                    className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] ${
+                      isBestValue
+                        ? "bg-[#d4af37] text-[#0b1320]"
+                        : isLifetime
+                        ? "bg-white text-[#0b1320]"
+                        : "border border-[#d4af37]/40 bg-[#0b1320] text-[#d4af37]"
+                    }`}
+                  >
+                    {pkg.badge}
+                  </span>
+                </div>
+
+                <div className="pt-4 text-center">
                   <h2
                     className={`mb-3 font-serif text-2xl ${
                       freeTrialBlocked ? "text-gray-400" : "text-white"
@@ -288,6 +376,14 @@ function PackagesContent() {
                     {pkg.years}
                   </div>
 
+                  <p className="mx-auto mt-4 min-h-[72px] text-sm leading-relaxed text-gray-300">
+                    {pkg.description}
+                  </p>
+
+                  <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] px-4 py-3 text-xs font-semibold text-[#d4af37]">
+                    {pkg.bestFor}
+                  </div>
+
                   {freeTrialBlocked && (
                     <div className="mt-4 rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-200">
                       Free Trial Already Used
@@ -295,26 +391,39 @@ function PackagesContent() {
                   )}
                 </div>
 
-                <ul className="mt-8 flex-1 space-y-3 text-gray-300">
-                  {pkg.features.map((feature) => (
-                    <li key={feature}>✓ {feature}</li>
-                  ))}
-                </ul>
+                <div className="mt-7">
+                  <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    {pkg.includesLine}
+                  </p>
+
+                  <ul className="flex-1 space-y-3 text-sm leading-relaxed text-gray-300">
+                    {pkg.features.map((feature) => (
+                      <li key={feature} className="flex gap-2">
+                        <span className="text-[#d4af37]">✓</span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 {freeTrialBlocked ? (
                   <button
                     type="button"
                     disabled
-                    className="mt-8 block cursor-not-allowed rounded-full bg-gray-700 px-6 py-4 text-center font-semibold text-gray-300"
+                    className="mt-auto block cursor-not-allowed rounded-full bg-gray-700 px-6 py-4 text-center font-semibold text-gray-300"
                   >
                     Free Trial Used
                   </button>
                 ) : (
                   <a
                     href={buildPackageLink(pkg)}
-                    className="mt-8 block rounded-full bg-[#d4af37] px-6 py-4 text-center font-semibold text-[#0b1320] shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+                    className={`mt-auto block rounded-full px-6 py-4 text-center font-semibold shadow-xl transition hover:scale-105 ${
+                      isBestValue
+                        ? "bg-[#f0c94a] text-[#0b1320] hover:bg-[#d4af37]"
+                        : "bg-[#d4af37] text-[#0b1320] hover:bg-[#f0c94a]"
+                    }`}
                   >
-                    Get Started
+                    {pkg.amount === 0 ? "Start Free Trial" : "Get Started"}
                   </a>
                 )}
               </div>
