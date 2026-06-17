@@ -78,7 +78,6 @@ export async function GET(req: Request) {
           message,
           flower_type,
           created_at,
-          updated_at,
           TIMESTAMPDIFF(SECOND, created_at, NOW()) AS seconds_old
        FROM memorial_reactions
        WHERE memorial_id = ?
