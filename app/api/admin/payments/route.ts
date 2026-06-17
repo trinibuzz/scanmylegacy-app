@@ -11,6 +11,40 @@ async function isAdminAuthorized() {
   return adminSession?.value === "active";
 }
 
+function quoteIdentifier(identifier: string) {
+  return `\`${String(identifier).replace(/`/g, "``")}\``;
+}
+
+async function deleteLegacyPageSafely(memorialId: number) {
+  /*
+    This removes records connected by memorial_id from any table that has
+    a memorial_id column, then deletes the main memorial/legacy page.
+    It does NOT delete the user account.
+  */
+
+  const [tablesWithMemorialId]: any = await db.execute(
+    `
+      SELECT TABLE_NAME AS table_name
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND COLUMN_NAME = 'memorial_id'
+    `
+  );
+
+  for (const table of tablesWithMemorialId) {
+    const tableName = table.table_name;
+
+    if (!tableName || tableName === "memorials") continue;
+
+    await db.execute(
+      `DELETE FROM ${quoteIdentifier(tableName)} WHERE memorial_id = ?`,
+      [memorialId]
+    );
+  }
+
+  await db.execute(`DELETE FROM memorials WHERE id = ?`, [memorialId]);
+}
+
 export async function GET() {
   try {
     const authorized = await isAdminAuthorized();
@@ -51,7 +85,8 @@ export async function GET() {
             'expired_bank_transfer',
             'rejected_bank_transfer',
             'pending',
-            'paid'
+            'paid',
+            'verified'
           )
        ORDER BY 
           CASE 
@@ -60,7 +95,8 @@ export async function GET() {
             WHEN m.payment_status = 'rejected_bank_transfer' THEN 3
             WHEN m.payment_status = 'pending' THEN 4
             WHEN m.payment_status = 'paid' THEN 5
-            ELSE 6
+            WHEN m.payment_status = 'verified' THEN 6
+            ELSE 7
           END,
           m.created_at DESC`
     );
@@ -72,7 +108,7 @@ export async function GET() {
   } catch (error: any) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message || "Failed to load payment records.",
       },
       { status: 500 }
     );
@@ -92,7 +128,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const memorialId = body.memorial_id;
+    const memorialId = Number(body.memorial_id);
     const action = body.action;
 
     if (!memorialId || !action) {
@@ -109,7 +145,7 @@ export async function POST(req: Request) {
 
     if (rows.length === 0) {
       return NextResponse.json(
-        { error: "Memorial not found." },
+        { error: "Memorial / legacy page not found." },
         { status: 404 }
       );
     }
@@ -144,7 +180,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "Payment verified. Memorial is now active permanently.",
+        message: "Payment verified. Legacy page is now active permanently.",
       });
     }
 
@@ -195,6 +231,16 @@ export async function POST(req: Request) {
       });
     }
 
+    if (action === "delete_legacy_page") {
+      await deleteLegacyPageSafely(memorialId);
+
+      return NextResponse.json({
+        success: true,
+        message:
+          "Legacy page deleted successfully. The owner account was not deleted.",
+      });
+    }
+
     return NextResponse.json(
       { error: "Invalid payment action." },
       { status: 400 }
@@ -202,7 +248,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     return NextResponse.json(
       {
-        error: error.message,
+        error: error.message || "Payment action failed.",
       },
       { status: 500 }
     );

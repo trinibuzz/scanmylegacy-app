@@ -101,12 +101,16 @@ export default function AdminPaymentsPage() {
     return { total, verified, pending, expired, rejected };
   }, [records]);
 
-  const updatePayment = async (memorialId: number, action: string) => {
+  const updatePayment = async (
+    memorialId: number,
+    action: string,
+    pageName?: string | null
+  ) => {
     let message = "Are you sure you want to update this payment?";
 
     if (action === "verify_payment") {
       message =
-        "Verify this payment? This will mark the memorial as paid and permanently active.";
+        "Verify this payment? This will mark the legacy page as paid and permanently active.";
     }
 
     if (action === "reject_payment") {
@@ -116,16 +120,37 @@ export default function AdminPaymentsPage() {
 
     if (action === "mark_expired") {
       message =
-        "Mark this payment as expired? The memorial will be deactivated until payment is verified.";
+        "Mark this payment as expired? The legacy page will be deactivated until payment is verified.";
     }
 
     if (action === "reactivate_pending") {
       message =
-        "Reopen this payment review for 48 hours? The memorial will become temporarily active again.";
+        "Reopen this payment review for 48 hours? The legacy page will become temporarily active again.";
     }
 
-    const confirmed = confirm(message);
-    if (!confirmed) return;
+    if (action === "delete_legacy_page") {
+      const confirmed = confirm(
+        `Permanently delete this legacy page?\n\nPage: ${
+          pageName || "Untitled Page"
+        }\n\nThis will remove the page and related records. The owner account will NOT be deleted.\n\nThis cannot be undone.`
+      );
+
+      if (!confirmed) return;
+
+      const typed = prompt(
+        `To confirm deletion, type DELETE below.\n\nPage: ${
+          pageName || "Untitled Page"
+        }`
+      );
+
+      if (typed !== "DELETE") {
+        alert("Delete cancelled. You did not type DELETE.");
+        return;
+      }
+    } else {
+      const confirmed = confirm(message);
+      if (!confirmed) return;
+    }
 
     try {
       setWorkingId(memorialId);
@@ -286,8 +311,8 @@ export default function AdminPaymentsPage() {
 
             <p className="mt-3 max-w-3xl text-sm leading-6 text-white/70">
               Review customer bank transfer references, verify payments, reject
-              payments, expire unpaid records, or reopen a 48-hour review
-              window.
+              payments, expire unpaid records, reopen a 48-hour review window,
+              or delete test legacy pages.
             </p>
           </div>
 
@@ -489,7 +514,11 @@ export default function AdminPaymentsPage() {
                           type="button"
                           disabled={isWorking || isVerified}
                           onClick={() =>
-                            updatePayment(item.id, "verify_payment")
+                            updatePayment(
+                              item.id,
+                              "verify_payment",
+                              item.full_name
+                            )
                           }
                           className="rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-400"
                         >
@@ -500,7 +529,11 @@ export default function AdminPaymentsPage() {
                           type="button"
                           disabled={isWorking || isVerified}
                           onClick={() =>
-                            updatePayment(item.id, "reject_payment")
+                            updatePayment(
+                              item.id,
+                              "reject_payment",
+                              item.full_name
+                            )
                           }
                           className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
@@ -511,7 +544,11 @@ export default function AdminPaymentsPage() {
                           type="button"
                           disabled={isWorking || isVerified}
                           onClick={() =>
-                            updatePayment(item.id, "mark_expired")
+                            updatePayment(
+                              item.id,
+                              "mark_expired",
+                              item.full_name
+                            )
                           }
                           className="rounded-lg border border-yellow-400/40 bg-yellow-500/10 px-4 py-3 text-sm font-semibold text-yellow-100 transition hover:bg-yellow-500/20 disabled:cursor-not-allowed disabled:opacity-60"
                         >
@@ -522,11 +559,30 @@ export default function AdminPaymentsPage() {
                           type="button"
                           disabled={isWorking || isVerified}
                           onClick={() =>
-                            updatePayment(item.id, "reactivate_pending")
+                            updatePayment(
+                              item.id,
+                              "reactivate_pending",
+                              item.full_name
+                            )
                           }
                           className="rounded-lg border border-[#d4af37]/40 px-4 py-3 text-sm font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Reopen 48 Hours
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={isWorking}
+                          onClick={() =>
+                            updatePayment(
+                              item.id,
+                              "delete_legacy_page",
+                              item.full_name
+                            )
+                          }
+                          className="rounded-lg border border-red-500/50 bg-red-700/20 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-700/40 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Delete Legacy Page
                         </button>
                       </div>
 
@@ -547,7 +603,9 @@ export default function AdminPaymentsPage() {
           <p>
             <span className="font-semibold text-[#d4af37]">Note:</span> This
             page handles bank transfer and manual payment review. Gift payment
-            verification is handled separately in the gift order flow.
+            verification is handled separately in the gift order flow. Delete
+            Legacy Page removes the selected page and related page records only;
+            it does not delete the user account.
           </p>
         </div>
       </div>
