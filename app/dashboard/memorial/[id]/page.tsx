@@ -14,6 +14,7 @@ export default function ManageMemorialPage() {
   const [gallery, setGallery] = useState<any[]>([]);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [reactions, setReactions] = useState<any[]>([]);
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -79,6 +80,7 @@ export default function ManageMemorialPage() {
 
       setMemorial(data.memorial);
       setGallery(data.gallery || []);
+      setReactions(data.reactions || []);
 
       setFullName(data.memorial.full_name || "");
       setBirthDate(
@@ -148,6 +150,23 @@ export default function ManageMemorialPage() {
   const bankReviewText = isLivingLegacy
     ? "Your living legacy page is temporarily active while your bank transfer is being reviewed. You can view and manage this page during this review period."
     : "Your memorial is temporarily active while your bank transfer is being reviewed. You can view and manage this memorial during this review period.";
+
+  const reactionsTitle = isLivingLegacy
+    ? "Blessings & Flowers Manager"
+    : "Candles & Flowers Manager";
+
+  const noReactionsText = isLivingLegacy
+    ? "No blessings or flowers have been posted yet."
+    : "No candles or flowers have been posted yet.";
+
+  const flowerOptions: any = {
+    rose: "🌹",
+    tulip: "🌷",
+    sunflower: "🌻",
+    lily: "🌸",
+    hibiscus: "🌺",
+    orchid: "💮",
+  };
 
   const now = new Date();
 
@@ -292,6 +311,99 @@ export default function ManageMemorialPage() {
     }
 
     await loadChatMessages(String(memorial.id));
+  };
+
+  const editReaction = async (reaction: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const newMessage = prompt(
+      "Edit the blessing / flower message:",
+      reaction.message || ""
+    );
+
+    if (newMessage === null) return;
+
+    let newFlowerType = reaction.flower_type || "rose";
+
+    if (reaction.reaction_type === "flower") {
+      const flowerPrompt = prompt(
+        "Flower type: rose, tulip, sunflower, lily, hibiscus, or orchid",
+        newFlowerType
+      );
+
+      if (flowerPrompt === null) return;
+
+      newFlowerType = flowerPrompt.trim().toLowerCase() || "rose";
+    }
+
+    const res = await fetch(`/api/dashboard/memorial/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: "edit_reaction",
+        reaction_id: reaction.id,
+        message: newMessage,
+        flower_type: newFlowerType,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to update blessing or flower.");
+      return;
+    }
+
+    alert(data.message || "Blessing or flower updated.");
+    await loadMemorial();
+  };
+
+  const deleteReaction = async (reaction: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const label =
+      reaction.reaction_type === "flower"
+        ? "flower"
+        : isLivingLegacy
+        ? "blessing"
+        : "candle";
+
+    const confirmed = confirm(
+      `Delete this ${label}? This will remove it from the public page.`
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch(`/api/dashboard/memorial/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        reaction_id: reaction.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to delete blessing or flower.");
+      return;
+    }
+
+    await loadMemorial();
   };
 
   const formatDateTime = (dateValue: string) => {
@@ -631,6 +743,117 @@ export default function ManageMemorialPage() {
                       {renderChatMedia(msg)}
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#d4af37]">
+                    {reactionsTitle}
+                  </h2>
+
+                  <p className="mt-2 text-sm text-gray-400">
+                    Correct spelling, change flower type, or remove unwanted
+                    blessings and flowers from the public page.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={loadMemorial}
+                  className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-sm font-semibold text-[#d4af37]"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {reactions.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-5 text-center text-sm text-gray-400">
+                  {noReactionsText}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reactions.map((reaction) => {
+                    const isFlower = reaction.reaction_type === "flower";
+                    const reactionLabel = isFlower
+                      ? "Flower"
+                      : isLivingLegacy
+                      ? "Blessing"
+                      : "Candle";
+                    const selectedFlower =
+                      flowerOptions[reaction.flower_type] || "🌸";
+
+                    return (
+                      <div
+                        key={reaction.id}
+                        className="rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                      >
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className="text-2xl">
+                                {isFlower
+                                  ? selectedFlower
+                                  : isLivingLegacy
+                                  ? "❤️"
+                                  : "🕯️"}
+                              </span>
+
+                              <span className="rounded-full border border-[#d4af37]/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                                {reactionLabel}
+                              </span>
+                            </div>
+
+                            <p className="font-semibold text-white">
+                              {reaction.guest_name || "Someone"}
+                            </p>
+
+                            <p className="text-xs text-gray-500">
+                              {formatDateTime(reaction.created_at)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => editReaction(reaction)}
+                              disabled={!canManage}
+                              className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => deleteReaction(reaction)}
+                              disabled={!canManage}
+                              className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {isFlower && reaction.flower_type && (
+                          <p className="mb-2 text-xs text-gray-500">
+                            Flower type: {reaction.flower_type}
+                          </p>
+                        )}
+
+                        {reaction.message ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                            {reaction.message}
+                          </p>
+                        ) : (
+                          <p className="text-sm italic text-gray-500">
+                            No message entered.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

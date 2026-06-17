@@ -172,10 +172,29 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       file_url: cleanPublicPath(photo.file_url),
     }));
 
+    const [reactionRows]: any = await db.execute(
+      `
+      SELECT
+        id,
+        memorial_id,
+        reaction_type,
+        guest_name,
+        message,
+        flower_type,
+        created_at
+      FROM memorial_reactions
+      WHERE memorial_id = ?
+      ORDER BY created_at DESC
+      LIMIT 200
+      `,
+      [memorialId]
+    );
+
     return NextResponse.json({
       success: true,
       memorial,
       gallery,
+      reactions: reactionRows,
     });
   } catch (error: any) {
     console.error("Dashboard memorial GET error:", error);
@@ -335,7 +354,8 @@ export async function POST(
   }
 }
 
-export async function DELETE(
+
+export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
@@ -347,11 +367,23 @@ export async function DELETE(
     }
 
     const memorialId = params.id;
-    const { gallery_id } = await req.json();
+    const body = await req.json();
 
-    if (!gallery_id) {
+    const action = String(body.action || "");
+    const reactionId = Number(body.reaction_id);
+    const message = String(body.message || "").trim().slice(0, 1000);
+    const flowerType = String(body.flower_type || "rose").trim().slice(0, 50);
+
+    if (action !== "edit_reaction") {
       return NextResponse.json(
-        { error: "Gallery photo ID is required." },
+        { error: "Invalid dashboard action." },
+        { status: 400 }
+      );
+    }
+
+    if (!reactionId) {
+      return NextResponse.json(
+        { error: "Blessing or flower ID is required." },
         { status: 400 }
       );
     }
@@ -383,6 +415,117 @@ export async function DELETE(
         },
         { status: 403 }
       );
+    }
+
+    const [reactionRows]: any = await db.execute(
+      `
+      SELECT id, reaction_type
+      FROM memorial_reactions
+      WHERE id = ? AND memorial_id = ?
+      LIMIT 1
+      `,
+      [reactionId, memorialId]
+    );
+
+    if (reactionRows.length === 0) {
+      return NextResponse.json(
+        { error: "Blessing or flower not found." },
+        { status: 404 }
+      );
+    }
+
+    await db.execute(
+      `
+      UPDATE memorial_reactions
+      SET message = ?,
+          flower_type = CASE
+            WHEN reaction_type = 'flower' THEN ?
+            ELSE flower_type
+          END
+      WHERE id = ? AND memorial_id = ?
+      `,
+      [message, flowerType || "rose", reactionId, memorialId]
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Blessing or flower updated successfully.",
+    });
+  } catch (error: any) {
+    console.error("Dashboard memorial PATCH error:", error);
+
+    return NextResponse.json(
+      { error: error.message || "Unable to update blessing or flower." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const userId = await getSessionUserId();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const memorialId = params.id;
+    const body = await req.json();
+    const gallery_id = body.gallery_id;
+    const reaction_id = body.reaction_id;
+
+    if (!gallery_id && !reaction_id) {
+      return NextResponse.json(
+        { error: "Gallery photo ID or blessing/flower ID is required." },
+        { status: 400 }
+      );
+    }
+
+    const [checkRows]: any = await db.execute(
+      `
+      SELECT *
+      FROM memorials
+      WHERE id = ? AND user_id = ?
+      LIMIT 1
+      `,
+      [memorialId, userId]
+    );
+
+    if (checkRows.length === 0) {
+      return NextResponse.json(
+        { error: "Memorial not found." },
+        { status: 404 }
+      );
+    }
+
+    const memorial = await expireBankTransferIfNeeded(checkRows[0]);
+
+    if (!canManageMemorial(memorial)) {
+      return NextResponse.json(
+        {
+          error:
+            "This page is temporarily deactivated because payment was not verified within 48 hours.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (reaction_id) {
+      await db.execute(
+        `
+        DELETE FROM memorial_reactions
+        WHERE id = ? AND memorial_id = ?
+        `,
+        [reaction_id, memorialId]
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: "Blessing or flower deleted successfully.",
+      });
     }
 
     await db.execute(
