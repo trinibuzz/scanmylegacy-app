@@ -40,6 +40,12 @@ export default function GuestAccess({ memorial, token }: any) {
   const [tributeMessage, setTributeMessage] = useState("");
   const [flowerType, setFlowerType] = useState("rose");
 
+  const [showEditReactionModal, setShowEditReactionModal] = useState(false);
+  const [editingReaction, setEditingReaction] = useState<any>(null);
+  const [editReactionMessage, setEditReactionMessage] = useState("");
+  const [editReactionFlowerType, setEditReactionFlowerType] = useState("rose");
+  const [savingReactionEdit, setSavingReactionEdit] = useState(false);
+
   const pageType = memorial.page_type === "living" ? "living" : "memorial";
   const isLivingLegacy = pageType === "living";
 
@@ -103,10 +109,6 @@ export default function GuestAccess({ memorial, token }: any) {
     ? "Leave Blessing"
     : "Light Candle";
 
-  const candleAlertText = isLivingLegacy
-    ? "Blessing left ❤️"
-    : "Candle lit 🕯️";
-
   const flowerActionLabel = isLivingLegacy ? "Send Flowers" : "Plant a Flower";
 
   const flowerCountText = isLivingLegacy
@@ -119,10 +121,6 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const flowerSubmitLabel = isLivingLegacy ? "Send Flowers" : "Plant Flower";
   const flowerByLabel = isLivingLegacy ? "Sent by" : "Planted by";
-
-  const flowerAlertText = isLivingLegacy
-    ? "Flowers sent 🌸"
-    : "Flower planted 🌸";
 
   const heroSubText = isLivingLegacy
     ? "A living tribute filled with stories, memories, blessings, family love, and legacy."
@@ -148,6 +146,10 @@ export default function GuestAccess({ memorial, token }: any) {
     hibiscus: "🌺",
     orchid: "💮",
   };
+
+  const currentGuestName = String(messageName || guestName || "")
+    .trim()
+    .toLowerCase();
 
   const candleReactions = reactions.filter(
     (reaction) => reaction.reaction_type === "candle"
@@ -263,6 +265,19 @@ export default function GuestAccess({ memorial, token }: any) {
     { label: "Login", href: "/login" },
   ];
 
+  const canGuestEditReaction = (reaction: any) => {
+    const reactionGuestName = String(reaction.guest_name || "")
+      .trim()
+      .toLowerCase();
+
+    return (
+      reaction.guest_can_edit === true &&
+      Number(reaction.guest_edit_seconds_left || 0) > 0 &&
+      currentGuestName.length > 0 &&
+      reactionGuestName === currentGuestName
+    );
+  };
+
   const closeMenu = () => {
     setMenuOpen(false);
   };
@@ -278,6 +293,268 @@ export default function GuestAccess({ memorial, token }: any) {
         block: "start",
       });
     }, 80);
+  };
+
+  const galleryPhotos =
+    memorial.gallery_photos && memorial.gallery_photos.length > 0
+      ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
+      : memorial.cover_photo
+      ? [safeMediaPath(memorial.cover_photo)]
+      : [];
+
+  const loadGuestbook = async () => {
+    const res = await fetch(`/api/guestbook?token=${token}`);
+    const data = await res.json();
+    setEntries(data.entries || []);
+  };
+
+  const loadReactions = async () => {
+    const res = await fetch(`/api/reactions?token=${token}`);
+    const data = await res.json();
+
+    setCandles(data.candles || 0);
+    setFlowers(data.flowers || 0);
+    setReactions(data.reactions || []);
+  };
+
+  useEffect(() => {
+    if (allowed) {
+      loadGuestbook();
+      loadReactions();
+    }
+  }, [allowed]);
+
+  useEffect(() => {
+    if (!allowed) return;
+
+    const interval = setInterval(() => {
+      loadReactions();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [allowed]);
+
+  useEffect(() => {
+    if (!isSlideshowPlaying || galleryPhotos.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setActivePhoto((current) =>
+        current === galleryPhotos.length - 1 ? 0 : current + 1
+      );
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [isSlideshowPlaying, galleryPhotos.length]);
+
+  const enterMemorial = async () => {
+    if (!guestName.trim()) {
+      alert("Please enter your name to continue.");
+      return;
+    }
+
+    const res = await fetch("/api/guest-access", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        guest_name: guestName,
+        guest_email: guestEmail,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+
+    setMessageName(guestName);
+    setTributeName(guestName);
+    setVisitorCount(data.visitor_count || 0);
+    setAllowed(true);
+  };
+
+  const shareMemorial = async () => {
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: isLivingLegacy
+          ? `${memorial.full_name} Living Legacy`
+          : `${memorial.full_name} Memorial`,
+        text: isLivingLegacy
+          ? `Visit the living legacy page of ${memorial.full_name}`
+          : `Visit the memorial of ${memorial.full_name}`,
+        url: shareUrl,
+      });
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      alert(pageLinkCopiedLabel);
+    }
+  };
+
+  const openCandleModal = () => {
+    setTributeName(messageName || guestName);
+    setTributeMessage("");
+    setShowCandleModal(true);
+  };
+
+  const openFlowerModal = () => {
+    setTributeName(messageName || guestName);
+    setTributeMessage("");
+    setFlowerType("rose");
+    setShowFlowerModal(true);
+  };
+
+  const openEditReactionModal = (reaction: any) => {
+    setEditingReaction(reaction);
+    setEditReactionMessage(reaction.message || "");
+    setEditReactionFlowerType(reaction.flower_type || "rose");
+    setShowEditReactionModal(true);
+  };
+
+  const closeEditReactionModal = () => {
+    setShowEditReactionModal(false);
+    setEditingReaction(null);
+    setEditReactionMessage("");
+    setEditReactionFlowerType("rose");
+    setSavingReactionEdit(false);
+  };
+
+  const submitReactionEdit = async () => {
+    if (!editingReaction) return;
+
+    try {
+      setSavingReactionEdit(true);
+
+      const res = await fetch("/api/reactions", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          reaction_id: editingReaction.id,
+          guest_name: messageName || guestName,
+          message: editReactionMessage,
+          flower_type:
+            editingReaction.reaction_type === "flower"
+              ? editReactionFlowerType
+              : "",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Could not update your post.");
+        return;
+      }
+
+      alert(data.message || "Your post was updated.");
+      closeEditReactionModal();
+      await loadReactions();
+    } catch {
+      alert("Could not update your post.");
+    } finally {
+      setSavingReactionEdit(false);
+    }
+  };
+
+  const submitReaction = async (type: "candle" | "flower") => {
+    if (!tributeName.trim()) {
+      alert("Please enter your name");
+      return;
+    }
+
+    const res = await fetch("/api/reactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        reaction_type: type,
+        guest_name: tributeName,
+        message: tributeMessage,
+        flower_type: type === "flower" ? flowerType : "",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+
+    setMessageName(tributeName);
+    await loadReactions();
+
+    setShowCandleModal(false);
+    setShowFlowerModal(false);
+    setTributeMessage("");
+
+    alert(
+      data.message ||
+        (type === "flower"
+          ? "Flowers sent. You can edit it for 2 minutes."
+          : "Blessing left. You can edit it for 2 minutes.")
+    );
+  };
+
+  const toggleMusic = () => {
+    const audio = document.getElementById("memorial-music") as HTMLAudioElement;
+
+    if (!audio) return;
+
+    if (isMusicPlaying) {
+      audio.pause();
+      setIsMusicPlaying(false);
+    } else {
+      audio
+        .play()
+        .then(() => setIsMusicPlaying(true))
+        .catch(() => {
+          alert(`Please tap Play ${musicButtonText} again to start the audio.`);
+        });
+    }
+  };
+
+  const submitGuestbook = async () => {
+    const formData = new FormData();
+
+    formData.append("token", token);
+    formData.append("guest_name", messageName);
+    formData.append("message", message);
+
+    if (image) formData.append("image", image);
+    if (video) formData.append("video", video);
+    if (audio) formData.append("audio", audio);
+
+    const res = await fetch("/api/guestbook", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error);
+      return;
+    }
+
+    alert(isLivingLegacy ? "Message posted ❤️" : "Guestbook message posted ❤️");
+
+    setMessage("");
+    setImage(null);
+    setVideo(null);
+    setAudio(null);
+
+    await loadGuestbook();
   };
 
   const MemorialHeader = ({ simple = false }: { simple?: boolean }) => (
@@ -399,198 +676,6 @@ export default function GuestAccess({ memorial, token }: any) {
       )}
     </header>
   );
-
-  const galleryPhotos =
-    memorial.gallery_photos && memorial.gallery_photos.length > 0
-      ? memorial.gallery_photos.map((photo: any) => safeMediaPath(photo))
-      : memorial.cover_photo
-      ? [safeMediaPath(memorial.cover_photo)]
-      : [];
-
-  const loadGuestbook = async () => {
-    const res = await fetch(`/api/guestbook?token=${token}`);
-    const data = await res.json();
-    setEntries(data.entries || []);
-  };
-
-  const loadReactions = async () => {
-    const res = await fetch(`/api/reactions?token=${token}`);
-    const data = await res.json();
-
-    setCandles(data.candles || 0);
-    setFlowers(data.flowers || 0);
-    setReactions(data.reactions || []);
-  };
-
-  useEffect(() => {
-    if (allowed) {
-      loadGuestbook();
-      loadReactions();
-    }
-  }, [allowed]);
-
-  useEffect(() => {
-    if (!isSlideshowPlaying || galleryPhotos.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setActivePhoto((current) =>
-        current === galleryPhotos.length - 1 ? 0 : current + 1
-      );
-    }, 8000);
-
-    return () => clearInterval(interval);
-  }, [isSlideshowPlaying, galleryPhotos.length]);
-
-  const enterMemorial = async () => {
-    if (!guestName.trim()) {
-      alert("Please enter your name to continue.");
-      return;
-    }
-
-    const res = await fetch("/api/guest-access", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        guest_name: guestName,
-        guest_email: guestEmail,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    setMessageName(guestName);
-    setTributeName(guestName);
-    setVisitorCount(data.visitor_count || 0);
-    setAllowed(true);
-  };
-
-  const shareMemorial = async () => {
-    const shareUrl = window.location.href;
-
-    if (navigator.share) {
-      await navigator.share({
-        title: isLivingLegacy
-          ? `${memorial.full_name} Living Legacy`
-          : `${memorial.full_name} Memorial`,
-        text: isLivingLegacy
-          ? `Visit the living legacy page of ${memorial.full_name}`
-          : `Visit the memorial of ${memorial.full_name}`,
-        url: shareUrl,
-      });
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      alert(pageLinkCopiedLabel);
-    }
-  };
-
-  const openCandleModal = () => {
-    setTributeName(messageName || guestName);
-    setTributeMessage("");
-    setShowCandleModal(true);
-  };
-
-  const openFlowerModal = () => {
-    setTributeName(messageName || guestName);
-    setTributeMessage("");
-    setFlowerType("rose");
-    setShowFlowerModal(true);
-  };
-
-  const submitReaction = async (type: "candle" | "flower") => {
-    if (!tributeName.trim()) {
-      alert("Please enter your name");
-      return;
-    }
-
-    const res = await fetch("/api/reactions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        reaction_type: type,
-        guest_name: tributeName,
-        message: tributeMessage,
-        flower_type: type === "flower" ? flowerType : "",
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    await loadReactions();
-
-    setShowCandleModal(false);
-    setShowFlowerModal(false);
-    setTributeMessage("");
-
-    if (type === "candle") alert(candleAlertText);
-    if (type === "flower") alert(flowerAlertText);
-  };
-
-  const toggleMusic = () => {
-    const audio = document.getElementById("memorial-music") as HTMLAudioElement;
-
-    if (!audio) return;
-
-    if (isMusicPlaying) {
-      audio.pause();
-      setIsMusicPlaying(false);
-    } else {
-      audio
-        .play()
-        .then(() => setIsMusicPlaying(true))
-        .catch(() => {
-          alert(`Please tap Play ${musicButtonText} again to start the audio.`);
-        });
-    }
-  };
-
-  const submitGuestbook = async () => {
-    const formData = new FormData();
-
-    formData.append("token", token);
-    formData.append("guest_name", messageName);
-    formData.append("message", message);
-
-    if (image) formData.append("image", image);
-    if (video) formData.append("video", video);
-    if (audio) formData.append("audio", audio);
-
-    const res = await fetch("/api/guestbook", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.error);
-      return;
-    }
-
-    alert(isLivingLegacy ? "Message posted ❤️" : "Guestbook message posted ❤️");
-
-    setMessage("");
-    setImage(null);
-    setVideo(null);
-    setAudio(null);
-
-    await loadGuestbook();
-  };
 
   const renderFeatureCards = () => (
     <section
@@ -733,6 +818,74 @@ export default function GuestAccess({ memorial, token }: any) {
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
       <MemorialHeader />
+
+      {showEditReactionModal && editingReaction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+          <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/40 bg-[#111a2e] p-6 shadow-2xl">
+            <div className="mb-4 text-center text-5xl">
+              {editingReaction.reaction_type === "flower"
+                ? flowerOptions[editReactionFlowerType] || "🌸"
+                : isLivingLegacy
+                ? "❤️"
+                : "🕯️"}
+            </div>
+
+            <h2 className="mb-2 text-center font-serif text-2xl text-[#d4af37]">
+              Edit Your{" "}
+              {editingReaction.reaction_type === "flower"
+                ? isLivingLegacy
+                  ? "Flower"
+                  : "Flower"
+                : isLivingLegacy
+                ? "Blessing"
+                : "Candle"}
+            </h2>
+
+            <p className="mb-4 text-center text-xs text-gray-400">
+              You can only edit this for a short time after posting.
+            </p>
+
+            {editingReaction.reaction_type === "flower" && (
+              <select
+                className="mb-3 w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+                value={editReactionFlowerType}
+                onChange={(e) => setEditReactionFlowerType(e.target.value)}
+              >
+                <option value="rose">Rose</option>
+                <option value="tulip">Tulip</option>
+                <option value="sunflower">Sunflower</option>
+                <option value="lily">Lily</option>
+                <option value="hibiscus">Hibiscus</option>
+                <option value="orchid">Orchid</option>
+              </select>
+            )}
+
+            <textarea
+              className="mb-4 min-h-[120px] w-full rounded border border-[#2a3550] bg-[#0b1320] p-3"
+              placeholder="Edit your message..."
+              value={editReactionMessage}
+              onChange={(e) => setEditReactionMessage(e.target.value)}
+            />
+
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={submitReactionEdit}
+                disabled={savingReactionEdit}
+                className="flex-1 rounded bg-[#d4af37] py-3 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {savingReactionEdit ? "Saving..." : "Save Edit"}
+              </button>
+
+              <button
+                onClick={closeEditReactionModal}
+                className="flex-1 rounded border border-gray-500 py-3 text-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCandleModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
@@ -1113,6 +1266,19 @@ export default function GuestAccess({ memorial, token }: any) {
                         “{reaction.message}”
                       </p>
                     )}
+
+                    {canGuestEditReaction(reaction) && (
+                      <button
+                        type="button"
+                        onClick={() => openEditReactionModal(reaction)}
+                        className="mt-4 rounded-full border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+                      >
+                        Edit{" "}
+                        {reaction.guest_edit_seconds_left
+                          ? `(${reaction.guest_edit_seconds_left}s left)`
+                          : ""}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1173,6 +1339,19 @@ export default function GuestAccess({ memorial, token }: any) {
                           “{reaction.message}”
                         </p>
                       )}
+
+                      {canGuestEditReaction(reaction) && (
+                        <button
+                          type="button"
+                          onClick={() => openEditReactionModal(reaction)}
+                          className="mt-4 rounded-full border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
+                        >
+                          Edit{" "}
+                          {reaction.guest_edit_seconds_left
+                            ? `(${reaction.guest_edit_seconds_left}s left)`
+                            : ""}
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -1190,7 +1369,10 @@ export default function GuestAccess({ memorial, token }: any) {
 
       {activeSection === "chat" && (
         <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-          <ChatBox memorialId={memorial.id} guestName={messageName || guestName} />
+          <ChatBox
+            memorialId={memorial.id}
+            guestName={messageName || guestName}
+          />
         </section>
       )}
 
