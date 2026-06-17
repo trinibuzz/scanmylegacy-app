@@ -15,6 +15,8 @@ export default function ManageMemorialPage() {
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [loadingChat, setLoadingChat] = useState(false);
   const [reactions, setReactions] = useState<any[]>([]);
+  const [familyMessages, setFamilyMessages] = useState<any[]>([]);
+  const [loadingFamilyMessages, setLoadingFamilyMessages] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -65,6 +67,30 @@ export default function ManageMemorialPage() {
     }
   };
 
+  const loadFamilyMessages = async (inviteTokenToLoad: string) => {
+    if (!inviteTokenToLoad) {
+      setFamilyMessages([]);
+      return;
+    }
+
+    try {
+      setLoadingFamilyMessages(true);
+
+      const res = await fetch(`/api/guestbook?token=${inviteTokenToLoad}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        setFamilyMessages(data.entries || []);
+      } else {
+        setFamilyMessages([]);
+      }
+    } catch {
+      setFamilyMessages([]);
+    } finally {
+      setLoadingFamilyMessages(false);
+    }
+  };
+
   const loadMemorial = async () => {
     try {
       setLoading(true);
@@ -92,6 +118,7 @@ export default function ManageMemorialPage() {
       setBiography(data.memorial.biography || "");
 
       await loadChatMessages(String(data.memorial.id));
+      await loadFamilyMessages(String(data.memorial.invite_token || ""));
     } finally {
       setLoading(false);
     }
@@ -158,6 +185,14 @@ export default function ManageMemorialPage() {
   const noReactionsText = isLivingLegacy
     ? "No blessings or flowers have been posted yet."
     : "No candles or flowers have been posted yet.";
+
+  const familyMessagesTitle = isLivingLegacy
+    ? "Family Messages Manager"
+    : "Guestbook Manager";
+
+  const noFamilyMessagesText = isLivingLegacy
+    ? "No family messages have been posted yet."
+    : "No guestbook messages have been posted yet.";
 
   const flowerOptions: any = {
     rose: "🌹",
@@ -406,6 +441,79 @@ export default function ManageMemorialPage() {
     await loadMemorial();
   };
 
+  const editFamilyMessage = async (entry: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const newMessage = prompt("Edit this family message:", entry.message || "");
+
+    if (newMessage === null) return;
+
+    if (!newMessage.trim()) {
+      alert("Family message cannot be empty.");
+      return;
+    }
+
+    const res = await fetch("/api/guestbook", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entry_id: entry.id,
+        message: newMessage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to update family message.");
+      return;
+    }
+
+    alert(data.message || "Family message updated.");
+    await loadFamilyMessages(String(memorial.invite_token || ""));
+  };
+
+  const deleteFamilyMessage = async (entry: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const confirmed = confirm(
+      "Delete this family message? This will remove the message and any attached photo, video, or audio from the public page."
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch("/api/guestbook", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entry_id: entry.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to delete family message.");
+      return;
+    }
+
+    await loadFamilyMessages(String(memorial.invite_token || ""));
+  };
+
   const formatDateTime = (dateValue: string) => {
     if (!dateValue) return "";
 
@@ -446,6 +554,42 @@ export default function ManageMemorialPage() {
 
           <audio controls className="w-full">
             <source src={safeMediaPath(msg.audio_url)} />
+          </audio>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  const renderFamilyMessageMedia = (entry: any) => {
+    if (entry.image_url) {
+      return (
+        <img
+          src={safeMediaPath(entry.image_url)}
+          alt="Family message image"
+          className="mt-3 max-h-[320px] w-full rounded-xl bg-white object-contain"
+        />
+      );
+    }
+
+    if (entry.video_url) {
+      return (
+        <video controls className="mt-3 w-full rounded-xl">
+          <source src={safeMediaPath(entry.video_url)} />
+        </video>
+      );
+    }
+
+    if (entry.audio_url) {
+      return (
+        <div className="mt-3 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-3">
+          <p className="mb-2 text-xs font-semibold text-[#d4af37]">
+            🎙️ Voice Note / Audio
+          </p>
+
+          <audio controls className="w-full">
+            <source src={safeMediaPath(entry.audio_url)} />
           </audio>
         </div>
       );
@@ -857,6 +1001,93 @@ export default function ManageMemorialPage() {
                 </div>
               )}
             </div>
+            <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#d4af37]">
+                    {familyMessagesTitle}
+                  </h2>
+
+                  <p className="mt-2 text-sm text-gray-400">
+                    Review, correct spelling, or delete family messages posted
+                    on the public page. Attachments stay with the message unless
+                    the whole message is deleted.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    loadFamilyMessages(String(memorial.invite_token || ""))
+                  }
+                  className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-sm font-semibold text-[#d4af37]"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              {loadingFamilyMessages ? (
+                <p className="text-gray-400">Loading family messages...</p>
+              ) : familyMessages.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-5 text-center text-sm text-gray-400">
+                  {noFamilyMessagesText}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {familyMessages.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-white">
+                            {entry.guest_name || "Someone"}
+                          </p>
+
+                          <p className="text-xs text-gray-500">
+                            {formatDateTime(entry.created_at)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => editFamilyMessage(entry)}
+                            disabled={!canManage}
+                            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteFamilyMessage(entry)}
+                            disabled={!canManage}
+                            className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {entry.message ? (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {entry.message}
+                        </p>
+                      ) : (
+                        <p className="text-sm italic text-gray-500">
+                          No message entered.
+                        </p>
+                      )}
+
+                      {renderFamilyMessageMedia(entry)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </section>
 
           <aside className="space-y-6">
