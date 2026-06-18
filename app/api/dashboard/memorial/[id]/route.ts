@@ -254,6 +254,26 @@ export async function POST(
     const birth_date = String(formData.get("birth_date") || "");
     const death_date = String(formData.get("death_date") || "");
     const biography = String(formData.get("biography") || "");
+    const support_fund_enabled =
+      String(formData.get("support_fund_enabled") || "0") === "1" ? 1 : 0;
+    const support_fund_title = String(
+      formData.get("support_fund_title") || ""
+    )
+      .trim()
+      .slice(0, 255);
+    const support_fund_purpose = String(
+      formData.get("support_fund_purpose") || ""
+    )
+      .trim()
+      .slice(0, 3000);
+    const support_fund_button_text = String(
+      formData.get("support_fund_button_text") || ""
+    )
+      .trim()
+      .slice(0, 100);
+    const support_fund_url = String(formData.get("support_fund_url") || "")
+      .trim()
+      .slice(0, 500);
 
     const coverPhoto = formData.get("cover_photo") as File | null;
     const memorialMusic = formData.get("memorial_music") as File | null;
@@ -264,6 +284,32 @@ export async function POST(
         { error: "Full name is required." },
         { status: 400 }
       );
+    }
+
+    if (support_fund_enabled === 1) {
+      if (!support_fund_title) {
+        return NextResponse.json(
+          { error: "Family Support Fund title is required when enabled." },
+          { status: 400 }
+        );
+      }
+
+      if (!support_fund_url) {
+        return NextResponse.json(
+          { error: "Family Support Fund link is required when enabled." },
+          { status: 400 }
+        );
+      }
+
+      if (
+        !support_fund_url.startsWith("http://") &&
+        !support_fund_url.startsWith("https://")
+      ) {
+        return NextResponse.json(
+          { error: "Family Support Fund link must start with http:// or https://." },
+          { status: 400 }
+        );
+      }
     }
 
     const { uploadsRoot, musicRoot, galleryRoot } = await ensureUploadFolders();
@@ -304,7 +350,12 @@ export async function POST(
           death_date = ?,
           biography = ?,
           cover_photo = ?,
-          memorial_music = ?
+          memorial_music = ?,
+          support_fund_enabled = ?,
+          support_fund_title = ?,
+          support_fund_purpose = ?,
+          support_fund_button_text = ?,
+          support_fund_url = ?
       WHERE id = ? AND user_id = ?
       `,
       [
@@ -314,6 +365,11 @@ export async function POST(
         biography || "",
         coverPhotoPath,
         memorialMusicPath,
+        support_fund_enabled,
+        support_fund_title || null,
+        support_fund_purpose || null,
+        support_fund_button_text || null,
+        support_fund_url || null,
         memorialId,
         userId,
       ]
