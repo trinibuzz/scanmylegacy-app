@@ -24,8 +24,10 @@ type LegacyRecord = {
   is_active?: number | boolean | string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  invite_token?: string | null;
   public_token?: string | null;
   token?: string | null;
+  public_url?: string | null;
 };
 
 export default function AdminLegacyPagesPage() {
@@ -74,6 +76,15 @@ export default function AdminLegacyPagesPage() {
 
   const getOwner = (item: LegacyRecord) => {
     return item.owner_name || item.email || "No owner listed";
+  };
+
+  const getPublicToken = (item: LegacyRecord) => {
+    return (
+      item.invite_token ||
+      item.public_token ||
+      item.token ||
+      null
+    );
   };
 
   const getPageType = (item: LegacyRecord) => {
@@ -335,7 +346,7 @@ export default function AdminLegacyPagesPage() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1200px] text-left text-sm">
+              <table className="w-full min-w-[1100px] text-left text-sm">
                 <thead className="bg-[#0b1320] text-xs uppercase tracking-[0.15em] text-[#d4af37]">
                   <tr>
                     <th className="p-4">Page</th>
@@ -352,7 +363,7 @@ export default function AdminLegacyPagesPage() {
                 <tbody>
                   {records.map((item, index) => {
                     const recordId = getRecordId(item);
-                    const token = item.public_token || item.token;
+                    const token = getPublicToken(item);
                     const pageType = getPageType(item);
 
                     return (
@@ -430,23 +441,18 @@ export default function AdminLegacyPagesPage() {
 
                         <td className="p-4">
                           <div className="flex flex-wrap gap-2">
-                            {recordId && (
-                              <Link
-                                href={`/admin/memorial/${recordId}`}
-                                className="rounded-lg bg-[#d4af37] px-3 py-2 text-xs font-semibold text-[#0b1320] transition hover:bg-[#f0c94a]"
-                              >
-                                Admin View
-                              </Link>
-                            )}
-
-                            {token && (
+                            {token ? (
                               <Link
                                 href={`/memorial/${token}`}
                                 target="_blank"
-                                className="rounded-lg border border-[#d4af37]/40 px-3 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-[#0b1320]"
+                                className="rounded-lg bg-[#d4af37] px-3 py-2 text-xs font-semibold text-[#0b1320] transition hover:bg-[#f0c94a]"
                               >
                                 Public View
                               </Link>
+                            ) : (
+                              <span className="rounded-lg border border-white/10 px-3 py-2 text-xs text-white/40">
+                                No Public Token
+                              </span>
                             )}
                           </div>
                         </td>
@@ -463,7 +469,8 @@ export default function AdminLegacyPagesPage() {
           <p>
             <span className="font-semibold text-[#d4af37]">Note:</span> This
             page reads from your existing admin memorial API and displays all
-            legacy records together with badges.
+            legacy records together with badges. Public View opens the actual
+            memorial link only; owner dashboards are not linked here.
           </p>
         </div>
       </div>
