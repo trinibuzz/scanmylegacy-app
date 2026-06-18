@@ -6,6 +6,7 @@ import ChatBox from "./ChatBox";
 
 type ActiveSection =
   | "story"
+  | "legacy-vault"
   | "blessings"
   | "flowers"
   | "family-tree"
@@ -22,6 +23,9 @@ export default function GuestAccess({ memorial, token }: any) {
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<ActiveSection>("story");
+
+  const [legacyVaultEntries, setLegacyVaultEntries] = useState<any[]>([]);
+  const [loadingLegacyVault, setLoadingLegacyVault] = useState(false);
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -80,7 +84,19 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const musicButtonText = isLivingLegacy ? "Legacy Music" : "Memorial Music";
   const lifeStoryTitle = isLivingLegacy ? "My Life Story" : "Life Story";
-  const guestbookTitle = isLivingLegacy ? "Family Messages" : "Guestbook";
+  const guestbookTitle = isLivingLegacy
+    ? "Family & Guest Messages"
+    : "Guestbook";
+
+  const legacyVaultTitle = isLivingLegacy ? "Legacy Vault" : "Life Memories";
+
+  const legacyVaultDescription = isLivingLegacy
+    ? "Stories, advice, recipes, family history, special memories, photos, videos, and voice messages shared by the owner."
+    : "Special stories, photos, videos, and voice messages shared by the page owner or family.";
+
+  const legacyVaultEmptyText = isLivingLegacy
+    ? "No Legacy Vault stories have been added yet."
+    : "No Life Memories have been added yet.";
 
   const guestbookPlaceholder = isLivingLegacy
     ? "Write a message, memory, blessing, or words of love..."
@@ -168,10 +184,18 @@ export default function GuestAccess({ memorial, token }: any) {
     {
       key: "story",
       icon: "📖",
-      title: isLivingLegacy ? "My Legacy" : "Life Story",
+      title: isLivingLegacy ? "My Story" : "Life Story",
       text: isLivingLegacy
-        ? "Read the personal story and legacy journey."
+        ? "Read the main personal life story."
         : "Read the life story and memories.",
+    },
+    {
+      key: "legacy-vault",
+      icon: "🔐",
+      title: legacyVaultTitle,
+      text: isLivingLegacy
+        ? "Owner stories, advice, recipes, and media."
+        : "Owner-added memories and media.",
     },
     {
       key: "blessings",
@@ -200,9 +224,9 @@ export default function GuestAccess({ memorial, token }: any) {
     {
       key: "messages",
       icon: "✍️",
-      title: isLivingLegacy ? "Family Messages" : "Guestbook",
+      title: isLivingLegacy ? "Family & Guest Messages" : "Guestbook",
       text: isLivingLegacy
-        ? "Post memories, blessings, and love."
+        ? "Guest posts from family and friends."
         : "Leave tributes and words of comfort.",
     },
   ];
@@ -240,6 +264,11 @@ export default function GuestAccess({ memorial, token }: any) {
       section: "story",
     },
     {
+      label: legacyVaultTitle,
+      href: "#legacy-sections",
+      section: "legacy-vault",
+    },
+    {
       label: isLivingLegacy ? "Blessings" : "Tributes",
       href: "#legacy-sections",
       section: "blessings",
@@ -251,7 +280,7 @@ export default function GuestAccess({ memorial, token }: any) {
     },
     { label: "Chat", href: "#legacy-sections", section: "chat" },
     {
-      label: isLivingLegacy ? "Messages" : "Guestbook",
+      label: isLivingLegacy ? "Family & Guest Messages" : "Guestbook",
       href: "#legacy-sections",
       section: "messages",
     },
@@ -308,6 +337,25 @@ export default function GuestAccess({ memorial, token }: any) {
     setEntries(data.entries || []);
   };
 
+  const loadLegacyVault = async () => {
+    try {
+      setLoadingLegacyVault(true);
+
+      const res = await fetch(`/api/legacy-vault?token=${token}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        setLegacyVaultEntries(data.entries || []);
+      } else {
+        setLegacyVaultEntries([]);
+      }
+    } catch {
+      setLegacyVaultEntries([]);
+    } finally {
+      setLoadingLegacyVault(false);
+    }
+  };
+
   const loadReactions = async () => {
     const res = await fetch(`/api/reactions?token=${token}`);
     const data = await res.json();
@@ -320,6 +368,7 @@ export default function GuestAccess({ memorial, token }: any) {
   useEffect(() => {
     if (allowed) {
       loadGuestbook();
+      loadLegacyVault();
       loadReactions();
     }
   }, [allowed]);
@@ -697,7 +746,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         {featureCards.map((card) => {
           const isActive = activeSection === card.key;
 
@@ -1214,6 +1263,92 @@ export default function GuestAccess({ memorial, token }: any) {
         </section>
       )}
 
+      {activeSection === "legacy-vault" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <div className="mb-6 text-center">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Owner Stories
+              </p>
+
+              <h2 className="font-serif text-3xl text-[#d4af37]">
+                {legacyVaultTitle}
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-gray-400">
+                {legacyVaultDescription}
+              </p>
+            </div>
+
+            {loadingLegacyVault ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                Loading {legacyVaultTitle}...
+              </p>
+            ) : legacyVaultEntries.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                {legacyVaultEmptyText}
+              </p>
+            ) : (
+              <div className="grid gap-5 md:grid-cols-2">
+                {legacyVaultEntries.map((entry: any) => (
+                  <article
+                    key={entry.id}
+                    className="overflow-hidden rounded-2xl border border-[#d4af37]/15 bg-[#0b1320] shadow-xl"
+                  >
+                    {entry.image_url && (
+                      <img
+                        src={safeMediaPath(entry.image_url)}
+                        alt={entry.title}
+                        className="max-h-[360px] w-full bg-black object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+
+                    <div className="p-5">
+                      {entry.category && (
+                        <div className="mb-3 w-fit rounded-full border border-[#d4af37]/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                          {entry.category}
+                        </div>
+                      )}
+
+                      <h3 className="font-serif text-2xl text-white">
+                        {entry.title}
+                      </h3>
+
+                      {entry.story && (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {entry.story}
+                        </p>
+                      )}
+
+                      {entry.video_url && (
+                        <video controls className="mt-4 w-full rounded-xl">
+                          <source src={safeMediaPath(entry.video_url)} />
+                        </video>
+                      )}
+
+                      {entry.audio_url && (
+                        <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-3">
+                          <p className="mb-2 text-xs font-semibold text-[#d4af37]">
+                            🎙️ Voice Message / Audio
+                          </p>
+
+                          <audio controls className="w-full">
+                            <source src={safeMediaPath(entry.audio_url)} />
+                          </audio>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {activeSection === "blessings" && (
         <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
@@ -1433,7 +1568,7 @@ export default function GuestAccess({ memorial, token }: any) {
               onClick={submitGuestbook}
               className="w-full rounded bg-[#d4af37] py-3 font-semibold text-black"
             >
-              {isLivingLegacy ? "Post Family Message" : "Post to Guestbook"}
+              {isLivingLegacy ? "Post Family / Guest Message" : "Post to Guestbook"}
             </button>
           </div>
 
