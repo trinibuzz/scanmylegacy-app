@@ -167,6 +167,29 @@ export default function GuestAccess({ memorial, token }: any) {
     ? "No life story added yet."
     : "No story added yet.";
 
+  const supportFundEnabled =
+    Number(memorial.support_fund_enabled) === 1 &&
+    String(memorial.support_fund_url || "").trim().length > 0;
+
+  const supportFundTitle =
+    String(memorial.support_fund_title || "").trim() || "Family Support Fund";
+
+  const supportFundPurpose =
+    String(memorial.support_fund_purpose || "").trim() ||
+    "Support funeral expenses, education, medical needs, or a special family cause connected to this legacy.";
+
+  const supportFundButtonText =
+    String(memorial.support_fund_button_text || "").trim() ||
+    "Support The Family";
+
+  const supportFundUrl = String(memorial.support_fund_url || "").trim();
+
+  const validSupportFundUrl =
+    supportFundUrl.startsWith("http://") ||
+    supportFundUrl.startsWith("https://");
+
+  const showSupportFund = supportFundEnabled && validSupportFundUrl;
+
   const flowerOptions: any = {
     rose: "🌹",
     tulip: "🌷",
@@ -1242,7 +1265,8 @@ export default function GuestAccess({ memorial, token }: any) {
               />
             </audio>
 
-            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-5">              <button
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-5">
+              <button
                 type="button"
                 onClick={() => setIsSlideshowPlaying(!isSlideshowPlaying)}
                 className="rounded-full border border-[#d4af37]/40 px-5 py-2 text-sm text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
@@ -1260,7 +1284,8 @@ export default function GuestAccess({ memorial, token }: any) {
             </div>
 
             {galleryPhotos.length > 1 && (
-              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[#d4af37]/10 bg-[#081827]/80 p-4 pt-5 sm:grid-cols-4 sm:gap-3 sm:p-5 md:grid-cols-6">                {galleryPhotos.map((photo: string, index: number) => (
+              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[#d4af37]/10 bg-[#081827]/80 p-4 pt-5 sm:grid-cols-4 sm:gap-3 sm:p-5 md:grid-cols-6">
+                {galleryPhotos.map((photo: string, index: number) => (
                   <button
                     key={index}
                     type="button"
@@ -1288,6 +1313,55 @@ export default function GuestAccess({ memorial, token }: any) {
       )}
 
       {renderFeatureCards()}
+
+      {showSupportFund && (
+        <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+          <div className="overflow-hidden rounded-3xl border border-[#d4af37]/30 bg-gradient-to-br from-[#111a2e] via-[#0b1320] to-[#081827] shadow-2xl">
+            <div className="grid gap-0 lg:grid-cols-[0.8fr_1.2fr]">
+              <div className="flex items-center justify-center bg-[#d4af37]/10 p-8 text-center">
+                <div>
+                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border border-[#d4af37]/40 bg-[#0b1320] text-4xl shadow-[0_0_30px_rgba(212,175,55,0.25)]">
+                    💛
+                  </div>
+
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#d4af37]">
+                    Private Family Support
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-6 sm:p-8">
+                <h2 className="font-serif text-3xl text-[#d4af37]">
+                  {supportFundTitle}
+                </h2>
+
+                <p className="mt-4 max-w-3xl whitespace-pre-wrap text-sm leading-relaxed text-gray-300 sm:text-base">
+                  {supportFundPurpose}
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <a
+                    href={supportFundUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full bg-[#d4af37] px-7 py-3 text-sm font-semibold text-black shadow-xl transition hover:scale-105 hover:bg-[#f0c94a]"
+                  >
+                    {supportFundButtonText}
+                  </a>
+                </div>
+
+                <div className="mt-5 rounded-2xl border border-[#d4af37]/15 bg-[#0b1320] p-4">
+                  <p className="text-xs leading-relaxed text-gray-400">
+                    ScanMyLegacy does not collect, hold, manage, verify, or
+                    distribute these funds. This support link is provided by the
+                    page owner or family and opens an external donation platform.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {activeSection === "story" && (
         <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
