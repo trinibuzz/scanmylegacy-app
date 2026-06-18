@@ -13,6 +13,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
 
   const isLivingLegacy = pageType === "living";
 
+
   const mainPersonLabel = isLivingLegacy ? "Main Person" : "Deceased";
   const mainTitle = isLivingLegacy ? "Family Legacy" : "Family Lineage";
   const mainSubtitle = isLivingLegacy
@@ -236,7 +237,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
       <div className="mt-8 text-center">
         <div className="mx-auto mb-4 h-7 w-px bg-[#d4af37]/40" />
 
-        <div className="flex justify-center gap-4">
+        <div className="inline-flex min-w-max justify-center gap-4">
           {children.map((child) => {
             const lowerChildren = getChildrenFor(child);
 
@@ -248,7 +249,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
                   <div className="mt-8">
                     <div className="mx-auto mb-4 h-7 w-px bg-[#d4af37]/40" />
 
-                    <div className="flex justify-center gap-4">
+                    <div className="inline-flex min-w-max justify-center gap-4">
                       {lowerChildren.map((lower) => (
                         <div key={lower.id}>{renderPerson(lower)}</div>
                       ))}
@@ -341,19 +342,18 @@ export default function FamilyTreeView({ token }: { token: string }) {
         </div>
 
         {treeOpen && (
-          <div className="overflow-x-auto rounded-2xl border border-[#d4af37]/10 bg-[#0b1320]/35 px-4 py-8">
-            <div className="flex min-w-full justify-center">
-              <div
-                className={
-                  horizontalOpen
-                    ? "mx-auto inline-block min-w-max"
-                    : "mx-auto inline-block w-fit"
-                }
-              >
+          <div className="rounded-2xl border border-[#d4af37]/10 bg-[#0b1320]/35 p-3 sm:p-4">
+            <p className="mb-3 text-center text-xs text-gray-400 md:hidden">
+              Swipe left or right to explore the full family tree.
+            </p>
+
+            <div className="max-w-full overflow-x-auto overflow-y-visible overscroll-x-contain rounded-2xl px-2 py-8 [-webkit-overflow-scrolling:touch] sm:px-4">
+              <div className="inline-flex min-w-full justify-start md:justify-center">
+                <div className="inline-block min-w-max px-6 sm:px-8 md:px-0">
                 {parents.length > 0 && (
                   <>
                     <div className="text-center">
-                      <div className="flex justify-center gap-4">
+                      <div className="inline-flex min-w-max justify-center gap-4">
                         {parents.map((parent) => (
                           <div key={parent.id}>{renderPerson(parent)}</div>
                         ))}
@@ -390,6 +390,7 @@ export default function FamilyTreeView({ token }: { token: string }) {
 
                     {horizontalOpen && rightSiblings.map(renderSiblingBranch)}
                   </div>
+                </div>
                 </div>
               </div>
             </div>
