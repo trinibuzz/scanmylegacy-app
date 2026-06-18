@@ -17,6 +17,19 @@ export default function ManageMemorialPage() {
   const [reactions, setReactions] = useState<any[]>([]);
   const [familyMessages, setFamilyMessages] = useState<any[]>([]);
   const [loadingFamilyMessages, setLoadingFamilyMessages] = useState(false);
+  const [legacyVaultEntries, setLegacyVaultEntries] = useState<any[]>([]);
+  const [loadingLegacyVault, setLoadingLegacyVault] = useState(false);
+  const [savingLegacyVault, setSavingLegacyVault] = useState(false);
+  const [editingVaultEntry, setEditingVaultEntry] = useState<any>(null);
+
+  const [vaultTitle, setVaultTitle] = useState("");
+  const [vaultCategory, setVaultCategory] = useState("Special Memories");
+  const [vaultStory, setVaultStory] = useState("");
+  const [vaultSortOrder, setVaultSortOrder] = useState("0");
+  const [vaultIsVisible, setVaultIsVisible] = useState(true);
+  const [vaultImage, setVaultImage] = useState<File | null>(null);
+  const [vaultVideo, setVaultVideo] = useState<File | null>(null);
+  const [vaultAudio, setVaultAudio] = useState<File | null>(null);
 
   const [fullName, setFullName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -91,6 +104,33 @@ export default function ManageMemorialPage() {
     }
   };
 
+  const loadLegacyVault = async (memorialIdToLoad: string) => {
+    if (!memorialIdToLoad) {
+      setLegacyVaultEntries([]);
+      return;
+    }
+
+    try {
+      setLoadingLegacyVault(true);
+
+      const res = await fetch(
+        `/api/legacy-vault?owner=1&memorial_id=${memorialIdToLoad}`
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setLegacyVaultEntries(data.entries || []);
+      } else {
+        setLegacyVaultEntries([]);
+      }
+    } catch {
+      setLegacyVaultEntries([]);
+    } finally {
+      setLoadingLegacyVault(false);
+    }
+  };
+
   const loadMemorial = async () => {
     try {
       setLoading(true);
@@ -119,6 +159,7 @@ export default function ManageMemorialPage() {
 
       await loadChatMessages(String(data.memorial.id));
       await loadFamilyMessages(String(data.memorial.invite_token || ""));
+      await loadLegacyVault(String(data.memorial.id));
     } finally {
       setLoading(false);
     }
@@ -202,6 +243,19 @@ export default function ManageMemorialPage() {
     hibiscus: "🌺",
     orchid: "💮",
   };
+
+  const legacyVaultCategories = [
+    "Childhood",
+    "Family History",
+    "Life Lessons",
+    "Recipes",
+    "Advice",
+    "Special Memories",
+    "Family Secrets",
+    "Future Messages",
+    "Final Wishes",
+    "Other",
+  ];
 
   const now = new Date();
 
@@ -514,6 +568,159 @@ export default function ManageMemorialPage() {
     await loadFamilyMessages(String(memorial.invite_token || ""));
   };
 
+  const resetVaultForm = () => {
+    setEditingVaultEntry(null);
+    setVaultTitle("");
+    setVaultCategory("Special Memories");
+    setVaultStory("");
+    setVaultSortOrder("0");
+    setVaultIsVisible(true);
+    setVaultImage(null);
+    setVaultVideo(null);
+    setVaultAudio(null);
+  };
+
+  const startEditVaultEntry = (entry: any) => {
+    setEditingVaultEntry(entry);
+    setVaultTitle(entry.title || "");
+    setVaultCategory(entry.category || "Special Memories");
+    setVaultStory(entry.story || "");
+    setVaultSortOrder(String(entry.sort_order || 0));
+    setVaultIsVisible(Number(entry.is_visible) === 1);
+    setVaultImage(null);
+    setVaultVideo(null);
+    setVaultAudio(null);
+
+    setTimeout(() => {
+      document
+        .getElementById("legacy-vault-manager")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const saveLegacyVaultEntry = async () => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    if (!vaultTitle.trim()) {
+      alert("Please enter a title for this Legacy Vault story.");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("memorial_id", String(memorial.id));
+    formData.append("title", vaultTitle);
+    formData.append("category", vaultCategory);
+    formData.append("story", vaultStory);
+    formData.append("sort_order", vaultSortOrder || "0");
+    formData.append("is_visible", vaultIsVisible ? "1" : "0");
+
+    if (editingVaultEntry?.id) {
+      formData.append("entry_id", String(editingVaultEntry.id));
+    }
+
+    if (vaultImage) formData.append("image", vaultImage);
+    if (vaultVideo) formData.append("video", vaultVideo);
+    if (vaultAudio) formData.append("audio", vaultAudio);
+
+    try {
+      setSavingLegacyVault(true);
+
+      const res = await fetch("/api/legacy-vault", {
+        method: editingVaultEntry?.id ? "PATCH" : "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to save Legacy Vault story.");
+        return;
+      }
+
+      alert(data.message || "Legacy Vault story saved.");
+      resetVaultForm();
+      await loadLegacyVault(String(memorial.id));
+    } finally {
+      setSavingLegacyVault(false);
+    }
+  };
+
+  const deleteVaultEntry = async (entry: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const confirmed = confirm(
+      `Delete this Legacy Vault story: "${entry.title}"? This will remove it from the public page.`
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch("/api/legacy-vault", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        entry_id: entry.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to delete Legacy Vault story.");
+      return;
+    }
+
+    await loadLegacyVault(String(memorial.id));
+  };
+
+  const renderVaultMedia = (entry: any) => {
+    if (entry.image_url) {
+      return (
+        <img
+          src={safeMediaPath(entry.image_url)}
+          alt={entry.title || "Legacy Vault image"}
+          className="mt-3 max-h-[320px] w-full rounded-xl bg-white object-contain"
+        />
+      );
+    }
+
+    if (entry.video_url) {
+      return (
+        <video controls className="mt-3 w-full rounded-xl">
+          <source src={safeMediaPath(entry.video_url)} />
+        </video>
+      );
+    }
+
+    if (entry.audio_url) {
+      return (
+        <div className="mt-3 rounded-xl border border-[#d4af37]/20 bg-[#0b1320] p-3">
+          <p className="mb-2 text-xs font-semibold text-[#d4af37]">
+            🎙️ Voice Note / Audio
+          </p>
+
+          <audio controls className="w-full">
+            <source src={safeMediaPath(entry.audio_url)} />
+          </audio>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const formatDateTime = (dateValue: string) => {
     if (!dateValue) return "";
 
@@ -822,6 +1029,258 @@ export default function ManageMemorialPage() {
                 ? "Saving Updates..."
                 : saveButtonLabel}
             </button>
+
+            {isLivingLegacy && (
+              <div
+                id="legacy-vault-manager"
+                className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6"
+              >
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-serif text-2xl text-[#d4af37]">
+                      Legacy Vault Manager
+                    </h2>
+
+                    <p className="mt-2 text-sm text-gray-400">
+                      Add your own personal stories, recipes, advice, life lessons,
+                      photos, videos, and voice notes. These stay separate from
+                      Family & Guest Messages.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => loadLegacyVault(String(memorial.id))}
+                    className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-sm font-semibold text-[#d4af37]"
+                  >
+                    Refresh
+                  </button>
+                </div>
+
+                <div className="mb-6 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <h3 className="font-serif text-xl text-white">
+                      {editingVaultEntry ? "Edit Vault Story" : "Add New Vault Story"}
+                    </h3>
+
+                    {editingVaultEntry && (
+                      <button
+                        type="button"
+                        onClick={resetVaultForm}
+                        className="rounded-lg border border-gray-500/40 px-4 py-2 text-xs font-semibold text-gray-300"
+                      >
+                        Cancel Edit
+                      </button>
+                    )}
+                  </div>
+
+                  <input
+                    value={vaultTitle}
+                    onChange={(e) => setVaultTitle(e.target.value)}
+                    placeholder="Story Title"
+                    disabled={!canManage}
+                    className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <div className="mb-4 grid gap-4 md:grid-cols-3">
+                    <select
+                      value={vaultCategory}
+                      onChange={(e) => setVaultCategory(e.target.value)}
+                      disabled={!canManage}
+                      className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {legacyVaultCategories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="number"
+                      value={vaultSortOrder}
+                      onChange={(e) => setVaultSortOrder(e.target.value)}
+                      placeholder="Sort order"
+                      disabled={!canManage}
+                      className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+
+                    <label className="flex items-center gap-3 rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-sm text-gray-300">
+                      <input
+                        type="checkbox"
+                        checked={vaultIsVisible}
+                        onChange={(e) => setVaultIsVisible(e.target.checked)}
+                        disabled={!canManage}
+                      />
+                      Show on public page
+                    </label>
+                  </div>
+
+                  <textarea
+                    value={vaultStory}
+                    onChange={(e) => setVaultStory(e.target.value)}
+                    rows={7}
+                    placeholder="Write your story, advice, recipe, memory, family history, or message here..."
+                    disabled={!canManage}
+                    className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <div className="mb-4 grid gap-4 md:grid-cols-3">
+                    <div className="rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                      <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                        Add Photo
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={!canManage}
+                        onChange={(e) => setVaultImage(e.target.files?.[0] || null)}
+                        className="w-full text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                      {vaultImage && (
+                        <p className="mt-2 text-xs text-[#d4af37]">
+                          {vaultImage.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                      <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                        Add Video
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="video/*"
+                        disabled={!canManage}
+                        onChange={(e) => setVaultVideo(e.target.files?.[0] || null)}
+                        className="w-full text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                      {vaultVideo && (
+                        <p className="mt-2 text-xs text-[#d4af37]">
+                          {vaultVideo.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                      <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                        Add Voice Note
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="audio/mpeg,audio/mp3,audio/wav,audio/mp4,audio/x-m4a,.mp3,.wav,.m4a"
+                        disabled={!canManage}
+                        onChange={(e) => setVaultAudio(e.target.files?.[0] || null)}
+                        className="w-full text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      />
+
+                      {vaultAudio && (
+                        <p className="mt-2 text-xs text-[#d4af37]">
+                          {vaultAudio.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={saveLegacyVaultEntry}
+                    disabled={savingLegacyVault || !canManage}
+                    className="w-full rounded-xl bg-[#d4af37] py-4 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
+                  >
+                    {savingLegacyVault
+                      ? "Saving Vault Story..."
+                      : editingVaultEntry
+                      ? "Save Vault Story Changes"
+                      : "Add To Legacy Vault"}
+                  </button>
+                </div>
+
+                {loadingLegacyVault ? (
+                  <p className="text-gray-400">Loading Legacy Vault...</p>
+                ) : legacyVaultEntries.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-5 text-center text-sm text-gray-400">
+                    No Legacy Vault stories added yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {legacyVaultEntries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                      >
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <div className="mb-2 flex flex-wrap items-center gap-2">
+                              <span className="rounded-full border border-[#d4af37]/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                                {entry.category || "Legacy Vault"}
+                              </span>
+
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                  Number(entry.is_visible) === 1
+                                    ? "bg-green-500/10 text-green-200"
+                                    : "bg-gray-500/10 text-gray-300"
+                                }`}
+                              >
+                                {Number(entry.is_visible) === 1
+                                  ? "Visible"
+                                  : "Hidden"}
+                              </span>
+                            </div>
+
+                            <h3 className="font-serif text-xl text-white">
+                              {entry.title}
+                            </h3>
+
+                            <p className="mt-1 text-xs text-gray-500">
+                              {formatDateTime(entry.created_at)}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => startEditVaultEntry(entry)}
+                              disabled={!canManage}
+                              className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => deleteVaultEntry(entry)}
+                              disabled={!canManage}
+                              className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {entry.story ? (
+                          <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                            {entry.story}
+                          </p>
+                        ) : (
+                          <p className="text-sm italic text-gray-500">
+                            No story text entered.
+                          </p>
+                        )}
+
+                        {renderVaultMedia(entry)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
