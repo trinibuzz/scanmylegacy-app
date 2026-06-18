@@ -21,6 +21,18 @@ export default function ManageMemorialPage() {
   const [loadingLegacyVault, setLoadingLegacyVault] = useState(false);
   const [savingLegacyVault, setSavingLegacyVault] = useState(false);
   const [editingVaultEntry, setEditingVaultEntry] = useState<any>(null);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
+  const [savingMilestone, setSavingMilestone] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<any>(null);
+
+  const [milestoneTitle, setMilestoneTitle] = useState("");
+  const [milestoneDate, setMilestoneDate] = useState("");
+  const [milestoneCategory, setMilestoneCategory] = useState("Life Event");
+  const [milestoneDescription, setMilestoneDescription] = useState("");
+  const [milestoneSortOrder, setMilestoneSortOrder] = useState("0");
+  const [milestoneIsVisible, setMilestoneIsVisible] = useState(true);
+  const [milestoneImage, setMilestoneImage] = useState<File | null>(null);
 
   const [vaultTitle, setVaultTitle] = useState("");
   const [vaultCategory, setVaultCategory] = useState("Special Memories");
@@ -131,6 +143,33 @@ export default function ManageMemorialPage() {
     }
   };
 
+  const loadMilestones = async (memorialIdToLoad: string) => {
+    if (!memorialIdToLoad) {
+      setMilestones([]);
+      return;
+    }
+
+    try {
+      setLoadingMilestones(true);
+
+      const res = await fetch(
+        `/api/milestones?owner=1&memorial_id=${memorialIdToLoad}`
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setMilestones(data.milestones || []);
+      } else {
+        setMilestones([]);
+      }
+    } catch {
+      setMilestones([]);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  };
+
   const loadMemorial = async () => {
     try {
       setLoading(true);
@@ -160,6 +199,7 @@ export default function ManageMemorialPage() {
       await loadChatMessages(String(data.memorial.id));
       await loadFamilyMessages(String(data.memorial.invite_token || ""));
       await loadLegacyVault(String(data.memorial.id));
+      await loadMilestones(String(data.memorial.id));
     } finally {
       setLoading(false);
     }
@@ -254,6 +294,22 @@ export default function ManageMemorialPage() {
     "Family Secrets",
     "Future Messages",
     "Final Wishes",
+    "Other",
+  ];
+
+  const milestoneCategories = [
+    "Life Event",
+    "Childhood",
+    "Education",
+    "Graduation",
+    "Career",
+    "Marriage",
+    "Children",
+    "Travel",
+    "Achievement",
+    "Community Work",
+    "Special Birthday",
+    "Family Memory",
     "Other",
   ];
 
@@ -683,6 +739,148 @@ export default function ManageMemorialPage() {
     }
 
     await loadLegacyVault(String(memorial.id));
+  };
+
+  const resetMilestoneForm = () => {
+    setEditingMilestone(null);
+    setMilestoneTitle("");
+    setMilestoneDate("");
+    setMilestoneCategory("Life Event");
+    setMilestoneDescription("");
+    setMilestoneSortOrder("0");
+    setMilestoneIsVisible(true);
+    setMilestoneImage(null);
+  };
+
+  const startEditMilestone = (milestone: any) => {
+    setEditingMilestone(milestone);
+    setMilestoneTitle(milestone.title || "");
+    setMilestoneDate(
+      milestone.milestone_date ? String(milestone.milestone_date).slice(0, 10) : ""
+    );
+    setMilestoneCategory(milestone.category || "Life Event");
+    setMilestoneDescription(milestone.description || "");
+    setMilestoneSortOrder(String(milestone.sort_order || 0));
+    setMilestoneIsVisible(Number(milestone.is_visible) === 1);
+    setMilestoneImage(null);
+
+    setTimeout(() => {
+      document
+        .getElementById("milestones-manager")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
+
+  const saveMilestone = async () => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    if (!milestoneTitle.trim()) {
+      alert("Please enter a title for this milestone.");
+      return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("memorial_id", String(memorial.id));
+    formData.append("title", milestoneTitle);
+    formData.append("milestone_date", milestoneDate);
+    formData.append("category", milestoneCategory);
+    formData.append("description", milestoneDescription);
+    formData.append("sort_order", milestoneSortOrder || "0");
+    formData.append("is_visible", milestoneIsVisible ? "1" : "0");
+
+    if (editingMilestone?.id) {
+      formData.append("milestone_id", String(editingMilestone.id));
+    }
+
+    if (milestoneImage) formData.append("image", milestoneImage);
+
+    try {
+      setSavingMilestone(true);
+
+      const res = await fetch("/api/milestones", {
+        method: editingMilestone?.id ? "PATCH" : "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to save milestone.");
+        return;
+      }
+
+      alert(data.message || "Milestone saved.");
+      resetMilestoneForm();
+      await loadMilestones(String(memorial.id));
+    } finally {
+      setSavingMilestone(false);
+    }
+  };
+
+  const deleteMilestone = async (milestone: any) => {
+    if (!canManage) {
+      alert(
+        `This ${pageNameLower} is temporarily deactivated because payment was not verified within 48 hours.`
+      );
+      return;
+    }
+
+    const confirmed = confirm(
+      `Delete this milestone: "${milestone.title}"? This will remove it from the public page.`
+    );
+
+    if (!confirmed) return;
+
+    const res = await fetch("/api/milestones", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        milestone_id: milestone.id,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to delete milestone.");
+      return;
+    }
+
+    await loadMilestones(String(memorial.id));
+  };
+
+  const formatDateOnly = (dateValue: string) => {
+    if (!dateValue) return "Date not set";
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) return "Date not set";
+
+    return date.toLocaleDateString([], {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const renderMilestoneMedia = (milestone: any) => {
+    if (!milestone.image_url) return null;
+
+    return (
+      <img
+        src={safeMediaPath(milestone.image_url)}
+        alt={milestone.title || "Milestone image"}
+        className="mt-3 max-h-[320px] w-full rounded-xl bg-white object-contain"
+      />
+    );
   };
 
   const renderVaultMedia = (entry: any) => {
@@ -1281,6 +1479,227 @@ export default function ManageMemorialPage() {
                 )}
               </div>
             )}
+
+            <div
+              id="milestones-manager"
+              className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6"
+            >
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#d4af37]">
+                    Milestones Manager
+                  </h2>
+
+                  <p className="mt-2 text-sm text-gray-400">
+                    Add important life moments, achievements, birthdays, family
+                    events, career highlights, travels, and special memories.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => loadMilestones(String(memorial.id))}
+                  className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-sm font-semibold text-[#d4af37]"
+                >
+                  Refresh
+                </button>
+              </div>
+
+              <div className="mb-6 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-serif text-xl text-white">
+                    {editingMilestone ? "Edit Milestone" : "Add New Milestone"}
+                  </h3>
+
+                  {editingMilestone && (
+                    <button
+                      type="button"
+                      onClick={resetMilestoneForm}
+                      className="rounded-lg border border-gray-500/40 px-4 py-2 text-xs font-semibold text-gray-300"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <input
+                  value={milestoneTitle}
+                  onChange={(e) => setMilestoneTitle(e.target.value)}
+                  placeholder="Milestone Title"
+                  disabled={!canManage}
+                  className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <div className="mb-4 grid gap-4 md:grid-cols-4">
+                  <input
+                    type="date"
+                    value={milestoneDate}
+                    onChange={(e) => setMilestoneDate(e.target.value)}
+                    disabled={!canManage}
+                    className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <select
+                    value={milestoneCategory}
+                    onChange={(e) => setMilestoneCategory(e.target.value)}
+                    disabled={!canManage}
+                    className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {milestoneCategories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="number"
+                    value={milestoneSortOrder}
+                    onChange={(e) => setMilestoneSortOrder(e.target.value)}
+                    placeholder="Sort order"
+                    disabled={!canManage}
+                    className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <label className="flex items-center gap-3 rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-sm text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={milestoneIsVisible}
+                      onChange={(e) => setMilestoneIsVisible(e.target.checked)}
+                      disabled={!canManage}
+                    />
+                    Show on public page
+                  </label>
+                </div>
+
+                <textarea
+                  value={milestoneDescription}
+                  onChange={(e) => setMilestoneDescription(e.target.value)}
+                  rows={5}
+                  placeholder="Describe this milestone, achievement, event, or memory..."
+                  disabled={!canManage}
+                  className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <div className="mb-4 rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                  <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                    Add Milestone Photo
+                  </label>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={!canManage}
+                    onChange={(e) => setMilestoneImage(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  {milestoneImage && (
+                    <p className="mt-2 text-xs text-[#d4af37]">
+                      {milestoneImage.name}
+                    </p>
+                  )}
+
+                  {editingMilestone?.image_url && !milestoneImage && (
+                    <p className="mt-2 text-xs text-gray-400">
+                      Existing image will remain unless you choose a new one.
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={saveMilestone}
+                  disabled={savingMilestone || !canManage}
+                  className="w-full rounded-xl bg-[#d4af37] py-4 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-gray-700 disabled:text-gray-300"
+                >
+                  {savingMilestone
+                    ? "Saving Milestone..."
+                    : editingMilestone
+                    ? "Save Milestone Changes"
+                    : "Add Milestone"}
+                </button>
+              </div>
+
+              {loadingMilestones ? (
+                <p className="text-gray-400">Loading milestones...</p>
+              ) : milestones.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-[#d4af37]/25 bg-[#0b1320] p-5 text-center text-sm text-gray-400">
+                  No milestones added yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {milestones.map((milestone) => (
+                    <div
+                      key={milestone.id}
+                      className="rounded-2xl border border-[#1f2a44] bg-[#0b1320] p-4"
+                    >
+                      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full border border-[#d4af37]/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                              {milestone.category || "Milestone"}
+                            </span>
+
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                Number(milestone.is_visible) === 1
+                                  ? "bg-green-500/10 text-green-200"
+                                  : "bg-gray-500/10 text-gray-300"
+                              }`}
+                            >
+                              {Number(milestone.is_visible) === 1
+                                ? "Visible"
+                                : "Hidden"}
+                            </span>
+                          </div>
+
+                          <h3 className="font-serif text-xl text-white">
+                            {milestone.title}
+                          </h3>
+
+                          <p className="mt-1 text-xs text-gray-500">
+                            {formatDateOnly(milestone.milestone_date)}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => startEditMilestone(milestone)}
+                            disabled={!canManage}
+                            className="rounded-lg border border-[#d4af37]/40 px-4 py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteMilestone(milestone)}
+                            disabled={!canManage}
+                            className="rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {milestone.description ? (
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {milestone.description}
+                        </p>
+                      ) : (
+                        <p className="text-sm italic text-gray-500">
+                          No description entered.
+                        </p>
+                      )}
+
+                      {renderMilestoneMedia(milestone)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
               <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
