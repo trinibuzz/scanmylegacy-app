@@ -42,6 +42,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const search = (searchParams.get("search") || "").trim();
+    const requestedPageType = String(searchParams.get("page_type") || "")
+      .trim()
+      .toLowerCase();
 
     const memorialColumns = await getTableColumns("memorials");
 
@@ -62,14 +65,16 @@ export async function GET(req: Request) {
       "active",
     ]);
 
-    const pageTypeSelect = pageTypeColumn
-      ? `m.\`${pageTypeColumn}\` AS page_type`
+    const pageTypeExpression = pageTypeColumn
+      ? `m.\`${pageTypeColumn}\``
       : `
         CASE
           WHEN m.death_date IS NULL OR m.death_date = '' THEN 'living_legacy'
           ELSE 'memorial'
-        END AS page_type
+        END
       `;
+
+    const pageTypeSelect = `${pageTypeExpression} AS page_type`;
 
     const statusSelect = statusColumn
       ? `m.\`${statusColumn}\` AS status`
@@ -130,17 +135,31 @@ export async function GET(req: Request) {
       LEFT JOIN users u ON u.id = m.user_id
     `;
 
+    const whereParts: string[] = [];
     const values: any[] = [];
 
+    if (requestedPageType === "memorial") {
+      whereParts.push(
+        `LOWER(COALESCE(${pageTypeExpression}, 'memorial')) NOT LIKE '%living%'`
+      );
+    }
+
+    if (requestedPageType === "living" || requestedPageType === "living_legacy") {
+      whereParts.push(
+        `LOWER(COALESCE(${pageTypeExpression}, '')) LIKE '%living%'`
+      );
+    }
+
     if (search) {
-      query += `
-        WHERE 
+      whereParts.push(`
+        (
           m.full_name LIKE ?
           OR m.creator_name LIKE ?
           OR m.creator_email LIKE ?
           OR u.name LIKE ?
           OR u.email LIKE ?
-      `;
+        )
+      `);
 
       const likeSearch = `%${search}%`;
 
@@ -151,6 +170,10 @@ export async function GET(req: Request) {
         likeSearch,
         likeSearch
       );
+    }
+
+    if (whereParts.length > 0) {
+      query += ` WHERE ${whereParts.join(" AND ")} `;
     }
 
     query += `

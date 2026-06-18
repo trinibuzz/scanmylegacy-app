@@ -12,9 +12,14 @@ export default function AdminMemorialPage() {
     try {
       setLoading(true);
 
-      const url = searchValue
-        ? `/api/admin/memorials?search=${encodeURIComponent(searchValue)}`
-        : "/api/admin/memorials";
+      const params = new URLSearchParams();
+      params.set("page_type", "memorial");
+
+      if (searchValue) {
+        params.set("search", searchValue);
+      }
+
+      const url = `/api/admin/memorials?${params.toString()}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -24,7 +29,12 @@ export default function AdminMemorialPage() {
         return;
       }
 
-      setRecords(data.records || []);
+      const memorialRecords = (data.records || []).filter((item: any) => {
+        const pageType = String(item.page_type || "memorial").toLowerCase();
+        return !pageType.includes("living");
+      });
+
+      setRecords(memorialRecords);
     } finally {
       setLoading(false);
     }
@@ -123,7 +133,7 @@ export default function AdminMemorialPage() {
             </h1>
 
             <p className="mt-3 max-w-3xl text-gray-400">
-              View all memorials, check owners, payment status, packages, and activate or deactivate access.
+              View memorial pages only, check owners, payment status, packages, and activate or deactivate access.
             </p>
           </div>
 
