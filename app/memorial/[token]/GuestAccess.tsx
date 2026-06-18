@@ -1242,8 +1242,7 @@ export default function GuestAccess({ memorial, token }: any) {
               />
             </audio>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-4">
-              <button
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 border-t border-[#d4af37]/10 bg-[#081827]/90 px-4 py-5">              <button
                 type="button"
                 onClick={() => setIsSlideshowPlaying(!isSlideshowPlaying)}
                 className="rounded-full border border-[#d4af37]/40 px-5 py-2 text-sm text-[#d4af37] transition hover:bg-[#d4af37] hover:text-black"
@@ -1261,8 +1260,7 @@ export default function GuestAccess({ memorial, token }: any) {
             </div>
 
             {galleryPhotos.length > 1 && (
-              <div className="grid grid-cols-3 gap-2 bg-[#081827]/80 p-3 sm:grid-cols-4 sm:gap-3 sm:p-4 md:grid-cols-6">
-                {galleryPhotos.map((photo: string, index: number) => (
+              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[#d4af37]/10 bg-[#081827]/80 p-4 pt-5 sm:grid-cols-4 sm:gap-3 sm:p-5 md:grid-cols-6">                {galleryPhotos.map((photo: string, index: number) => (
                   <button
                     key={index}
                     type="button"
