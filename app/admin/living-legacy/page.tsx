@@ -32,6 +32,7 @@ export default function AdminLivingLegacyPage() {
   const [records, setRecords] = useState<LegacyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [convertingId, setConvertingId] = useState<string | number | null>(null);
 
   const safeText = (value: unknown, fallback = "N/A") => {
     if (value === null || value === undefined || value === "") return fallback;
@@ -144,6 +145,50 @@ export default function AdminLivingLegacyPage() {
       setRecords([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const convertToMemorial = async (item: LegacyRecord) => {
+    const recordId = getRecordId(item);
+    const title = getTitle(item);
+
+    if (!recordId) {
+      alert("Missing page ID. Cannot convert this page.");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Convert ${title} from a Living Legacy Page to a Memorial Page? This will change the public wording from Living Legacy to Memorial Tribute.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setConvertingId(recordId);
+
+      const res = await fetch("/api/admin/convert-to-memorial", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          memorial_id: recordId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "Failed to convert page to memorial.");
+        return;
+      }
+
+      alert(data.message || "Living Legacy page converted to Memorial Page.");
+      await loadRecords();
+    } catch {
+      alert("Could not connect to the convert page API.");
+    } finally {
+      setConvertingId(null);
     }
   };
 
@@ -384,6 +429,19 @@ export default function AdminLivingLegacyPage() {
                               >
                                 Public View
                               </Link>
+                            )}
+
+                            {recordId && (
+                              <button
+                                type="button"
+                                onClick={() => convertToMemorial(item)}
+                                disabled={convertingId === recordId}
+                                className="rounded-lg border border-red-400/50 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {convertingId === recordId
+                                  ? "Converting..."
+                                  : "Convert to Memorial"}
+                              </button>
                             )}
                           </div>
                         </td>
