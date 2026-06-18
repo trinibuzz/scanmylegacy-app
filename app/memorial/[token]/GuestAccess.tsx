@@ -7,6 +7,7 @@ import ChatBox from "./ChatBox";
 type ActiveSection =
   | "story"
   | "legacy-vault"
+  | "milestones"
   | "blessings"
   | "flowers"
   | "family-tree"
@@ -26,6 +27,8 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const [legacyVaultEntries, setLegacyVaultEntries] = useState<any[]>([]);
   const [loadingLegacyVault, setLoadingLegacyVault] = useState(false);
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [loadingMilestones, setLoadingMilestones] = useState(false);
 
   const [messageName, setMessageName] = useState("");
   const [message, setMessage] = useState("");
@@ -97,6 +100,16 @@ export default function GuestAccess({ memorial, token }: any) {
   const legacyVaultEmptyText = isLivingLegacy
     ? "No Legacy Vault stories have been added yet."
     : "No Life Memories have been added yet.";
+
+  const milestonesTitle = "Milestones";
+
+  const milestonesDescription = isLivingLegacy
+    ? "Important life moments, achievements, travels, birthdays, career highlights, family memories, and special events."
+    : "A timeline of important life moments, achievements, and family memories.";
+
+  const milestonesEmptyText = isLivingLegacy
+    ? "No milestones have been added yet."
+    : "No memorial milestones have been added yet.";
 
   const guestbookPlaceholder = isLivingLegacy
     ? "Write a message, memory, blessing, or words of love..."
@@ -198,6 +211,14 @@ export default function GuestAccess({ memorial, token }: any) {
         : "Owner-added memories and media.",
     },
     {
+      key: "milestones",
+      icon: "🏆",
+      title: milestonesTitle,
+      text: isLivingLegacy
+        ? "Key life moments and achievements."
+        : "Important dates and memories.",
+    },
+    {
       key: "blessings",
       icon: isLivingLegacy ? "❤️" : "🕯️",
       title: isLivingLegacy ? "Blessings" : "Candles",
@@ -267,6 +288,11 @@ export default function GuestAccess({ memorial, token }: any) {
       label: legacyVaultTitle,
       href: "#legacy-sections",
       section: "legacy-vault",
+    },
+    {
+      label: milestonesTitle,
+      href: "#legacy-sections",
+      section: "milestones",
     },
     {
       label: isLivingLegacy ? "Blessings" : "Tributes",
@@ -356,6 +382,25 @@ export default function GuestAccess({ memorial, token }: any) {
     }
   };
 
+  const loadMilestones = async () => {
+    try {
+      setLoadingMilestones(true);
+
+      const res = await fetch(`/api/milestones?token=${token}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        setMilestones(data.milestones || []);
+      } else {
+        setMilestones([]);
+      }
+    } catch {
+      setMilestones([]);
+    } finally {
+      setLoadingMilestones(false);
+    }
+  };
+
   const loadReactions = async () => {
     const res = await fetch(`/api/reactions?token=${token}`);
     const data = await res.json();
@@ -369,6 +414,7 @@ export default function GuestAccess({ memorial, token }: any) {
     if (allowed) {
       loadGuestbook();
       loadLegacyVault();
+      loadMilestones();
       loadReactions();
     }
   }, [allowed]);
@@ -746,7 +792,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-8">
         {featureCards.map((card) => {
           const isActive = activeSection === card.key;
 
@@ -1343,6 +1389,86 @@ export default function GuestAccess({ memorial, token }: any) {
                     </div>
                   </article>
                 ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeSection === "milestones" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+            <div className="mb-8 text-center">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Life Timeline
+              </p>
+
+              <h2 className="font-serif text-3xl text-[#d4af37]">
+                {milestonesTitle}
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-gray-400">
+                {milestonesDescription}
+              </p>
+            </div>
+
+            {loadingMilestones ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                Loading milestones...
+              </p>
+            ) : milestones.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#d4af37]/20 bg-[#0b1320] p-6 text-center text-gray-400">
+                {milestonesEmptyText}
+              </p>
+            ) : (
+              <div className="relative mx-auto max-w-4xl">
+                <div className="absolute bottom-0 left-4 top-0 hidden w-px bg-[#d4af37]/25 sm:block" />
+
+                <div className="space-y-5">
+                  {milestones.map((milestone: any) => (
+                    <article
+                      key={milestone.id}
+                      className="relative rounded-2xl border border-[#d4af37]/15 bg-[#0b1320] p-5 shadow-xl sm:ml-10"
+                    >
+                      <div className="absolute -left-[47px] top-6 hidden h-4 w-4 rounded-full border border-[#d4af37] bg-[#d4af37] shadow-[0_0_18px_rgba(212,175,55,0.45)] sm:block" />
+
+                      <div className="mb-3 flex flex-wrap items-center gap-2">
+                        {milestone.milestone_date && (
+                          <span className="rounded-full border border-[#d4af37]/35 px-3 py-1 text-xs font-semibold text-[#d4af37]">
+                            {new Date(milestone.milestone_date).toLocaleDateString()}
+                          </span>
+                        )}
+
+                        {milestone.category && (
+                          <span className="rounded-full bg-[#d4af37]/10 px-3 py-1 text-xs font-semibold text-[#d4af37]">
+                            {milestone.category}
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="font-serif text-2xl text-white">
+                        {milestone.title}
+                      </h3>
+
+                      {milestone.description && (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {milestone.description}
+                        </p>
+                      )}
+
+                      {milestone.image_url && (
+                        <img
+                          src={safeMediaPath(milestone.image_url)}
+                          alt={milestone.title}
+                          className="mt-4 max-h-[420px] w-full rounded-xl bg-black object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                    </article>
+                  ))}
+                </div>
               </div>
             )}
           </div>
