@@ -48,6 +48,12 @@ export default function ManageMemorialPage() {
   const [deathDate, setDeathDate] = useState("");
   const [biography, setBiography] = useState("");
 
+  const [supportFundEnabled, setSupportFundEnabled] = useState(false);
+  const [supportFundTitle, setSupportFundTitle] = useState("");
+  const [supportFundPurpose, setSupportFundPurpose] = useState("");
+  const [supportFundButtonText, setSupportFundButtonText] = useState("Support The Family");
+  const [supportFundUrl, setSupportFundUrl] = useState("");
+
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [memorialMusic, setMemorialMusic] = useState<File | null>(null);
   const [galleryPhotos, setGalleryPhotos] = useState<File[]>([]);
@@ -195,6 +201,13 @@ export default function ManageMemorialPage() {
         data.memorial.death_date ? data.memorial.death_date.slice(0, 10) : ""
       );
       setBiography(data.memorial.biography || "");
+      setSupportFundEnabled(Number(data.memorial.support_fund_enabled) === 1);
+      setSupportFundTitle(data.memorial.support_fund_title || "");
+      setSupportFundPurpose(data.memorial.support_fund_purpose || "");
+      setSupportFundButtonText(
+        data.memorial.support_fund_button_text || "Support The Family"
+      );
+      setSupportFundUrl(data.memorial.support_fund_url || "");
 
       await loadChatMessages(String(data.memorial.id));
       await loadFamilyMessages(String(data.memorial.invite_token || ""));
@@ -358,11 +371,36 @@ export default function ManageMemorialPage() {
       return;
     }
 
+    if (supportFundEnabled) {
+      if (!supportFundTitle.trim()) {
+        alert("Please enter a title for the Family Support Fund.");
+        return;
+      }
+
+      if (!supportFundUrl.trim()) {
+        alert("Please enter the outside donation link for the Family Support Fund.");
+        return;
+      }
+
+      if (
+        !supportFundUrl.trim().startsWith("http://") &&
+        !supportFundUrl.trim().startsWith("https://")
+      ) {
+        alert("The Family Support Fund link must start with http:// or https://");
+        return;
+      }
+    }
+
     const formData = new FormData();
     formData.append("full_name", fullName);
     formData.append("birth_date", birthDate);
     formData.append("death_date", deathDate);
     formData.append("biography", biography);
+    formData.append("support_fund_enabled", supportFundEnabled ? "1" : "0");
+    formData.append("support_fund_title", supportFundTitle);
+    formData.append("support_fund_purpose", supportFundPurpose);
+    formData.append("support_fund_button_text", supportFundButtonText);
+    formData.append("support_fund_url", supportFundUrl);
 
     if (coverPhoto) formData.append("cover_photo", coverPhoto);
     if (memorialMusic) formData.append("memorial_music", memorialMusic);
@@ -1212,6 +1250,101 @@ export default function ManageMemorialPage() {
                     {galleryPhotos.length} new photo
                     {galleryPhotos.length === 1 ? "" : "s"} selected.
                   </p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="font-serif text-2xl text-[#d4af37]">
+                    Family Support Fund
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-relaxed text-gray-400">
+                    Optional. Display an outside donation or fundraising link inside
+                    the private page for family and friends. ScanMyLegacy does not
+                    collect or manage these funds.
+                  </p>
+                </div>
+
+                <label className="flex items-center gap-3 rounded-xl border border-[#d4af37]/25 bg-[#0b1320] px-4 py-3 text-sm font-semibold text-gray-200">
+                  <input
+                    type="checkbox"
+                    checked={supportFundEnabled}
+                    onChange={(e) => setSupportFundEnabled(e.target.checked)}
+                    disabled={!canManage}
+                  />
+                  Show on public page
+                </label>
+              </div>
+
+              <div className="rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+                <div className="mb-4 rounded-xl border border-yellow-400/20 bg-yellow-500/10 p-4 text-sm leading-relaxed text-yellow-100">
+                  <strong>Important:</strong> The family must provide their own
+                  GoFundMe, PayPal, WiPay, bank instruction page, or other outside
+                  link. ScanMyLegacy only displays the link and does not collect,
+                  hold, manage, verify, or refund any donations.
+                </div>
+
+                <input
+                  value={supportFundTitle}
+                  onChange={(e) => setSupportFundTitle(e.target.value)}
+                  placeholder="Fund Title — example: Help Support Joshua’s University Journey"
+                  disabled={!canManage || !supportFundEnabled}
+                  className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <textarea
+                  value={supportFundPurpose}
+                  onChange={(e) => setSupportFundPurpose(e.target.value)}
+                  rows={5}
+                  placeholder="Explain the purpose — example: Family and friends who wish to support funeral expenses, education, medical needs, or a special family cause may contribute through the link below."
+                  disabled={!canManage || !supportFundEnabled}
+                  className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                />
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <input
+                    value={supportFundButtonText}
+                    onChange={(e) => setSupportFundButtonText(e.target.value)}
+                    placeholder="Button Text — example: Support The Family"
+                    disabled={!canManage || !supportFundEnabled}
+                    className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+
+                  <input
+                    value={supportFundUrl}
+                    onChange={(e) => setSupportFundUrl(e.target.value)}
+                    placeholder="External link — must start with https://"
+                    disabled={!canManage || !supportFundEnabled}
+                    className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                </div>
+
+                {supportFundEnabled && supportFundUrl && (
+                  <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                    <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[#d4af37]">
+                      Preview
+                    </p>
+
+                    <h3 className="font-serif text-xl text-white">
+                      {supportFundTitle || "Family Support Fund"}
+                    </h3>
+
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-gray-300">
+                      {supportFundPurpose ||
+                        "Family and friends may contribute through the link below."}
+                    </p>
+
+                    <a
+                      href={supportFundUrl}
+                      target="_blank"
+                      className="mt-4 inline-block rounded-full bg-[#d4af37] px-5 py-3 text-sm font-semibold text-black"
+                    >
+                      {supportFundButtonText || "Support The Family"}
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
