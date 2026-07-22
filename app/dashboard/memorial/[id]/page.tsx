@@ -39,6 +39,11 @@ export default function ManageMemorialPage() {
   const [vaultStory, setVaultStory] = useState("");
   const [vaultSortOrder, setVaultSortOrder] = useState("0");
   const [vaultIsVisible, setVaultIsVisible] = useState(true);
+  const [vaultVisibilityType, setVaultVisibilityType] = useState("public");
+  const [vaultReleaseDate, setVaultReleaseDate] = useState("");
+  const [vaultRecipientName, setVaultRecipientName] = useState("");
+  const [vaultRecipientContact, setVaultRecipientContact] = useState("");
+  const [vaultRecipientAccessCode, setVaultRecipientAccessCode] = useState("");
   const [vaultImage, setVaultImage] = useState<File | null>(null);
   const [vaultVideo, setVaultVideo] = useState<File | null>(null);
   const [vaultAudio, setVaultAudio] = useState<File | null>(null);
@@ -309,6 +314,41 @@ export default function ManageMemorialPage() {
     "Final Wishes",
     "Other",
   ];
+
+  const legacyVaultVisibilityOptions = [
+    {
+      value: "public",
+      label: "Public Now",
+      description: "Visible to everyone who enters this private legacy page.",
+    },
+    {
+      value: "hidden",
+      label: "Hidden From Public",
+      description: "Only the page owner can see it in the dashboard.",
+    },
+    {
+      value: "after_passing",
+      label: "Release After Passing",
+      description: "Shown after this Living Legacy is converted to a Memorial.",
+    },
+    {
+      value: "release_date",
+      label: "Release On A Special Date",
+      description: "Shown on or after the selected release date.",
+    },
+    {
+      value: "recipient_only",
+      label: "Private Recipient Only",
+      description: "Hidden from everyone except the selected recipient after unlock.",
+    },
+  ];
+
+  const getVaultVisibilityLabel = (value: string) => {
+    return (
+      legacyVaultVisibilityOptions.find((option) => option.value === value)
+        ?.label || "Public Now"
+    );
+  };
 
   const milestoneCategories = [
     "Life Event",
@@ -669,6 +709,11 @@ export default function ManageMemorialPage() {
     setVaultStory("");
     setVaultSortOrder("0");
     setVaultIsVisible(true);
+    setVaultVisibilityType("public");
+    setVaultReleaseDate("");
+    setVaultRecipientName("");
+    setVaultRecipientContact("");
+    setVaultRecipientAccessCode("");
     setVaultImage(null);
     setVaultVideo(null);
     setVaultAudio(null);
@@ -681,6 +726,13 @@ export default function ManageMemorialPage() {
     setVaultStory(entry.story || "");
     setVaultSortOrder(String(entry.sort_order || 0));
     setVaultIsVisible(Number(entry.is_visible) === 1);
+    setVaultVisibilityType(entry.visibility_type || "public");
+    setVaultReleaseDate(
+      entry.release_date ? String(entry.release_date).slice(0, 10) : ""
+    );
+    setVaultRecipientName(entry.recipient_name || "");
+    setVaultRecipientContact(entry.recipient_contact || "");
+    setVaultRecipientAccessCode(entry.recipient_access_code || "");
     setVaultImage(null);
     setVaultVideo(null);
     setVaultAudio(null);
@@ -705,6 +757,23 @@ export default function ManageMemorialPage() {
       return;
     }
 
+    if (vaultVisibilityType === "release_date" && !vaultReleaseDate) {
+      alert("Please choose the date this Legacy Vault story should be released.");
+      return;
+    }
+
+    if (vaultVisibilityType === "recipient_only") {
+      if (!vaultRecipientName.trim()) {
+        alert("Please enter the private recipient's name.");
+        return;
+      }
+
+      if (!vaultRecipientAccessCode.trim()) {
+        alert("Please enter a private access code for this recipient.");
+        return;
+      }
+    }
+
     const formData = new FormData();
 
     formData.append("memorial_id", String(memorial.id));
@@ -713,6 +782,11 @@ export default function ManageMemorialPage() {
     formData.append("story", vaultStory);
     formData.append("sort_order", vaultSortOrder || "0");
     formData.append("is_visible", vaultIsVisible ? "1" : "0");
+    formData.append("visibility_type", vaultVisibilityType);
+    formData.append("release_date", vaultReleaseDate);
+    formData.append("recipient_name", vaultRecipientName);
+    formData.append("recipient_contact", vaultRecipientContact);
+    formData.append("recipient_access_code", vaultRecipientAccessCode);
 
     if (editingVaultEntry?.id) {
       formData.append("entry_id", String(editingVaultEntry.id));
@@ -1413,7 +1487,7 @@ export default function ManageMemorialPage() {
                     className="mb-4 w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
-                  <div className="mb-4 grid gap-4 md:grid-cols-3">
+                  <div className="mb-4 grid gap-4 md:grid-cols-2">
                     <select
                       value={vaultCategory}
                       onChange={(e) => setVaultCategory(e.target.value)}
@@ -1435,16 +1509,90 @@ export default function ManageMemorialPage() {
                       disabled={!canManage}
                       className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
                     />
+                  </div>
 
-                    <label className="flex items-center gap-3 rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-sm text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={vaultIsVisible}
-                        onChange={(e) => setVaultIsVisible(e.target.checked)}
-                        disabled={!canManage}
-                      />
-                      Show on public page
+                  <div className="mb-4 rounded-2xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                    <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                      Release / Visibility Type
                     </label>
+
+                    <select
+                      value={vaultVisibilityType}
+                      onChange={(e) => {
+                        setVaultVisibilityType(e.target.value);
+                        setVaultIsVisible(e.target.value === "public");
+                      }}
+                      disabled={!canManage}
+                      className="mb-3 w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {legacyVaultVisibilityOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <p className="text-xs leading-relaxed text-gray-400">
+                      {
+                        legacyVaultVisibilityOptions.find(
+                          (option) => option.value === vaultVisibilityType
+                        )?.description
+                      }
+                    </p>
+
+                    {vaultVisibilityType === "release_date" && (
+                      <div className="mt-4">
+                        <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                          Release Date
+                        </label>
+
+                        <input
+                          type="date"
+                          value={vaultReleaseDate}
+                          onChange={(e) => setVaultReleaseDate(e.target.value)}
+                          disabled={!canManage}
+                          className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+                      </div>
+                    )}
+
+                    {vaultVisibilityType === "recipient_only" && (
+                      <div className="mt-4 grid gap-4 md:grid-cols-3">
+                        <input
+                          value={vaultRecipientName}
+                          onChange={(e) => setVaultRecipientName(e.target.value)}
+                          placeholder="Recipient Name"
+                          disabled={!canManage}
+                          className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+
+                        <input
+                          value={vaultRecipientContact}
+                          onChange={(e) =>
+                            setVaultRecipientContact(e.target.value)
+                          }
+                          placeholder="Recipient Email or Phone"
+                          disabled={!canManage}
+                          className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+
+                        <input
+                          value={vaultRecipientAccessCode}
+                          onChange={(e) =>
+                            setVaultRecipientAccessCode(e.target.value)
+                          }
+                          placeholder="Private Access Code"
+                          disabled={!canManage}
+                          className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        />
+                      </div>
+                    )}
+
+                    <div className="mt-4 rounded-xl border border-yellow-400/20 bg-yellow-500/10 p-3 text-xs leading-relaxed text-yellow-100">
+                      Private recipient messages are hidden from the public page.
+                      The unlock screen will be added next so each recipient can
+                      only open their own message with their private access code.
+                    </div>
                   </div>
 
                   <textarea
@@ -1554,14 +1702,18 @@ export default function ManageMemorialPage() {
 
                               <span
                                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                  Number(entry.is_visible) === 1
+                                  entry.visibility_type === "public" || Number(entry.is_visible) === 1
                                     ? "bg-green-500/10 text-green-200"
                                     : "bg-gray-500/10 text-gray-300"
                                 }`}
                               >
-                                {Number(entry.is_visible) === 1
+                                {entry.visibility_type === "public" || Number(entry.is_visible) === 1
                                   ? "Visible"
-                                  : "Hidden"}
+                                  : "Protected"}
+                              </span>
+
+                              <span className="rounded-full bg-[#d4af37]/10 px-3 py-1 text-xs font-semibold text-[#d4af37]">
+                                {getVaultVisibilityLabel(entry.visibility_type || "public")}
                               </span>
                             </div>
 
@@ -1572,6 +1724,18 @@ export default function ManageMemorialPage() {
                             <p className="mt-1 text-xs text-gray-500">
                               {formatDateTime(entry.created_at)}
                             </p>
+
+                            {entry.visibility_type === "release_date" && entry.release_date && (
+                              <p className="mt-1 text-xs text-[#d4af37]">
+                                Releases on {formatDateOnly(entry.release_date)}
+                              </p>
+                            )}
+
+                            {entry.visibility_type === "recipient_only" && entry.recipient_name && (
+                              <p className="mt-1 text-xs text-[#d4af37]">
+                                Private recipient: {entry.recipient_name}
+                              </p>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap gap-2">
