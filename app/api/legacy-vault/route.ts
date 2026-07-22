@@ -151,13 +151,81 @@ async function getVaultEntry(entryId: number) {
   return rows[0];
 }
 
-function prepareEntry(entry: any) {
-  return {
+function normalizeVisibilityType(value: any) {
+  const visibilityType = String(value || "public").trim().toLowerCase();
+
+  const allowedTypes = [
+    "public",
+    "hidden",
+    "after_passing",
+    "release_date",
+    "recipient_only",
+  ];
+
+  if (!allowedTypes.includes(visibilityType)) return "public";
+
+  return visibilityType;
+}
+
+function cleanDate(value: any) {
+  const dateValue = String(value || "").trim();
+
+  if (!dateValue) return null;
+
+  return dateValue.slice(0, 10);
+}
+
+function cleanRecipientAccessCode(value: any) {
+  return String(value || "")
+    .trim()
+    .slice(0, 100);
+}
+
+function prepareEntry(entry: any, ownerMode = false) {
+  const prepared: any = {
     ...entry,
+    visibility_type: normalizeVisibilityType(entry.visibility_type),
     image_url: normalizeMediaUrl(entry.image_url),
     video_url: normalizeMediaUrl(entry.video_url),
     audio_url: normalizeMediaUrl(entry.audio_url),
   };
+
+  if (!ownerMode) {
+    delete prepared.recipient_contact;
+    delete prepared.recipient_access_code;
+  }
+
+  return prepared;
+}
+
+function validateReleaseSettings({
+  visibilityType,
+  releaseDate,
+  recipientName,
+  recipientContact,
+  recipientAccessCode,
+}: {
+  visibilityType: string;
+  releaseDate: string | null;
+  recipientName: string;
+  recipientContact: string;
+  recipientAccessCode: string;
+}) {
+  if (visibilityType === "release_date" && !releaseDate) {
+    return "Please choose a release date for this Legacy Vault story.";
+  }
+
+  if (visibilityType === "recipient_only") {
+    if (!recipientName) {
+      return "Recipient name is required for a private recipient message.";
+    }
+
+    if (!recipientAccessCode) {
+      return "Private access code is required for a private recipient message.";
+    }
+  }
+
+  return "";
 }
 
 export async function GET(req: Request) {
@@ -169,6 +237,7 @@ export async function GET(req: Request) {
     const ownerMode = searchParams.get("owner") === "1";
 
     let memorialId: number | null = null;
+    let pageType: "living" | "memorial" = "memorial";
 
     if (ownerMode) {
       const userId = await getSessionUserId();
@@ -199,6 +268,7 @@ export async function GET(req: Request) {
       }
 
       memorialId = Number(memorial.id);
+      pageType = memorial.page_type === "living" ? "living" : "memorial";
     } else {
       if (!token) {
         return NextResponse.json(
@@ -217,6 +287,7 @@ export async function GET(req: Request) {
       }
 
       memorialId = Number(memorial.id);
+      pageType = memorial.page_type === "living" ? "living" : "memorial";
     }
 
     const [rows]: any = await db.execute(
@@ -232,19 +303,35 @@ export async function GET(req: Request) {
         audio_url,
         sort_order,
         is_visible,
+        visibility_type,
+        release_date,
+        recipient_name,
+        recipient_contact,
+        recipient_access_code,
         created_at,
         updated_at
       FROM legacy_vault_entries
       WHERE memorial_id = ?
-        ${ownerMode ? "" : "AND is_visible = 1"}
+        ${
+          ownerMode
+            ? ""
+            : `
+        AND is_visible = 1
+        AND (
+          COALESCE(visibility_type, 'public') = 'public'
+          OR (visibility_type = 'release_date' AND release_date IS NOT NULL AND release_date <= CURDATE())
+          OR (visibility_type = 'after_passing' AND ? = 'memorial')
+        )
+        `
+        }
       ORDER BY sort_order ASC, created_at DESC
       `,
-      [memorialId]
+      ownerMode ? [memorialId] : [memorialId, pageType]
     );
 
     return NextResponse.json({
       success: true,
-      entries: rows.map((entry: any) => prepareEntry(entry)),
+      entries: rows.map((entry: any) => prepareEntry(entry, ownerMode)),
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -269,7 +356,19 @@ export async function POST(req: Request) {
     const category = cleanText(formData.get("category"), 100);
     const story = cleanText(formData.get("story"), 10000);
     const sortOrder = Number(formData.get("sort_order") || 0);
-    const isVisible = String(formData.get("is_visible") || "1") === "1" ? 1 : 0;
+    const visibilityType = normalizeVisibilityType(formData.get("visibility_type"));
+    const releaseDate = cleanDate(formData.get("release_date"));
+    const recipientName = cleanText(formData.get("recipient_name"), 255);
+    const recipientContact = cleanText(formData.get("recipient_contact"), 255);
+    const recipientAccessCode = cleanRecipientAccessCode(
+      formData.get("recipient_access_code")
+    );
+
+    let isVisible = String(formData.get("is_visible") || "1") === "1" ? 1 : 0;
+
+    if (visibilityType === "hidden" || visibilityType === "recipient_only") {
+      isVisible = 0;
+    }
 
     const image = formData.get("image") as File | null;
     const video = formData.get("video") as File | null;
@@ -289,6 +388,18 @@ export async function POST(req: Request) {
       );
     }
 
+    const releaseError = validateReleaseSettings({
+      visibilityType,
+      releaseDate,
+      recipientName,
+      recipientContact,
+      recipientAccessCode,
+    });
+
+    if (releaseError) {
+      return NextResponse.json({ error: releaseError }, { status: 400 });
+    }
+
     const memorial = await getOwnedMemorial(memorialId, Number(userId));
 
     if (!memorial) {
@@ -305,8 +416,23 @@ export async function POST(req: Request) {
     const [result]: any = await db.execute(
       `
       INSERT INTO legacy_vault_entries
-      (memorial_id, title, category, story, image_url, video_url, audio_url, sort_order, is_visible)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (
+        memorial_id,
+        title,
+        category,
+        story,
+        image_url,
+        video_url,
+        audio_url,
+        sort_order,
+        is_visible,
+        visibility_type,
+        release_date,
+        recipient_name,
+        recipient_contact,
+        recipient_access_code
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         memorialId,
@@ -318,6 +444,11 @@ export async function POST(req: Request) {
         audioUrl || null,
         sortOrder,
         isVisible,
+        visibilityType,
+        releaseDate,
+        recipientName || null,
+        recipientContact || null,
+        recipientAccessCode || null,
       ]
     );
 
@@ -349,7 +480,19 @@ export async function PATCH(req: Request) {
     const category = cleanText(formData.get("category"), 100);
     const story = cleanText(formData.get("story"), 10000);
     const sortOrder = Number(formData.get("sort_order") || 0);
-    const isVisible = String(formData.get("is_visible") || "1") === "1" ? 1 : 0;
+    const visibilityType = normalizeVisibilityType(formData.get("visibility_type"));
+    const releaseDate = cleanDate(formData.get("release_date"));
+    const recipientName = cleanText(formData.get("recipient_name"), 255);
+    const recipientContact = cleanText(formData.get("recipient_contact"), 255);
+    const recipientAccessCode = cleanRecipientAccessCode(
+      formData.get("recipient_access_code")
+    );
+
+    let isVisible = String(formData.get("is_visible") || "1") === "1" ? 1 : 0;
+
+    if (visibilityType === "hidden" || visibilityType === "recipient_only") {
+      isVisible = 0;
+    }
 
     const image = formData.get("image") as File | null;
     const video = formData.get("video") as File | null;
@@ -367,6 +510,18 @@ export async function PATCH(req: Request) {
         { error: "Title is required." },
         { status: 400 }
       );
+    }
+
+    const releaseError = validateReleaseSettings({
+      visibilityType,
+      releaseDate,
+      recipientName,
+      recipientContact,
+      recipientAccessCode,
+    });
+
+    if (releaseError) {
+      return NextResponse.json({ error: releaseError }, { status: 400 });
     }
 
     const entry = await getVaultEntry(entryId);
@@ -420,7 +575,12 @@ export async function PATCH(req: Request) {
           video_url = ?,
           audio_url = ?,
           sort_order = ?,
-          is_visible = ?
+          is_visible = ?,
+          visibility_type = ?,
+          release_date = ?,
+          recipient_name = ?,
+          recipient_contact = ?,
+          recipient_access_code = ?
       WHERE id = ?
       `,
       [
@@ -432,6 +592,11 @@ export async function PATCH(req: Request) {
         audioUrl,
         sortOrder,
         isVisible,
+        visibilityType,
+        releaseDate,
+        recipientName || null,
+        recipientContact || null,
+        recipientAccessCode || null,
         entryId,
       ]
     );
