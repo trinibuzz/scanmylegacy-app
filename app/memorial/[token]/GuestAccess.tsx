@@ -7,6 +7,7 @@ import ChatBox from "./ChatBox";
 type ActiveSection =
   | "story"
   | "legacy-vault"
+  | "private-messages"
   | "milestones"
   | "blessings"
   | "flowers"
@@ -27,6 +28,12 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const [legacyVaultEntries, setLegacyVaultEntries] = useState<any[]>([]);
   const [loadingLegacyVault, setLoadingLegacyVault] = useState(false);
+  const [privateRecipientName, setPrivateRecipientName] = useState("");
+  const [privateRecipientContact, setPrivateRecipientContact] = useState("");
+  const [privateAccessCode, setPrivateAccessCode] = useState("");
+  const [privateVaultEntries, setPrivateVaultEntries] = useState<any[]>([]);
+  const [unlockingPrivateVault, setUnlockingPrivateVault] = useState(false);
+  const [privateUnlockMessage, setPrivateUnlockMessage] = useState("");
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
 
@@ -234,6 +241,12 @@ export default function GuestAccess({ memorial, token }: any) {
         : "Owner-added memories and media.",
     },
     {
+      key: "private-messages",
+      icon: "🔑",
+      title: "Private Messages",
+      text: "Unlock a personal message with your code.",
+    },
+    {
       key: "milestones",
       icon: "🏆",
       title: milestonesTitle,
@@ -311,6 +324,11 @@ export default function GuestAccess({ memorial, token }: any) {
       label: legacyVaultTitle,
       href: "#legacy-sections",
       section: "legacy-vault",
+    },
+    {
+      label: "Private Messages",
+      href: "#legacy-sections",
+      section: "private-messages",
     },
     {
       label: milestonesTitle,
@@ -402,6 +420,57 @@ export default function GuestAccess({ memorial, token }: any) {
       setLegacyVaultEntries([]);
     } finally {
       setLoadingLegacyVault(false);
+    }
+  };
+
+  const unlockPrivateVault = async () => {
+    if (!privateRecipientName.trim()) {
+      alert("Please enter the recipient name.");
+      return;
+    }
+
+    if (!privateAccessCode.trim()) {
+      alert("Please enter the private access code.");
+      return;
+    }
+
+    try {
+      setUnlockingPrivateVault(true);
+      setPrivateUnlockMessage("");
+      setPrivateVaultEntries([]);
+
+      const res = await fetch("/api/legacy-vault/unlock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          recipient_name: privateRecipientName,
+          recipient_contact: privateRecipientContact,
+          access_code: privateAccessCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPrivateUnlockMessage(
+          data.error || "No private message was found for those details."
+        );
+        return;
+      }
+
+      setPrivateVaultEntries(data.entries || []);
+      setPrivateUnlockMessage(
+        data.entries?.length
+          ? "Private message unlocked."
+          : "No private message was found for those details."
+      );
+    } catch {
+      setPrivateUnlockMessage("Could not unlock private messages. Please try again.");
+    } finally {
+      setUnlockingPrivateVault(false);
     }
   };
 
@@ -1463,6 +1532,153 @@ export default function GuestAccess({ memorial, token }: any) {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {activeSection === "private-messages" && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl">
+            <div className="mb-6 text-center">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Private Recipient Access
+              </p>
+
+              <h2 className="font-serif text-3xl text-[#d4af37]">
+                Private Messages
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-gray-400">
+                Some messages are personal and can only be opened by the person
+                they were created for. Enter the recipient details and private
+                access code provided by the page owner or family.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-3xl rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Recipient Name
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Example: Joshua Balfour"
+                    value={privateRecipientName}
+                    onChange={(e) => setPrivateRecipientName(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Email or Phone Optional
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Email or phone used by the owner"
+                    value={privateRecipientContact}
+                    onChange={(e) => setPrivateRecipientContact(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                  Private Access Code
+                </label>
+
+                <input
+                  className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                  placeholder="Enter private access code"
+                  value={privateAccessCode}
+                  onChange={(e) => setPrivateAccessCode(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={unlockPrivateVault}
+                disabled={unlockingPrivateVault}
+                className="mt-5 w-full rounded-xl bg-[#d4af37] py-3 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {unlockingPrivateVault ? "Checking..." : "Unlock Private Message"}
+              </button>
+
+              {privateUnlockMessage && (
+                <p className="mt-4 rounded-xl border border-[#d4af37]/15 bg-[#111a2e] p-3 text-center text-sm text-gray-300">
+                  {privateUnlockMessage}
+                </p>
+              )}
+            </div>
+
+            {privateVaultEntries.length > 0 && (
+              <div className="mt-6 grid gap-5 md:grid-cols-2">
+                {privateVaultEntries.map((entry: any) => (
+                  <article
+                    key={entry.id}
+                    className="overflow-hidden rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] shadow-xl"
+                  >
+                    {entry.image_url && (
+                      <img
+                        src={safeMediaPath(entry.image_url)}
+                        alt={entry.title}
+                        className="max-h-[360px] w-full bg-black object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
+
+                    <div className="p-5">
+                      {entry.category && (
+                        <div className="mb-3 w-fit rounded-full border border-[#d4af37]/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                          {entry.category}
+                        </div>
+                      )}
+
+                      <h3 className="font-serif text-2xl text-white">
+                        {entry.title}
+                      </h3>
+
+                      {entry.story && (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-gray-300">
+                          {entry.story}
+                        </p>
+                      )}
+
+                      {entry.video_url && (
+                        <video controls className="mt-4 w-full rounded-xl">
+                          <source src={safeMediaPath(entry.video_url)} />
+                        </video>
+                      )}
+
+                      {entry.audio_url && (
+                        <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-3">
+                          <p className="mb-2 text-xs font-semibold text-[#d4af37]">
+                            🎙️ Private Voice Message / Audio
+                          </p>
+
+                          <audio controls className="w-full">
+                            <source src={safeMediaPath(entry.audio_url)} />
+                          </audio>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-6 rounded-2xl border border-[#d4af37]/15 bg-[#0b1320] p-4">
+              <p className="text-xs leading-relaxed text-gray-400">
+                Private messages are controlled by the page owner or family.
+                ScanMyLegacy does not verify family relationships or legal
+                instructions. This area is for personal legacy messages,
+                memories, guidance, and emotional keepsakes.
+              </p>
+            </div>
           </div>
         </section>
       )}
