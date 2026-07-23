@@ -30,6 +30,14 @@ export default async function AdminDashboardPage() {
       wide: true,
     },
     {
+      href: "/admin/trusted-contact-requests",
+      icon: "🛡️",
+      title: "Trusted Contact Requests",
+      description:
+        "Review trusted contact requests for legacy release, conversion to memorial, and ownership transfer before anything is approved.",
+      button: "Review Requests →",
+    },
+    {
       href: "/admin/trials",
       icon: "⏳",
       title: "Trial Manager",
@@ -55,7 +63,7 @@ export default async function AdminDashboardPage() {
     },
     {
       href: "/admin/reports",
-      icon: "🛡️",
+      icon: "🚩",
       title: "Reports",
       description:
         "Review reported content, flagged chats, and platform activity when this section is enabled.",
@@ -74,8 +82,9 @@ export default async function AdminDashboardPage() {
           <h1 className="font-serif text-4xl font-bold">Admin Dashboard</h1>
 
           <p className="mt-3 max-w-2xl text-sm text-white/70">
-            Manage living legacy pages, memorial pages, free trials, manual cash
-            payments, package activations, and account status.
+            Manage living legacy pages, memorial pages, free trials, trusted
+            contact requests, manual cash payments, package activations, and
+            account status.
           </p>
         </div>
 
@@ -103,7 +112,7 @@ export default async function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="mt-6 grid gap-6 md:grid-cols-4">
+        <div className="mt-6 grid gap-6 md:grid-cols-3">
           {cards.slice(2).map((card) => (
             <Link
               key={card.title}
