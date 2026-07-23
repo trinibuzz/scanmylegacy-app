@@ -93,119 +93,91 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const pageThemes: any = {
     classic_gold: {
-      bg: "#0b1320",
-      card: "#111a2e",
-      cardSoft: "#081827",
-      accent: "#d4af37",
-      text: "#ffffff",
-      muted: "#cbd5e1",
-      border: "#2a3550",
-      heroOverlay: "linear-gradient(to bottom, rgba(11,19,32,0.78), rgba(11,19,32,0.90), #0b1320)",
-    },
-    heavenly_white: {
-      bg: "#f8f5ef",
-      card: "#ffffff",
-      cardSoft: "#f1eadc",
-      accent: "#b88925",
-      text: "#1f2933",
-      muted: "#5f6b7a",
-      border: "#dfd2bd",
-      heroOverlay: "linear-gradient(to bottom, rgba(248,245,239,0.75), rgba(248,245,239,0.92), #f8f5ef)",
-    },
-    garden_memories: {
-      bg: "#0f2418",
-      card: "#183524",
-      cardSoft: "#102a1b",
-      accent: "#d7c58a",
-      text: "#fffaf0",
-      muted: "#d7e3cf",
-      border: "#3f5f45",
-      heroOverlay: "linear-gradient(to bottom, rgba(15,36,24,0.72), rgba(15,36,24,0.90), #0f2418)",
-    },
-    royal_legacy: {
-      bg: "#170d2c",
-      card: "#241343",
-      cardSoft: "#1d1036",
-      accent: "#f2c96d",
-      text: "#ffffff",
-      muted: "#ddd2f0",
-      border: "#4a2d78",
-      heroOverlay: "linear-gradient(to bottom, rgba(23,13,44,0.74), rgba(23,13,44,0.90), #170d2c)",
-    },
-    caribbean_life: {
-      bg: "#06283d",
-      card: "#07445f",
-      cardSoft: "#053247",
-      accent: "#ffb84d",
-      text: "#ffffff",
-      muted: "#d5f2f7",
-      border: "#1b7a8f",
-      heroOverlay: "linear-gradient(to bottom, rgba(6,40,61,0.72), rgba(6,40,61,0.90), #06283d)",
-    },
-    modern_minimal: {
-      bg: "#0a0a0a",
-      card: "#171717",
-      cardSoft: "#111111",
-      accent: "#e5e5e5",
-      text: "#ffffff",
-      muted: "#c7c7c7",
-      border: "#3f3f46",
-      heroOverlay: "linear-gradient(to bottom, rgba(10,10,10,0.78), rgba(10,10,10,0.90), #0a0a0a)",
-    },
-    ocean_tribute: {
-      bg: "#062434",
-      card: "#0b3d56",
-      cardSoft: "#082f44",
-      accent: "#7dd3fc",
-      text: "#f0fbff",
-      muted: "#cceaf5",
-      border: "#2b7894",
-      heroOverlay: "linear-gradient(to bottom, rgba(6,36,52,0.72), rgba(6,36,52,0.90), #062434)",
-    },
-    christian_faith: {
-      bg: "#f7f4ec",
-      card: "#ffffff",
-      cardSoft: "#efe7d8",
-      accent: "#b88a2b",
-      text: "#1f2a44",
-      muted: "#5f6b7a",
-      border: "#d9c69f",
-      heroOverlay: "linear-gradient(to bottom, rgba(247,244,236,0.72), rgba(247,244,236,0.92), #f7f4ec)",
-    },
-    military_honour: {
-      bg: "#182315",
-      card: "#24331f",
-      cardSoft: "#1d2b19",
-      accent: "#d4af37",
-      text: "#fff8e6",
-      muted: "#d7ddc8",
-      border: "#4e633d",
-      heroOverlay: "linear-gradient(to bottom, rgba(24,35,21,0.74), rgba(24,35,21,0.91), #182315)",
-    },
-    celebration_life: {
-      bg: "#fff4df",
-      card: "#ffffff",
-      cardSoft: "#ffe7bd",
-      accent: "#f59e0b",
-      text: "#3b2512",
-      muted: "#765638",
-      border: "#f7c76f",
-      heroOverlay: "linear-gradient(to bottom, rgba(255,244,223,0.72), rgba(255,244,223,0.92), #fff4df)",
-    },
+  bg: "#0b1320",
+  card: "#111a2e",
+  cardSoft: "#081827",
+  accent: "#d4af37",
+  text: "#ffffff",
+  muted: "#cbd5e1",
+  border: "#2a3550",
+  photoOpacity: "0.55",
+  heroOverlay: "linear-gradient(to bottom, rgba(11,19,32,0.52), rgba(11,19,32,0.78), #0b1320)",
+},
+
+heavenly_white: {
+  bg: "#f8f5ef",
+  card: "#ffffff",
+  cardSoft: "#f1eadc",
+  accent: "#b88925",
+  text: "#1f2933",
+  muted: "#5f6b7a",
+  border: "#dfd2bd",
+  photoOpacity: "0.60",
+  heroOverlay: "linear-gradient(to bottom, rgba(40,30,15,0.25), rgba(248,245,239,0.62), #f8f5ef)",
+},
+
+garden_memories: {
+  bg: "#0f2418",
+  card: "#183524",
+  cardSoft: "#102a1b",
+  accent: "#d7c58a",
+  text: "#fffaf0",
+  muted: "#d7e3cf",
+  border: "#3f5f45",
+  photoOpacity: "0.58",
+  heroOverlay: "linear-gradient(to bottom, rgba(15,36,24,0.48), rgba(15,36,24,0.76), #0f2418)",
+},
+
+royal_legacy: {
+  bg: "#170d2c",
+  card: "#241343",
+  cardSoft: "#1d1036",
+  accent: "#f2c96d",
+  text: "#ffffff",
+  muted: "#ddd2f0",
+  border: "#4a2d78",
+  photoOpacity: "0.56",
+  heroOverlay: "linear-gradient(to bottom, rgba(23,13,44,0.50), rgba(23,13,44,0.78), #170d2c)",
+},
+
+caribbean_life: {
+  bg: "#06283d",
+  card: "#07445f",
+  cardSoft: "#053247",
+  accent: "#ffb84d",
+  text: "#ffffff",
+  muted: "#d5f2f7",
+  border: "#1b7a8f",
+  photoOpacity: "0.60",
+  heroOverlay: "linear-gradient(to bottom, rgba(6,40,61,0.45), rgba(6,40,61,0.75), #06283d)",
+},
+
+modern_minimal: {
+  bg: "#0a0a0a",
+  card: "#171717",
+  cardSoft: "#111111",
+  accent: "#e5e5e5",
+  text: "#ffffff",
+  muted: "#c7c7c7",
+  border: "#3f3f46",
+  photoOpacity: "0.52",
+  heroOverlay: "linear-gradient(to bottom, rgba(10,10,10,0.50), rgba(10,10,10,0.78), #0a0a0a)",
+},
   };
 
   const currentTheme = pageThemes[selectedPageTheme] || pageThemes.classic_gold;
 
-  const themeStyle = {
-    "--sml-bg": currentTheme.bg,
-    "--sml-card": currentTheme.card,
-    "--sml-card-soft": currentTheme.cardSoft,
-    "--sml-accent": currentTheme.accent,
-    "--sml-text": currentTheme.text,
-    "--sml-muted": currentTheme.muted,
-    "--sml-border": currentTheme.border,
-    "--sml-hero-overlay": currentTheme.heroOverlay,
-  } as any;
+const themeStyle = {
+  "--sml-bg": currentTheme.bg,
+  "--sml-card": currentTheme.card,
+  "--sml-card-soft": currentTheme.cardSoft,
+  "--sml-accent": currentTheme.accent,
+  "--sml-text": currentTheme.text,
+  "--sml-muted": currentTheme.muted,
+  "--sml-border": currentTheme.border,
+  "--sml-photo-opacity": currentTheme.photoOpacity || "0.55",
+  "--sml-hero-overlay": currentTheme.heroOverlay,
+} as any;
 
   const pageTypeLabel = isLivingLegacy ? "Living Legacy" : "Memorial Tribute";
   const pageTypeFullLabel = isLivingLegacy
@@ -1155,7 +1127,8 @@ export default function GuestAccess({ memorial, token }: any) {
             <img
               src={safeMediaPath(memorial.cover_photo)}
               alt={memorial.full_name}
-              className="absolute inset-0 h-full w-full object-cover object-[center_20%] opacity-35"
+              className="absolute inset-0 h-full w-full object-cover object-[center_20%]"
+              style={{ opacity: "var(--sml-photo-opacity)" }}
               onError={(e) => {
                 e.currentTarget.style.display = "none";
               }}
@@ -1495,12 +1468,12 @@ export default function GuestAccess({ memorial, token }: any) {
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-[var(--sml-accent)] bg-[var(--sml-card)] shadow-2xl">
-            <div className="relative aspect-[16/9] bg-black">
+            <div className="relative aspect-[16/9] overflow-hidden bg-black">
               <img
                 key={activePhoto}
                 src={galleryPhotos[activePhoto]}
                 alt={slideshowTitle}
-                className="h-full w-full object-contain memorial-cinematic"
+                className="block h-full w-full object-contain memorial-cinematic"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
@@ -1556,7 +1529,7 @@ export default function GuestAccess({ memorial, token }: any) {
               />
             </audio>
 
-            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 border-t border-[var(--sml-accent)] bg-[var(--sml-card-soft)]/90 px-4 py-5">
+            <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 border-t border-[var(--sml-accent)] bg-[var(--sml-card)] px-4 py-5">
               <button
                 type="button"
                 onClick={() => setIsSlideshowPlaying(!isSlideshowPlaying)}
@@ -1575,7 +1548,7 @@ export default function GuestAccess({ memorial, token }: any) {
             </div>
 
             {galleryPhotos.length > 1 && (
-              <div className="mt-4 grid grid-cols-3 gap-3 border-t border-[var(--sml-accent)] bg-[var(--sml-card-soft)]/80 p-4 pt-5 sm:grid-cols-4 sm:gap-3 sm:p-5 md:grid-cols-6">
+              <div className="grid grid-cols-3 gap-3 border-t border-[var(--sml-accent)] bg-[var(--sml-card-soft)] p-4 sm:grid-cols-4 sm:gap-3 sm:p-5 md:grid-cols-6">
                 {galleryPhotos.map((photo: string, index: number) => (
                   <button
                     key={index}
