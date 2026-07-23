@@ -8,6 +8,7 @@ type ActiveSection =
   | "story"
   | "legacy-vault"
   | "private-messages"
+  | "trusted-contact"
   | "milestones"
   | "blessings"
   | "flowers"
@@ -34,6 +35,14 @@ export default function GuestAccess({ memorial, token }: any) {
   const [privateVaultEntries, setPrivateVaultEntries] = useState<any[]>([]);
   const [unlockingPrivateVault, setUnlockingPrivateVault] = useState(false);
   const [privateUnlockMessage, setPrivateUnlockMessage] = useState("");
+  const [trustedRequestType, setTrustedRequestType] = useState("convert_to_memorial");
+  const [trustedContactName, setTrustedContactName] = useState("");
+  const [trustedContactEmail, setTrustedContactEmail] = useState("");
+  const [trustedContactPhone, setTrustedContactPhone] = useState("");
+  const [trustedAccessCode, setTrustedAccessCode] = useState("");
+  const [trustedRequestNote, setTrustedRequestNote] = useState("");
+  const [submittingTrustedRequest, setSubmittingTrustedRequest] = useState(false);
+  const [trustedRequestMessage, setTrustedRequestMessage] = useState("");
   const [milestones, setMilestones] = useState<any[]>([]);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
 
@@ -197,6 +206,12 @@ export default function GuestAccess({ memorial, token }: any) {
 
   const showSupportFund = supportFundEnabled && validSupportFundUrl;
 
+  const trustedContactEnabled =
+    Number(memorial.trusted_contact_enabled) === 1 &&
+    String(memorial.trusted_contact_name || "").trim().length > 0;
+
+  const showTrustedContactRequest = trustedContactEnabled;
+
   const flowerOptions: any = {
     rose: "🌹",
     tulip: "🌷",
@@ -246,6 +261,16 @@ export default function GuestAccess({ memorial, token }: any) {
       title: "Private Messages",
       text: "Unlock a personal message with your code.",
     },
+    ...(showTrustedContactRequest
+      ? [
+          {
+            key: "trusted-contact" as ActiveSection,
+            icon: "🛡️",
+            title: "Trusted Contact",
+            text: "Submit a release or conversion request.",
+          },
+        ]
+      : []),
     {
       key: "milestones",
       icon: "🏆",
@@ -330,6 +355,15 @@ export default function GuestAccess({ memorial, token }: any) {
       href: "#legacy-sections",
       section: "private-messages",
     },
+    ...(showTrustedContactRequest
+      ? [
+          {
+            label: "Trusted Contact",
+            href: "#legacy-sections",
+            section: "trusted-contact" as ActiveSection,
+          },
+        ]
+      : []),
     {
       label: milestonesTitle,
       href: "#legacy-sections",
@@ -471,6 +505,59 @@ export default function GuestAccess({ memorial, token }: any) {
       setPrivateUnlockMessage("Could not unlock private messages. Please try again.");
     } finally {
       setUnlockingPrivateVault(false);
+    }
+  };
+
+  const submitTrustedContactRequest = async () => {
+    if (!trustedContactName.trim()) {
+      alert("Please enter the trusted contact name.");
+      return;
+    }
+
+    if (!trustedContactEmail.trim() && !trustedContactPhone.trim()) {
+      alert("Please enter the trusted contact email or phone.");
+      return;
+    }
+
+    try {
+      setSubmittingTrustedRequest(true);
+      setTrustedRequestMessage("");
+
+      const res = await fetch("/api/trusted-contact/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          request_type: trustedRequestType,
+          trusted_contact_name: trustedContactName,
+          trusted_contact_email: trustedContactEmail,
+          trusted_contact_phone: trustedContactPhone,
+          access_code: trustedAccessCode,
+          request_note: trustedRequestNote,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setTrustedRequestMessage(
+          data.error || "Unable to submit trusted contact request."
+        );
+        return;
+      }
+
+      setTrustedRequestMessage(
+        data.message ||
+          "Request submitted. ScanMyLegacy admin will review it before anything is changed."
+      );
+
+      setTrustedRequestNote("");
+    } catch {
+      setTrustedRequestMessage("Unable to submit request. Please try again.");
+    } finally {
+      setSubmittingTrustedRequest(false);
     }
   };
 
@@ -884,7 +971,7 @@ export default function GuestAccess({ memorial, token }: any) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-9">
         {featureCards.map((card) => {
           const isActive = activeSection === card.key;
 
@@ -1677,6 +1764,148 @@ export default function GuestAccess({ memorial, token }: any) {
                 ScanMyLegacy does not verify family relationships or legal
                 instructions. This area is for personal legacy messages,
                 memories, guidance, and emotional keepsakes.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {activeSection === "trusted-contact" && showTrustedContactRequest && (
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+          <div className="rounded-2xl border border-[#d4af37]/25 bg-[#111a2e] p-6 shadow-2xl">
+            <div className="mb-6 text-center">
+              <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[#d4af37]">
+                Release Manager
+              </p>
+
+              <h2 className="font-serif text-3xl text-[#d4af37]">
+                Trusted Contact Request
+              </h2>
+
+              <p className="mx-auto mt-3 max-w-3xl text-sm leading-relaxed text-gray-400">
+                This area is for the trusted contact chosen by the page owner.
+                A request can be submitted for admin review, but nothing is
+                converted, released, or transferred automatically.
+              </p>
+            </div>
+
+            <div className="mx-auto max-w-3xl rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                Request Type
+              </label>
+
+              <select
+                value={trustedRequestType}
+                onChange={(e) => setTrustedRequestType(e.target.value)}
+                className="mb-4 w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+              >
+                <option value="convert_to_memorial">
+                  Convert Living Legacy To Memorial
+                </option>
+                <option value="release_after_passing">
+                  Release After Passing Messages
+                </option>
+                <option value="ownership_transfer">
+                  Request Ownership Transfer
+                </option>
+                <option value="general_release_request">
+                  General Family Release Request
+                </option>
+              </select>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Trusted Contact Name
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Enter your name"
+                    value={trustedContactName}
+                    onChange={(e) => setTrustedContactName(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Access Code Optional
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Access code if provided"
+                    value={trustedAccessCode}
+                    onChange={(e) => setTrustedAccessCode(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Email Address
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Email saved by the owner"
+                    value={trustedContactEmail}
+                    onChange={(e) => setTrustedContactEmail(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                    Phone Number
+                  </label>
+
+                  <input
+                    className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                    placeholder="Phone saved by the owner"
+                    value={trustedContactPhone}
+                    onChange={(e) => setTrustedContactPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-[#d4af37]">
+                  Request Note
+                </label>
+
+                <textarea
+                  rows={5}
+                  className="w-full rounded-xl border border-[#2a3550] bg-[#111a2e] p-3 text-white outline-none transition focus:border-[#d4af37]"
+                  placeholder="Explain the reason for this request..."
+                  value={trustedRequestNote}
+                  onChange={(e) => setTrustedRequestNote(e.target.value)}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={submitTrustedContactRequest}
+                disabled={submittingTrustedRequest}
+                className="mt-5 w-full rounded-xl bg-[#d4af37] py-3 font-semibold text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submittingTrustedRequest
+                  ? "Submitting Request..."
+                  : "Submit Trusted Contact Request"}
+              </button>
+
+              {trustedRequestMessage && (
+                <p className="mt-4 rounded-xl border border-[#d4af37]/15 bg-[#111a2e] p-3 text-center text-sm text-gray-300">
+                  {trustedRequestMessage}
+                </p>
+              )}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-yellow-400/20 bg-yellow-500/10 p-4">
+              <p className="text-xs leading-relaxed text-yellow-100">
+                ScanMyLegacy does not automatically release private messages,
+                transfer ownership, or convert a page based only on this form.
+                Every trusted contact request must be reviewed by admin first.
               </p>
             </div>
           </div>
