@@ -254,6 +254,24 @@ export async function POST(
     const birth_date = String(formData.get("birth_date") || "");
     const death_date = String(formData.get("death_date") || "");
     const biography = String(formData.get("biography") || "");
+
+    const allowedPageThemes = [
+      "classic_gold",
+      "heavenly_white",
+      "garden_memories",
+      "royal_legacy",
+      "caribbean_life",
+      "modern_minimal",
+    ];
+
+    const submittedPageTheme = String(
+      formData.get("page_theme") || "classic_gold"
+    ).trim();
+
+    const page_theme = allowedPageThemes.includes(submittedPageTheme)
+      ? submittedPageTheme
+      : "classic_gold";
+
     const support_fund_enabled =
       String(formData.get("support_fund_enabled") || "0") === "1" ? 1 : 0;
     const support_fund_title = String(
@@ -391,6 +409,7 @@ export async function POST(
           birth_date = ?,
           death_date = ?,
           biography = ?,
+          page_theme = ?,
           cover_photo = ?,
           memorial_music = ?,
           support_fund_enabled = ?,
@@ -410,6 +429,7 @@ export async function POST(
         birth_date || null,
         death_date || null,
         biography || "",
+        page_theme,
         coverPhotoPath,
         memorialMusicPath,
         support_fund_enabled,

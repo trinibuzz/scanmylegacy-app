@@ -52,6 +52,7 @@ export default function ManageMemorialPage() {
   const [birthDate, setBirthDate] = useState("");
   const [deathDate, setDeathDate] = useState("");
   const [biography, setBiography] = useState("");
+  const [pageTheme, setPageTheme] = useState("classic_gold");
 
   const [supportFundEnabled, setSupportFundEnabled] = useState(false);
   const [supportFundTitle, setSupportFundTitle] = useState("");
@@ -212,6 +213,7 @@ export default function ManageMemorialPage() {
         data.memorial.death_date ? data.memorial.death_date.slice(0, 10) : ""
       );
       setBiography(data.memorial.biography || "");
+      setPageTheme(data.memorial.page_theme || "classic_gold");
       setSupportFundEnabled(Number(data.memorial.support_fund_enabled) === 1);
       setSupportFundTitle(data.memorial.support_fund_title || "");
       setSupportFundPurpose(data.memorial.support_fund_purpose || "");
@@ -377,6 +379,43 @@ export default function ManageMemorialPage() {
     "Other",
   ];
 
+  const pageThemeOptions = [
+    {
+      value: "classic_gold",
+      label: "Classic Gold",
+      description: "Navy and gold premium ScanMyLegacy look.",
+    },
+    {
+      value: "heavenly_white",
+      label: "Heavenly White",
+      description: "Soft white, gold, and peaceful memorial styling.",
+    },
+    {
+      value: "garden_memories",
+      label: "Garden of Memories",
+      description: "Green, cream, and natural family memory styling.",
+    },
+    {
+      value: "royal_legacy",
+      label: "Royal Legacy",
+      description: "Deep purple, gold, and rich legacy styling.",
+    },
+    {
+      value: "caribbean_life",
+      label: "Caribbean Life",
+      description: "Warm sunset, ocean blue, and Caribbean energy.",
+    },
+    {
+      value: "modern_minimal",
+      label: "Modern Minimal",
+      description: "Clean black, white, and soft gold styling.",
+    },
+  ];
+
+  const selectedPageTheme =
+    pageThemeOptions.find((option) => option.value === pageTheme) ||
+    pageThemeOptions[0];
+
   const now = new Date();
 
   const paymentDueAt = memorial?.payment_due_at
@@ -459,6 +498,7 @@ export default function ManageMemorialPage() {
     formData.append("birth_date", birthDate);
     formData.append("death_date", deathDate);
     formData.append("biography", biography);
+    formData.append("page_theme", pageTheme);
     formData.append("support_fund_enabled", supportFundEnabled ? "1" : "0");
     formData.append("support_fund_title", supportFundTitle);
     formData.append("support_fund_purpose", supportFundPurpose);
@@ -1282,6 +1322,40 @@ export default function ManageMemorialPage() {
                 disabled={!canManage}
                 className="w-full rounded-lg border border-[#2a3550] bg-[#0b1320] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
               />
+
+              <div className="mt-5 rounded-2xl border border-[#d4af37]/20 bg-[#0b1320] p-5">
+                <label className="mb-2 block text-sm font-semibold text-[#d4af37]">
+                  Page Theme
+                </label>
+
+                <p className="mb-4 text-sm leading-relaxed text-gray-400">
+                  Choose the look and mood for this public legacy page. The
+                  selected theme will apply when visitors open the page.
+                </p>
+
+                <select
+                  value={pageTheme}
+                  onChange={(e) => setPageTheme(e.target.value)}
+                  disabled={!canManage}
+                  className="w-full rounded-lg border border-[#2a3550] bg-[#111a2e] p-4 text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {pageThemeOptions.map((theme) => (
+                    <option key={theme.value} value={theme.value}>
+                      {theme.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="mt-4 rounded-xl border border-[#d4af37]/20 bg-[#111a2e] p-4">
+                  <p className="text-sm font-semibold text-white">
+                    {selectedPageTheme.label}
+                  </p>
+
+                  <p className="mt-1 text-sm leading-relaxed text-gray-400">
+                    {selectedPageTheme.description}
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6">
