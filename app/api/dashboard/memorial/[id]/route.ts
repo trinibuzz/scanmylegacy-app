@@ -275,6 +275,29 @@ export async function POST(
       .trim()
       .slice(0, 500);
 
+    const trusted_contact_enabled =
+      String(formData.get("trusted_contact_enabled") || "0") === "1" ? 1 : 0;
+    const trusted_contact_name = String(
+      formData.get("trusted_contact_name") || ""
+    )
+      .trim()
+      .slice(0, 255);
+    const trusted_contact_email = String(
+      formData.get("trusted_contact_email") || ""
+    )
+      .trim()
+      .slice(0, 255);
+    const trusted_contact_phone = String(
+      formData.get("trusted_contact_phone") || ""
+    )
+      .trim()
+      .slice(0, 100);
+    const trusted_contact_note = String(
+      formData.get("trusted_contact_note") || ""
+    )
+      .trim()
+      .slice(0, 3000);
+
     const coverPhoto = formData.get("cover_photo") as File | null;
     const memorialMusic = formData.get("memorial_music") as File | null;
     const galleryPhotos = formData.getAll("gallery_photos") as File[];
@@ -307,6 +330,25 @@ export async function POST(
       ) {
         return NextResponse.json(
           { error: "Family Support Fund link must start with http:// or https://." },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (trusted_contact_enabled === 1) {
+      if (!trusted_contact_name) {
+        return NextResponse.json(
+          { error: "Trusted Contact name is required when enabled." },
+          { status: 400 }
+        );
+      }
+
+      if (!trusted_contact_email && !trusted_contact_phone) {
+        return NextResponse.json(
+          {
+            error:
+              "Trusted Contact email or phone is required when enabled.",
+          },
           { status: 400 }
         );
       }
@@ -355,7 +397,12 @@ export async function POST(
           support_fund_title = ?,
           support_fund_purpose = ?,
           support_fund_button_text = ?,
-          support_fund_url = ?
+          support_fund_url = ?,
+          trusted_contact_enabled = ?,
+          trusted_contact_name = ?,
+          trusted_contact_email = ?,
+          trusted_contact_phone = ?,
+          trusted_contact_note = ?
       WHERE id = ? AND user_id = ?
       `,
       [
@@ -370,6 +417,11 @@ export async function POST(
         support_fund_purpose || null,
         support_fund_button_text || null,
         support_fund_url || null,
+        trusted_contact_enabled,
+        trusted_contact_name || null,
+        trusted_contact_email || null,
+        trusted_contact_phone || null,
+        trusted_contact_note || null,
         memorialId,
         userId,
       ]
