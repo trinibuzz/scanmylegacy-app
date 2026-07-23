@@ -410,6 +410,26 @@ export default function ManageMemorialPage() {
       label: "Modern Minimal",
       description: "Clean black, white, and soft gold styling.",
     },
+    {
+      value: "ocean_tribute",
+      label: "Ocean Tribute",
+      description: "Soft navy, sea blue, white, and calm water tribute styling.",
+    },
+    {
+      value: "christian_faith",
+      label: "Christian Faith",
+      description: "White, soft gold, and deep blue with a peaceful faith-inspired look.",
+    },
+    {
+      value: "military_honour",
+      label: "Military Honour",
+      description: "Dark green, gold, and cream with a respectful honour style.",
+    },
+    {
+      value: "celebration_life",
+      label: "Celebration of Life",
+      description: "Warm cream, bright gold, and joyful colours for an uplifting tribute.",
+    },
   ];
 
   const selectedPageTheme =

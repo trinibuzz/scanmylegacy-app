@@ -262,6 +262,10 @@ export async function POST(
       "royal_legacy",
       "caribbean_life",
       "modern_minimal",
+      "ocean_tribute",
+      "christian_faith",
+      "military_honour",
+      "celebration_life",
     ];
 
     const submittedPageTheme = String(

@@ -79,6 +79,10 @@ export default function GuestAccess({ memorial, token }: any) {
     "royal_legacy",
     "caribbean_life",
     "modern_minimal",
+    "ocean_tribute",
+    "christian_faith",
+    "military_honour",
+    "celebration_life",
   ];
 
   const selectedPageTheme = allowedPageThemes.includes(
@@ -147,6 +151,46 @@ export default function GuestAccess({ memorial, token }: any) {
       muted: "#c7c7c7",
       border: "#3f3f46",
       heroOverlay: "linear-gradient(to bottom, rgba(10,10,10,0.78), rgba(10,10,10,0.90), #0a0a0a)",
+    },
+    ocean_tribute: {
+      bg: "#062434",
+      card: "#0b3d56",
+      cardSoft: "#082f44",
+      accent: "#7dd3fc",
+      text: "#f0fbff",
+      muted: "#cceaf5",
+      border: "#2b7894",
+      heroOverlay: "linear-gradient(to bottom, rgba(6,36,52,0.72), rgba(6,36,52,0.90), #062434)",
+    },
+    christian_faith: {
+      bg: "#f7f4ec",
+      card: "#ffffff",
+      cardSoft: "#efe7d8",
+      accent: "#b88a2b",
+      text: "#1f2a44",
+      muted: "#5f6b7a",
+      border: "#d9c69f",
+      heroOverlay: "linear-gradient(to bottom, rgba(247,244,236,0.72), rgba(247,244,236,0.92), #f7f4ec)",
+    },
+    military_honour: {
+      bg: "#182315",
+      card: "#24331f",
+      cardSoft: "#1d2b19",
+      accent: "#d4af37",
+      text: "#fff8e6",
+      muted: "#d7ddc8",
+      border: "#4e633d",
+      heroOverlay: "linear-gradient(to bottom, rgba(24,35,21,0.74), rgba(24,35,21,0.91), #182315)",
+    },
+    celebration_life: {
+      bg: "#fff4df",
+      card: "#ffffff",
+      cardSoft: "#ffe7bd",
+      accent: "#f59e0b",
+      text: "#3b2512",
+      muted: "#765638",
+      border: "#f7c76f",
+      heroOverlay: "linear-gradient(to bottom, rgba(255,244,223,0.72), rgba(255,244,223,0.92), #fff4df)",
     },
   };
 
