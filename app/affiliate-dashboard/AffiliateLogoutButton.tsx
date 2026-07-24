@@ -3,6 +3,20 @@
 export default function AffiliateLogoutButton() {
   const logout = async () => {
     try {
+      localStorage.removeItem("ref");
+      localStorage.removeItem("referral");
+      localStorage.removeItem("affiliate_ref");
+      localStorage.removeItem("affiliateCode");
+      localStorage.removeItem("referralCode");
+      localStorage.removeItem("scanmylegacy_ref");
+
+      sessionStorage.removeItem("ref");
+      sessionStorage.removeItem("referral");
+      sessionStorage.removeItem("affiliate_ref");
+      sessionStorage.removeItem("affiliateCode");
+      sessionStorage.removeItem("referralCode");
+      sessionStorage.removeItem("scanmylegacy_ref");
+
       await fetch("/api/affiliate-logout", {
         method: "POST",
       });
