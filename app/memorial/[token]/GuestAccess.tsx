@@ -1655,7 +1655,7 @@ export default function GuestAccess({ memorial, token }: any) {
       )}
 
       {activeSection === "story" && (
-        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+        <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
           <div className="rounded-2xl border border-[var(--sml-border)] bg-[var(--sml-card)] p-6">
             <p className="mb-2 text-sm uppercase tracking-[0.25em] text-[var(--sml-accent)]">
               {isLivingLegacy ? "Personal Story" : "Legacy Story"}
