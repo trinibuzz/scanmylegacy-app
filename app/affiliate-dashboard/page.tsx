@@ -1,3 +1,4 @@
+import AffiliateLogoutButton from "./AffiliateLogoutButton";
 import { db } from "../../lib/db";
 import { cookies } from "next/headers";
 import Link from "next/link";
@@ -129,9 +130,13 @@ export default async function AffiliateDashboardPage() {
             </p>
           </div>
 
-          <div className="rounded-full border border-green-400/30 bg-green-500/10 px-5 py-2 text-sm font-semibold text-green-300">
-            Active Partner
-          </div>
+          <div className="flex flex-wrap items-center gap-3">
+  <div className="rounded-full border border-green-400/30 bg-green-500/10 px-5 py-2 text-sm font-semibold text-green-300">
+    Active Partner
+  </div>
+
+  <AffiliateLogoutButton />
+</div>
         </div>
 
         <div className="mb-8 rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] p-6 shadow-xl">
