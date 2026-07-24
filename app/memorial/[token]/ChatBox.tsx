@@ -199,7 +199,7 @@ export default function ChatBox({
   };
 
   return (
-    <section className="mx-auto max-w-[76rem] px-4 pb-10 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6">
       {reportingMessage && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#d4af37]/30 bg-[#111a2e] p-6 shadow-2xl">
