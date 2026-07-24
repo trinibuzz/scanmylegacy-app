@@ -1,5 +1,6 @@
 "use client";
 
+import AffiliateClickTracker from "./AffiliateClickTracker";
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import SiteHeader from "../components/SiteHeader";
@@ -173,6 +174,7 @@ function PackagesContent() {
 
   return (
     <main className="min-h-screen bg-[#0b1320] text-white">
+      <AffiliateClickTracker />
       <SiteHeader />
 
       <section className="relative min-h-[68vh] overflow-hidden bg-[#26447F]">
