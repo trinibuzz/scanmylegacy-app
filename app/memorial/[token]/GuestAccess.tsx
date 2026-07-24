@@ -933,12 +933,12 @@ export default function GuestAccess({ memorial, token }: any) {
           </div>
 
           <div className="overflow-hidden rounded-3xl border border-[#d4af37]/20 bg-[#111a2e] shadow-2xl">
-            <div className="relative aspect-[16/9] bg-black">
+            <div className="relative aspect-[16/9] overflow-hidden bg-black">
               <img
                 key={activePhoto}
                 src={galleryPhotos[activePhoto]}
                 alt={slideshowTitle}
-                className="h-full w-full object-contain memorial-cinematic"
+                className="block h-full w-full object-contain memorial-cinematic"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";
                 }}
