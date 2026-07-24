@@ -30,6 +30,14 @@ export default async function AdminDashboardPage() {
       wide: true,
     },
     {
+      href: "/admin/affiliates",
+      icon: "🤝",
+      title: "Affiliates",
+      description:
+        "Manage affiliate partners, referral codes, referred customers, referral activity, and commission tracking.",
+      button: "Open Affiliates →",
+    },
+    {
       href: "/admin/trusted-contact-requests",
       icon: "🛡️",
       title: "Trusted Contact Requests",
@@ -82,9 +90,9 @@ export default async function AdminDashboardPage() {
           <h1 className="font-serif text-4xl font-bold">Admin Dashboard</h1>
 
           <p className="mt-3 max-w-2xl text-sm text-white/70">
-            Manage living legacy pages, memorial pages, free trials, trusted
-            contact requests, manual cash payments, package activations, and
-            account status.
+            Manage living legacy pages, memorial pages, affiliates, free trials,
+            trusted contact requests, manual cash payments, package activations,
+            and account status.
           </p>
         </div>
 
