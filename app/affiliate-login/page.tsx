@@ -116,7 +116,7 @@ export default function AffiliateLoginPage() {
               </label>
               <input
                 type="password"
-                className="mb-6 w-full rounded-xl border border-[#d4af37]/20 bg-[#020817]/70 p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
+                className="mb-3 w-full rounded-xl border border-[#d4af37]/20 bg-[#020817]/70 p-4 text-white outline-none transition placeholder:text-gray-500 focus:border-[#d4af37]"
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -126,6 +126,15 @@ export default function AffiliateLoginPage() {
                   }
                 }}
               />
+
+              <div className="mb-6 text-right">
+                <Link
+                  href="/affiliate-forgot-password"
+                  className="text-sm font-semibold text-[#d4af37] transition hover:text-[#f0c94a] hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
 
               <button
                 onClick={login}
