@@ -70,6 +70,15 @@ export default async function AffiliateDashboardPage() {
     [affiliate.id]
   );
 
+  const [clickRows]: any = await db.execute(
+    `SELECT COUNT(*) AS total_clicks
+     FROM affiliate_clicks
+     WHERE affiliate_id = ?`,
+    [affiliate.id]
+  );
+
+  const linkClicks = Number(clickRows?.[0]?.total_clicks || 0);
+
   const totalReferrals = referrals.length;
 
   const pendingCommission = referrals
@@ -159,7 +168,14 @@ export default async function AffiliateDashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8 grid gap-6 md:grid-cols-4">
+        <div className="mb-8 grid gap-6 md:grid-cols-5">
+          <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 shadow-xl">
+            <p className="text-sm text-gray-400">Link Clicks</p>
+            <h2 className="mt-2 text-4xl font-bold text-blue-300">
+              {linkClicks}
+            </h2>
+          </div>
+
           <div className="rounded-2xl border border-[#1f2a44] bg-[#111a2e] p-6 shadow-xl">
             <p className="text-sm text-gray-400">Total Referrals</p>
             <h2 className="mt-2 text-4xl font-bold text-[#d4af37]">
